@@ -32,8 +32,8 @@ module Homebrew
 
           output_dir = dir/"doc"
 
-          SystemCommand.safe_system "bundle", "exec", "yard", "doc", "--fail-on-warning", *no_api_args, "--output",
-                                    output_dir
+          SystemCommand.safe_system "bundle", "exec", "yard", "doc", "--fail-on-warning",
+                                    args: [*no_api_args, "--output", output_dir]
 
           Utils::Browser.open "file://#{output_dir}/index.html" if args.open?
         end

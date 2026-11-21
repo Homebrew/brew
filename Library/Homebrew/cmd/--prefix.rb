@@ -86,7 +86,7 @@ module Homebrew
           arguments.concat UNBREWED_EXCLUDE_PATHS.flat_map { |d| %W[! -path #{d}] }
           arguments.push ")"
 
-          cd(HOMEBREW_PREFIX) { SystemCommand.safe_system("find", *arguments) }
+          cd(HOMEBREW_PREFIX) { SystemCommand.safe_system("find", args: arguments) }
         elsif args.no_named?
           puts HOMEBREW_PREFIX
         else

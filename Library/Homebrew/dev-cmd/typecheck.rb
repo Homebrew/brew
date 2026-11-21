@@ -60,12 +60,12 @@ module Homebrew
           if update
             workers = args.debug? ? ["--workers=1"] : []
             SystemCommand.safe_system "bundle", "exec", "tapioca", "annotations"
-            SystemCommand.safe_system "bundle", "exec", "tapioca", "dsl", *workers
+            SystemCommand.safe_system "bundle", "exec", "tapioca", "dsl", args: workers
             # Prefer adding args here: Library/Homebrew/sorbet/tapioca/config.yml
             tapioca_args = args.update_all? ? ["--all"] : []
 
             ohai "Updating Tapioca RBI files..."
-            SystemCommand.safe_system "bundle", "exec", "tapioca", "gem", *tapioca_args
+            SystemCommand.safe_system "bundle", "exec", "tapioca", "gem", args: tapioca_args
 
             ohai "Trimming RuboCop RBI because by default it's massive..."
             trim_rubocop_rbi

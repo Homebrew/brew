@@ -19,7 +19,7 @@ RSpec.describe Homebrew::DevCmd::Prof do
       allow($stdout).to receive(:tty?).and_return(false)
       expect(SystemCommand).to receive(:safe_system)
         .with("ruby-prof", "--printer=call_stack", "--file=prof/call_stack.html",
-              Utils::Path.resolved_path(HOMEBREW_LIBRARY_PATH/"brew.rb"), "--", "help")
+              Utils::Path.resolved_path(HOMEBREW_LIBRARY_PATH/"brew.rb"), "--", args: ["help"])
       expect(Utils::Browser).not_to receive(:open)
 
       prof.run
@@ -38,8 +38,8 @@ RSpec.describe Homebrew::DevCmd::Prof do
           "-r",
           (HOMEBREW_LIBRARY_PATH/"prof/vernier_fork_guard").to_s,
           Utils::Path.resolved_path(HOMEBREW_LIBRARY_PATH/"brew.rb"),
-          "commands",
-          env: {
+          args: ["commands"],
+          env:  {
             "HOMEBREW_SPAWN_SYSTEM"       => "1",
             "VERNIER_ALLOCATION_INTERVAL" => "500",
             "VERNIER_OUTPUT"              => "prof/vernier.json",

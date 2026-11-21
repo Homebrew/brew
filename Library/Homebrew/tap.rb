@@ -787,7 +787,7 @@ class Tap # rubocop:disable Metrics/ClassLength
         worktree_args = ["-c", "core.hooksPath=#{File::NULL}", "-C", worktree_source_tap_path, "worktree", "add"]
         worktree_args << "--quiet" if quiet
         worktree_args += ["--detach", path, worktree_head]
-        SystemCommand.safe_system "git", *worktree_args
+        SystemCommand.safe_system "git", args: worktree_args
       else
         result = git_command!(args)
         update_remote_from_git_redirect!(result.stderr, quiet:)

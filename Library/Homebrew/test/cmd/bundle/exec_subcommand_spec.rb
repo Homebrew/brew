@@ -284,7 +284,7 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
 
           # Return original service state
           expect(Utils).to receive(:safe_popen_read)
-            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", "nginx", "httpd", "redis", "redis@6.2")
+            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", args: ["nginx", "httpd", "redis", "redis@6.2"])
             .and_return(services_info_pre.to_json)
 
           # Stop original nginx
@@ -314,7 +314,7 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
 
           # Return new service state
           expect(Utils).to receive(:safe_popen_read)
-            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", "nginx", "httpd", "redis", "redis@6.2")
+            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", args: ["nginx", "httpd", "redis", "redis@6.2"])
             .and_return(services_info_post.to_json)
 
           # Stop new services

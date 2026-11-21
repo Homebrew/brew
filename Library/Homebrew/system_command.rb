@@ -88,12 +88,12 @@ class SystemCommand
   module Helpers
     sig { params(executable: T.any(String, Pathname), args: T.any(String, Pathname)).void }
     def safe_system(executable, *args)
-      SystemCommand.safe_system(executable, *args)
+      SystemCommand.safe_system(executable, args:)
     end
 
     sig { params(executable: T.any(String, Pathname), args: T.any(String, Pathname)).returns(T::Boolean) }
     def quiet_system(executable, *args)
-      SystemCommand.quiet_system(executable, *args)
+      SystemCommand.quiet_system(executable, args:)
     end
   end
 
@@ -181,20 +181,22 @@ class SystemCommand
 
   # Run a command attached to the caller's standard streams and terminal,
   # raising if it fails. Unlike {SystemCommand.run!} nothing is captured, so
-  # interactive programs such as editors and pagers work.
+  # interactive programs such as editors and pagers work. Pass a built-up
+  # array of arguments as `args:` rather than splatting it.
   sig {
     params(
-      executable: T.nilable(T.any(String, Pathname)),
-      args:       T.nilable(T.any(String, Pathname)),
-      env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
-      out:        T.nilable(Symbol),
+      executable:      T.nilable(T.any(String, Pathname)),
+      positional_args: T.nilable(T.any(String, Pathname)),
+      args:            T::Array[T.nilable(T.any(String, Pathname))],
+      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
+      out:             T.nilable(Symbol),
     ).void
   }
-  def self.safe_system(executable, *args, env: {}, out: nil)
+  def self.safe_system(executable, *positional_args, args: [], env: {}, out: nil)
     raise ArgumentError, "Missing executable" if executable.nil?
-    raise ArgumentError, "Invalid nil command argument" if args.any?(&:nil?)
+    raise ArgumentError, "Invalid nil command argument" if positional_args.any?(&:nil?) || args.any?(&:nil?)
 
-    args = args.compact
+    args = positional_args.compact + args.compact
     if Context.current.verbose?
       command = "#{executable} #{args * " "}".gsub(RUBY_PATH.to_s, "ruby")
                                              .gsub($LOAD_PATH.join(File::PATH_SEPARATOR), "$LOAD_PATH")
@@ -206,22 +208,24 @@ class SystemCommand
   end
 
   # Run a command attached to the caller's standard input with its output
-  # discarded, returning whether it succeeded.
+  # discarded, returning whether it succeeded. Pass a built-up array of
+  # arguments as `args:` rather than splatting it.
   # Preserve the existing Formula DSL method name.
   # rubocop:disable Naming/PredicateMethod
   sig {
     params(
-      executable: T.nilable(T.any(String, Pathname)),
-      args:       T.nilable(T.any(String, Pathname)),
-      env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
+      executable:      T.nilable(T.any(String, Pathname)),
+      positional_args: T.nilable(T.any(String, Pathname)),
+      args:            T::Array[T.nilable(T.any(String, Pathname))],
+      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
     ).returns(T::Boolean)
   }
-  def self.quiet_system(executable, *args, env: {})
-    return false if executable.nil? || args.any?(&:nil?)
+  def self.quiet_system(executable, *positional_args, args: [], env: {})
+    return false if executable.nil? || positional_args.any?(&:nil?) || args.any?(&:nil?)
 
     # Redirect output streams to `/dev/null` instead of closing as some programs
     # will fail to execute if they can't write to an open stream.
-    attached_success?(executable, args.compact, env:, out: File::NULL, err: File::NULL)
+    attached_success?(executable, positional_args.compact + args.compact, env:, out: File::NULL, err: File::NULL)
   end
   # rubocop:enable Naming/PredicateMethod
 

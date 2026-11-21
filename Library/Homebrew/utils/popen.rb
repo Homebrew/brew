@@ -5,16 +5,20 @@ module Utils
   IO_DEFAULT_BUFFER_SIZE = 4096
   private_constant :IO_DEFAULT_BUFFER_SIZE
 
+  # Read a command's standard output. Pass a built-up array of arguments as
+  # `args:` rather than splatting it.
   sig {
     type_parameters(:U)
       .params(
-        args:    T.nilable(T.any(String, Pathname, T::Hash[String, String])),
-        safe:    T::Boolean,
-        options: T.nilable(T.any(Pathname, String, Symbol)),
-        block:   T.nilable(T.proc.params(arg0: IO).returns(T.type_parameter(:U))),
+        positional_args: T.nilable(T.any(String, Pathname, T::Hash[String, String])),
+        args:            T::Array[T.nilable(T.any(String, Pathname, T::Hash[String, String]))],
+        safe:            T::Boolean,
+        options:         T.nilable(T.any(Pathname, String, Symbol)),
+        block:           T.nilable(T.proc.params(arg0: IO).returns(T.type_parameter(:U))),
       ).returns(T.any(T.type_parameter(:U), String))
   }
-  def self.popen_read(*args, safe: false, **options, &block)
+  def self.popen_read(*positional_args, args: [], safe: false, **options, &block)
+    args = positional_args + args
     options[:in] ||= File::NULL
     output = popen(args, "rb", options, &block)
     return output if !safe || $CHILD_STATUS.success?
@@ -24,38 +28,41 @@ module Utils
 
   sig {
     params(
-      args:    T.nilable(T.any(String, Pathname, T::Hash[String, String])),
-      options: T.nilable(T.any(Pathname, String, Symbol)),
+      positional_args: T.nilable(T.any(String, Pathname, T::Hash[String, String])),
+      args:            T::Array[T.nilable(T.any(String, Pathname, T::Hash[String, String]))],
+      options:         T.nilable(T.any(Pathname, String, Symbol)),
     ).returns(String)
   }
-  def self.popen_read_text(*args, **options)
-    output = popen_read(*args, **options)
-    raise TypeError, "Expected command output to be a String" unless output.is_a?(String)
-
-    output.force_encoding(Encoding.default_external)
+  def self.popen_read_text(*positional_args, args: [], **options)
+    popen_read(args: positional_args + args, **options).force_encoding(Encoding.default_external)
   end
 
   sig {
     type_parameters(:U)
       .params(
-        args:    T.nilable(T.any(String, Pathname, T::Hash[String, String])),
-        options: T.nilable(T.any(Pathname, String, Symbol)),
-        block:   T.nilable(T.proc.params(arg0: IO).returns(T.type_parameter(:U))),
+        positional_args: T.nilable(T.any(String, Pathname, T::Hash[String, String])),
+        args:            T::Array[T.nilable(T.any(String, Pathname, T::Hash[String, String]))],
+        options:         T.nilable(T.any(Pathname, String, Symbol)),
+        block:           T.nilable(T.proc.params(arg0: IO).returns(T.type_parameter(:U))),
       ).returns(T.any(T.type_parameter(:U), String))
   }
-  def self.safe_popen_read(*args, **options, &block)
-    popen_read(*args, safe: true, **options, &block)
+  def self.safe_popen_read(*positional_args, args: [], **options, &block)
+    popen_read(args: positional_args + args, safe: true, **options, &block)
   end
 
+  # Write to a command's standard input. Pass a built-up array of arguments
+  # as `args:` rather than splatting it.
   sig {
     params(
-      args:    T.any(String, Pathname),
-      safe:    T::Boolean,
-      options: T.nilable(T.any(Pathname, String, Symbol)),
-      _block:  T.proc.params(arg0: IO).returns(T.anything),
+      positional_args: T.any(String, Pathname),
+      args:            T::Array[T.any(String, Pathname)],
+      safe:            T::Boolean,
+      options:         T.nilable(T.any(Pathname, String, Symbol)),
+      _block:          T.proc.params(arg0: IO).returns(T.anything),
     ).returns(String)
   }
-  def self.popen_write(*args, safe: false, **options, &_block)
+  def self.popen_write(*positional_args, args: [], safe: false, **options, &_block)
+    args = positional_args + args
     output = ""
     popen(args, "w+b", options) do |pipe|
       # Before we yield to the block, capture as much output as we can
@@ -79,15 +86,15 @@ module Utils
   end
 
   sig {
-    type_parameters(:U)
-      .params(
-        args:    T.any(String, Pathname),
-        options: T.nilable(T.any(Pathname, String, Symbol)),
-        block:   T.proc.params(arg0: IO).returns(T.type_parameter(:U)),
-      ).returns(T.type_parameter(:U))
+    params(
+      positional_args: T.any(String, Pathname),
+      args:            T::Array[T.any(String, Pathname)],
+      options:         T.nilable(T.any(Pathname, String, Symbol)),
+      block:           T.proc.params(arg0: IO).returns(T.anything),
+    ).returns(String)
   }
-  def self.safe_popen_write(*args, **options, &block)
-    popen_write(*args, safe: true, **options, &block)
+  def self.safe_popen_write(*positional_args, args: [], **options, &block)
+    popen_write(args: positional_args + args, safe: true, **options, &block)
   end
 
   sig {
