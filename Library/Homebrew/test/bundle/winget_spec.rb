@@ -92,6 +92,9 @@ RSpec.describe Homebrew::Bundle::Winget do
       powershell.write <<~SH
         #!/bin/sh
         printf '%s' #{output.shellescape} > "$EXAMPLE_WINGET_EXPORT"
+        printf '%s\\n' 'Name          Id           Version' \\
+                       '----------------------------------' \\
+                       'Example café  Example.App  1.0'
         printf '%s\\n' 'native inventory diagnostic' >&2
         exit #{status}
       SH
@@ -116,6 +119,11 @@ RSpec.describe Homebrew::Bundle::Winget do
     end
 
     it_behaves_like "a failed inventory dump"
+
+    it "reads Unicode app names from each configured source" do
+      expect(described_class.apps.map { |app| [app.name, app.source] })
+        .to eq([["Example café", "winget"], ["Example café", "msstore"]])
+    end
 
     it "does not cache a failed bridge and retries without reset" do
       write_inventory(output: inventory_output, status: 1)

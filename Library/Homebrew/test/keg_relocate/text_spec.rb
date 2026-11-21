@@ -55,11 +55,14 @@ RSpec.describe Keg do
     expect(described_class.text_matches_in_file(file, dir.to_s, [], [], nil).count).to eq 1
   end
 
-  specify "::text_matches_in_file finds a path containing non-ASCII characters",
-          unless: ENV.fetch("HOMEBREW_TEST_GENERIC_OS", nil) do
+  specify "::text_matches_in_file finds a path containing non-ASCII characters" do
     ENV["LC_ALL"] = "en_US.UTF-8"
     (dir/"José").mkpath
     file.binwrite("\0#{dir}/José\0".b)
+    if ENV["HOMEBREW_TEST_GENERIC_OS"] && OS.kernel_name == "Linux"
+      # Generic mode does not load the Linux encoding flags for GNU strings.
+      allow(described_class).to receive(:strings_encoding_args).and_return(["-e", "S"])
+    end
 
     expect(described_class.text_matches_in_file(file, dir.to_s, [], [], nil).count).to eq 1
   end

@@ -17,6 +17,20 @@ RSpec.describe PyPI do
     "https://github.com/pypa/pip-audit/releases/download/v2.5.6/v2.5.6.tar.gz"
   end
 
+  let(:package_checksum) { "47417307d08ecb0707b3b29effc933bd63d8c8e3ab15509c62b685b7614c6568" }
+  let(:old_package_checksum) { "2367ce91baf7f8fa7738d33aff9670ffdf5410bbac49aeb209f73b45a3425046" }
+
+  def stub_pypi_release(version, url, checksum, path: "snakemake/#{version}/json")
+    allow(Utils::Curl).to receive(:curl_output)
+      .with("https://pypi.org/pypi/#{path}", "--location", "--fail")
+      .and_return(
+        instance_double(SystemCommand::Result,
+                        status: instance_double(Process::Status, success?: true),
+                        stdout: JSON.generate(info: { name: "snakemake", version: },
+                                              urls: [{ packagetype: "sdist", url:, digests: { sha256: checksum } }])),
+      )
+  end
+
   describe ".input_packages" do
     it "deduplicates the main and extra packages with normalised names" do
       main = PyPI::Package.new("Example_Name==1.0")
@@ -86,9 +100,6 @@ RSpec.describe PyPI do
   end
 
   describe PyPI::Package do
-    let(:package_checksum) { "47417307d08ecb0707b3b29effc933bd63d8c8e3ab15509c62b685b7614c6568" }
-    let(:old_package_checksum) { "2367ce91baf7f8fa7738d33aff9670ffdf5410bbac49aeb209f73b45a3425046" }
-
     let(:package) { described_class.new("snakemake") }
     let(:package_with_version) { described_class.new("snakemake==5.28.0") }
     let(:package_with_different_version) { described_class.new("snakemake==5.29.0") }
@@ -159,8 +170,12 @@ RSpec.describe PyPI do
       end
     end
 
-    describe ".pypi_info", :needs_network do
+    describe ".pypi_info" do
       specify do
+        stub_pypi_release("5.29.0", pypi_package_url, package_checksum, path: "snakemake/json")
+        stub_pypi_release("5.29.0", pypi_package_url, package_checksum)
+        stub_pypi_release("5.28.0", old_pypi_package_url, old_package_checksum)
+
         expect(package.pypi_info.first).to eq "snakemake"
         expect(package_with_extra.pypi_info.first).to eq "snakemake"
         expect(package_with_version.pypi_info).to eq ["snakemake", old_pypi_package_url, old_package_checksum,
@@ -169,23 +184,27 @@ RSpec.describe PyPI do
       end
 
       it "gets pypi info from a package name and specified version" do
+        stub_pypi_release("5.29.0", pypi_package_url, package_checksum)
         expect(package.pypi_info(new_version: "5.29.0")).to eq ["snakemake", pypi_package_url, package_checksum,
                                                                 "5.29.0"]
       end
 
       it "gets pypi info from a package name with overridden version" do
-        expected_result = ["snakemake", pypi_package_url, package_checksum, "5.29.0"]
-        expect(package_with_version.pypi_info(new_version: "5.29.0")).to eq expected_result
+        stub_pypi_release("5.29.0", pypi_package_url, package_checksum)
+        expect(package_with_version.pypi_info(new_version: "5.29.0"))
+          .to eq ["snakemake", pypi_package_url, package_checksum, "5.29.0"]
       end
 
       it "gets pypi info from a package name, extras and version" do
-        expected_result = ["snakemake", old_pypi_package_url, old_package_checksum, "5.28.0"]
-        expect(package_with_extra_and_version.pypi_info).to eq expected_result
+        stub_pypi_release("5.28.0", old_pypi_package_url, old_package_checksum)
+        expect(package_with_extra_and_version.pypi_info)
+          .to eq ["snakemake", old_pypi_package_url, old_package_checksum, "5.28.0"]
       end
 
       it "gets pypi info from a url with overridden version" do
-        expected_result = ["snakemake", old_pypi_package_url, old_package_checksum, "5.28.0"]
-        expect(package_from_pypi_url.pypi_info(new_version: "5.28.0")).to eq expected_result
+        stub_pypi_release("5.28.0", old_pypi_package_url, old_package_checksum)
+        expect(package_from_pypi_url.pypi_info(new_version: "5.28.0"))
+          .to eq ["snakemake", old_pypi_package_url, old_package_checksum, "5.28.0"]
       end
     end
 
@@ -233,14 +252,33 @@ RSpec.describe PyPI do
   end
 
   describe ".pip_report" do
-    context "with sandbox execution stubbed" do
+    context "when running sandboxed metadata commands" do
       before do
-        allow(Sandbox).to receive_messages(available?: true, avoid_nested_sandboxing?: false,
-                                           full_write_isolation?: true)
-        sandbox = Sandbox.new
-        allow(Sandbox).to receive(:new).and_return(sandbox)
-        allow(sandbox).to receive(:sandbox_command) { |args, _tmpdir| args }
-        allow(sandbox).to receive(:apply_before_exec?).and_return(false)
+        if !Sandbox.available? || Sandbox.nested_sandbox?
+          allow(Sandbox).to receive_messages(available?: true, avoid_nested_sandboxing?: false)
+          sandbox = Sandbox.new
+          allow(Sandbox).to receive(:new).and_return(sandbox)
+          allow(sandbox).to receive(:sandbox_command) { |args, _tmpdir| args }
+          allow(sandbox).to receive(:apply_before_exec?).and_return(false)
+        end
+      end
+
+      it "captures metadata with a minimal sandbox environment" do
+        ENV["HOMEBREW_METADATA_TEST"] = "parent value"
+        expect(described_class.pip_output(["/bin/sh", "-c", 'printf %s "${HOMEBREW_METADATA_TEST:-clean}"']))
+          .to eq("clean")
+      end
+
+      it "passes proxy settings into the sandbox" do
+        ENV["HTTPS_PROXY"] = "http://proxy.example:3128"
+        expect(described_class.pip_output(["/bin/sh", "-c", 'printf %s "${HTTPS_PROXY:-clean}"']))
+          .to eq("http://proxy.example:3128")
+      end
+
+      it "warns when the available sandbox cannot isolate metadata changes" do
+        allow(Sandbox).to receive(:full_write_isolation?).and_return(false)
+        expect { described_class.pip_output(["/bin/echo", "metadata"]) }
+          .to output(/cannot restrict file permissions or ownership/).to_stderr
       end
 
       it "runs metadata inspection without a terminal" do
@@ -261,6 +299,7 @@ RSpec.describe PyPI do
       end
 
       it "redacts authenticated proxies from printed output" do
+        allow(Sandbox).to receive(:full_write_isolation?).and_return(true)
         ENV["HTTPS_PROXY"] = "http://user:p$a=ss@proxy.example:3128"
         ENV["http_proxy"] = ""
 
@@ -329,24 +368,6 @@ RSpec.describe PyPI do
       end
     end
 
-    it "captures metadata with a minimal sandbox environment" do
-      skip Sandbox.failure_reason unless Sandbox.available?
-      skip "Homebrew is running inside another sandbox" if Sandbox.avoid_nested_sandboxing?
-
-      ENV["HOMEBREW_METADATA_TEST"] = "parent value"
-      expect(described_class.pip_output(["/bin/sh", "-c", 'printf %s "${HOMEBREW_METADATA_TEST:-clean}"']))
-        .to eq("clean")
-    end
-
-    it "passes proxy settings into the sandbox" do
-      skip Sandbox.failure_reason unless Sandbox.available?
-      skip "Homebrew is running inside another sandbox" if Sandbox.avoid_nested_sandboxing?
-
-      ENV["HTTPS_PROXY"] = "http://proxy.example:3128"
-      expect(described_class.pip_output(["/bin/sh", "-c", 'printf %s "${HTTPS_PROXY:-clean}"']))
-        .to eq("http://proxy.example:3128")
-    end
-
     it "refuses metadata inspection when the sandbox is unavailable" do
       allow(Sandbox).to receive(:available?).and_return(false)
       expect { described_class.pip_output(["/bin/echo", "metadata"]) }.to raise_error(RuntimeError, /sandbox/)
@@ -356,15 +377,6 @@ RSpec.describe PyPI do
       allow(Sandbox).to receive_messages(available?: true, avoid_nested_sandboxing?: true)
       expect { described_class.pip_output(["/bin/echo", "metadata"]) }
         .to raise_error(RuntimeError, /another sandbox/)
-    end
-
-    it "warns when the available sandbox cannot isolate metadata changes" do
-      skip Sandbox.failure_reason unless Sandbox.available?
-      skip "Homebrew is running inside another sandbox" if Sandbox.avoid_nested_sandboxing?
-
-      allow(Sandbox).to receive(:full_write_isolation?).and_return(false)
-      expect { described_class.pip_output(["/bin/echo", "metadata"]) }
-        .to output(/cannot restrict file permissions or ownership/).to_stderr
     end
 
     it "filters packages uploaded within the last day" do
@@ -765,12 +777,16 @@ RSpec.describe PyPI do
     end
   end
 
-  describe "update_pypi_url", :needs_network do
+  describe "update_pypi_url" do
     it "updates url to new version" do
+      stub_pypi_release("5.29.0", pypi_package_url, package_checksum)
       expect(described_class.update_pypi_url(old_pypi_package_url, "5.29.0")).to eq pypi_package_url
     end
 
     it "returns nil for invalid versions" do
+      allow(Utils::Curl).to receive(:curl_output)
+        .with("https://pypi.org/pypi/snakemake/0.0.0/json", "--location", "--fail")
+        .and_return(instance_double(SystemCommand::Result, status: instance_double(Process::Status, success?: false)))
       expect(described_class.update_pypi_url(old_pypi_package_url, "0.0.0")).to be_nil
     end
 

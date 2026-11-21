@@ -6,6 +6,7 @@ require "utils/browser"
 require "abstract_command"
 require "fileutils"
 require "system_command"
+require "test/support/helper/files"
 require "utils/git"
 
 module Homebrew
@@ -327,16 +328,11 @@ module Homebrew
       sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
       def os_bundle_args(bundle_args)
         # for generic tests, remove macOS or Linux specific tests
-        bundle_args << "--tag" << "~needs_sandbox"
         non_linux_bundle_args(non_macos_bundle_args(bundle_args))
       end
 
       sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
       def non_macos_bundle_args(bundle_args)
-        bundle_args << "--tag" << "~needs_homebrew_core" if ENV["CI"]
-        bundle_args << "--tag" << "~needs_svnadmin" unless args.online?
-        bundle_args << "--tag" << "~needs_svn" unless args.online?
-
         bundle_args << "--tag" << "~needs_macos"
       end
 
@@ -353,12 +349,12 @@ module Homebrew
 
       sig { params(files: T::Array[String]).returns(T::Array[String]) }
       def non_macos_files(files)
-        files.grep_v(%r{^test/os/mac(/.*|_spec\.rb)$})
+        files.grep_v(::Test::Helper::Files::MACOS_SPEC)
       end
 
       sig { params(files: T::Array[String]).returns(T::Array[String]) }
       def non_linux_files(files)
-        files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
+        files.grep_v(::Test::Helper::Files::LINUX_SPEC)
       end
 
       sig { params(tag: String).returns(T::Array[Pathname]) }

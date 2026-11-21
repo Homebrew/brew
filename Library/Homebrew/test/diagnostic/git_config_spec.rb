@@ -39,13 +39,16 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       expect(checks.check_git_config_in_sandbox).to be_nil
     end
 
-    it "reads valid configuration in the native download sandbox" do
-      allow(Sandbox).to receive(:nested_sandbox?).and_call_original
-      skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
-      skip "Sandboxing is unavailable." unless Sandbox.available?
-      allow(Sandbox).to receive(:for_operation).and_call_original
+    test_each(%w[macos linux]) do |platform|
+      it "reads valid configuration in the #{platform} download sandbox",
+         needs_linux: platform == "linux", needs_macos: platform == "macos" do
+        allow(Sandbox).to receive(:nested_sandbox?).and_call_original
+        skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
+        skip "Sandboxing is unavailable." unless Sandbox.available?
+        allow(Sandbox).to receive(:for_operation).and_call_original
 
-      expect(checks.check_git_config_in_sandbox).to be_nil
+        expect(checks.check_git_config_in_sandbox).to be_nil
+      end
     end
 
     it "accepts successful configuration reads with launcher warnings" do

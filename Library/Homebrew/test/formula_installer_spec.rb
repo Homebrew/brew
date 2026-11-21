@@ -78,10 +78,13 @@ RSpec.describe FormulaInstaller do
     end
   end
 
-  specify "offline installation" do
-    skip "Sandbox not in use." unless Sandbox.use_for?("testing offline installation", warn_without_sandbox: false)
+  test_each(%w[macos linux]) do |platform|
+    specify "offline installation on #{platform}", needs_linux: platform == "linux",
+                                                   needs_macos: platform == "macos" do
+      skip "Sandbox not in use." unless Sandbox.use_for?("testing offline installation", warn_without_sandbox: false)
 
-    expect { temporary_install(FailballOfflineInstall.new) }.to raise_error(BuildError)
+      expect { temporary_install(FailballOfflineInstall.new) }.to raise_error(BuildError)
+    end
   end
 
   it "releases its formula locks when installation raises" do

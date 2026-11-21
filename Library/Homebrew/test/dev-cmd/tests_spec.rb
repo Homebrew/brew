@@ -40,9 +40,11 @@ RSpec.describe Homebrew::DevCmd::Tests do
       end
     end
 
-    context "when an explicit test only runs on another OS" do
-      let(:args) { ["--only=#{test_name}"] }
-      let(:test_name) { OS.linux? ? "os/mac/xcode" : "os/linux/ld" }
+    context "when every selected test requires another OS" do
+      let(:args) do
+        native_spec = OS.linux? ? "os/mac" : "os/linux"
+        ["--only=#{native_spec},#{native_spec}:9"]
+      end
 
       it "fails instead of reporting success without running the test" do
         expect(tests).not_to receive(:system)
@@ -243,8 +245,9 @@ RSpec.describe Homebrew::DevCmd::Tests do
         .to eq(%w[test/cask/cask_spec.rb test/cask_spec.rb])
     end
 
-    it "does not exclude the cask fixture context" do
-      expect(tests.non_macos_bundle_args([])).not_to include("~cask")
+    it "only excludes macOS examples" do
+      ENV["CI"] = "1"
+      expect(tests.non_macos_bundle_args([])).to eq(["--tag", "~needs_macos"])
     end
   end
 
@@ -253,18 +256,71 @@ RSpec.describe Homebrew::DevCmd::Tests do
 
     it "fails when a dependency is missing on CI" do
       ENV["CI"] = "1"
-      ENV.delete("HOMEBREW_TEST_BOT")
+      ENV["HOMEBREW_TEST_BOT"] = "1"
 
       expect { ensure_test_dependency!(false, "Dependency is not installed.") }
         .to raise_error(RuntimeError, "Dependency is not installed.")
     end
 
-    it "skips when a dependency is missing under `brew test-bot`" do
-      ENV["CI"] = "1"
-      ENV["HOMEBREW_TEST_BOT"] = "1"
+    it "skips when a dependency is missing locally" do
+      ENV.delete("CI")
 
       expect(self).to receive(:skip).with("Dependency is not installed.")
       ensure_test_dependency!(false, "Dependency is not installed.")
+    end
+  end
+
+  describe Test::Helper::Dependencies, ".unexpected_ci_skips" do
+    def example_with(status, **metadata)
+      reason = "missing tool" if status == :pending
+      result = instance_double(RSpec::Core::Example::ExecutionResult, status:, pending_message: reason)
+      instance_double(RSpec::Core::Example, execution_result: result, metadata:, location: "spec.rb:1",
+                                            full_description: "example")
+    end
+
+    before do
+      allow(OS).to receive_messages(mac?: false, linux?: true)
+      ENV.delete("HOMEBREW_TEST_ONLINE")
+    end
+
+    it "allows incompatible OS and network requirements on an offline Linux runner" do
+      expect(described_class.unexpected_ci_skips([
+        example_with(nil, needs_macos: true), example_with(nil, needs_network: true),
+        example_with(:passed), example_with(:failed)
+      ])).to be_empty
+    end
+
+    it "reports pending and filtered examples on an eligible runner" do
+      ENV["HOMEBREW_TEST_ONLINE"] = "1"
+      examples = [example_with(:pending), example_with(nil, needs_linux: true, needs_network: true),
+                  example_with(nil, needs_macos: true, needs_linux: true)]
+      expect(described_class.unexpected_ci_skips(examples)).to contain_exactly(
+        "spec.rb:1 example (missing tool)", "spec.rb:1 example (filtered out)", "spec.rb:1 example (filtered out)"
+      )
+    end
+
+    it "reports only the selected line when RSpec filters out every example" do
+      mktmpdir do |dir|
+        spec = dir/"filtered_spec.rb"
+        spec.write <<~RUBY
+          RSpec.describe "first group" do
+            it("unselected", if: false) {}
+          end
+
+          RSpec.describe "second group" do
+            it("selected", if: false) {}
+          end
+        RUBY
+        output, status = Open3.capture2e(
+          { "CI" => "1", "HOMEBREW_TESTS_COVERAGE" => nil },
+          "bundle", "exec", "rspec",
+          "--require", (HOMEBREW_LIBRARY_PATH/"test/spec_helper").to_s, "#{spec}:6"
+        )
+
+        expect(status.exitstatus).to eq(1), output
+        expect(output.lines.grep(/ \(filtered out\)$/))
+          .to contain_exactly(a_string_ending_with("filtered_spec.rb:6 second group selected (filtered out)\n"))
+      end
     end
   end
 
