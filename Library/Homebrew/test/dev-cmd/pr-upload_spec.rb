@@ -16,6 +16,14 @@ class PrUploadForTesting < Homebrew::DevCmd::PrUpload
 
   sig { params(json_files: T::Array[String]).returns(T::Hash[String, T.anything]) }
   def merge_bottle_metadata(json_files) = bottles_hash_from_json_files(json_files, args)
+
+  sig {
+    params(bottles_hash: T::Hash[String, T.anything], manifest_sha256s: T::Hash[String, String],
+           unbottled_formulae: T::Array[String]).void
+  }
+  def write_manifest_pins!(bottles_hash, manifest_sha256s, unbottled_formulae = [])
+    pin_manifests!(bottles_hash, manifest_sha256s, unbottled_formulae)
+  end
 end
 
 RSpec.describe Homebrew::DevCmd::PrUpload do
@@ -144,6 +152,88 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
         bottles.fetch(current.name).fetch("bottle")["tags"] = {}
 
         expect { PrUploadForTesting.new([]).validate_transition_bottles!(bottles) }.not_to raise_error
+      end
+    end
+  end
+
+  describe "#pin_manifests!" do
+    sig { returns(T::Hash[String, String]) }
+    let(:manifest_sha256s) { { current.name => "b" * 64 } }
+
+    it "pins the image index above the bottle checksums" do
+      PrUploadForTesting.new(["--no-commit"]).write_manifest_pins!(bottles, manifest_sha256s)
+
+      expect(formula_path.read)
+        .to include(%Q(  bottle do\n    manifest_sha256 "#{"b" * 64}"\n    sha256 arm64_golden_gate:))
+    end
+
+    it "pins the image index in a dry run, like the rest of the bottle block it writes" do
+      PrUploadForTesting.new(["--dry-run", "--no-commit"]).write_manifest_pins!(bottles, manifest_sha256s)
+
+      expect(formula_path.read).to include(%Q(manifest_sha256 "#{"b" * 64}"))
+    end
+
+    it "pins the image index below the rebuild" do
+      formula_path.atomic_write(formula_source.sub("bottle do", "bottle do\n    rebuild 1"))
+
+      PrUploadForTesting.new(["--no-commit"]).write_manifest_pins!(bottles, manifest_sha256s)
+
+      expect(formula_path.read).to include(%Q(    rebuild 1\n    manifest_sha256 "#{"b" * 64}"\n    sha256 ))
+    end
+
+    it "leaves the bottle block of an image that was not built unpinned" do
+      PrUploadForTesting.new(["--no-commit"]).write_manifest_pins!(bottles, {})
+
+      expect(formula_path.read).to eq(formula_source)
+    end
+
+    context "when committing" do
+      before do
+        allow(Utils::Git).to receive_messages(set_name_email!: nil, setup_gpg!: nil)
+      end
+
+      it "commits the pinned bottle block as an update" do
+        expect(SystemCommand).to receive(:safe_system)
+          .with("git", "commit", "--no-edit", "--verbose", "--message=transition-test: update 2.0 bottle.",
+                "--", formula_path)
+
+        PrUploadForTesting.new([]).write_manifest_pins!(bottles, manifest_sha256s)
+      end
+
+      it "commits the first bottle block of a formula as an addition" do
+        expect(SystemCommand).to receive(:safe_system)
+          .with("git", "commit", "--no-edit", "--verbose", "--message=transition-test: add 2.0 bottle.",
+                "--", formula_path)
+
+        PrUploadForTesting.new([]).write_manifest_pins!(bottles, manifest_sha256s, [current.name])
+      end
+    end
+
+    context "when only uploading" do
+      it "accepts a committed bottle block that pins the image index" do
+        formula_path.atomic_write(formula_source.sub("bottle do", %Q(bottle do\n    manifest_sha256 "#{"b" * 64}")))
+
+        expect { PrUploadForTesting.new(["--upload-only"]).write_manifest_pins!(bottles, manifest_sha256s) }
+          .not_to raise_error
+      end
+
+      it "rejects a committed bottle block that pins another image index" do
+        formula_path.atomic_write(formula_source.sub("bottle do", %Q(bottle do\n    manifest_sha256 "#{"c" * 64}")))
+
+        expect { PrUploadForTesting.new(["--upload-only"]).write_manifest_pins!(bottles, manifest_sha256s) }
+          .to raise_error(SystemExit).and output(/pins manifest #{"c" * 64}/).to_stderr
+      end
+
+      it "accepts a pinned bottle block whose image is already uploaded, so was not built" do
+        formula_path.atomic_write(formula_source.sub("bottle do", %Q(bottle do\n    manifest_sha256 "#{"b" * 64}")))
+
+        expect { PrUploadForTesting.new(["--upload-only"]).write_manifest_pins!(bottles, {}) }.not_to raise_error
+      end
+
+      it "does not pin a committed bottle block" do
+        PrUploadForTesting.new(["--upload-only"]).write_manifest_pins!(bottles, manifest_sha256s)
+
+        expect(formula_path.read).to eq(formula_source)
       end
     end
   end

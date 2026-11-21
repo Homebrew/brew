@@ -501,12 +501,23 @@ class Resource
       nil
     end
 
+    # The name an index gives the manifest of this bottle's build for a tag.
+    sig { params(tag: T.any(String, Symbol, Utils::Bottles::Tag)).returns(String) }
+    def image_ref(tag)
+      version = bottle.resource.version
+      raise "Version is nil" if version.nil?
+
+      GitHubPackages.version_rebuild(version, bottle.rebuild, tag.to_s)
+    end
+
     # The SHA-256 of each bottle's own manifest in a downloaded index, keyed
-    # by the SHA-256 of that bottle.
-    sig { returns(T::Hash[String, String]) }
+    # by that manifest's name and the SHA-256 of its bottle. Bottles for
+    # several tags can share a SHA-256 but a client accepts only the manifest
+    # named for its own tag.
+    sig { returns(T::Hash[[String, String], String]) }
     def platform_manifest_sha256s
       JSON.parse(cached_manifest).fetch("manifests").to_h do |manifest|
-        [manifest.fetch("annotations").fetch("sh.brew.bottle.digest"),
+        [manifest.fetch("annotations").fetch_values("org.opencontainers.image.ref.name", "sh.brew.bottle.digest"),
          manifest.fetch("digest").delete_prefix("sha256:")]
       end
     end
@@ -554,14 +565,11 @@ class Resource
       raise "Checksum is nil" if checksum.nil?
 
       bottle_digest = checksum.hexdigest
-      version = bottle.resource.version
-      raise "Version is nil" if version.nil?
-
-      image_ref = GitHubPackages.version_rebuild(version, bottle.rebuild, bottle.tag.to_s)
+      bottle_image_ref = image_ref(bottle.tag)
       manifests_annotation = manifests_annotations.find do |m|
         next if m["sh.brew.bottle.digest"] != bottle_digest
 
-        m["org.opencontainers.image.ref.name"] == image_ref
+        m["org.opencontainers.image.ref.name"] == bottle_image_ref
       end
       raise Error, "Couldn't find manifest matching bottle checksum." if manifests_annotation.blank?
 

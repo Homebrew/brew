@@ -54,6 +54,7 @@ module Homebrew
         Utils::GemSetup.install_bundler_gems!(groups: ["pr_upload"])
 
         bottles_hash = bottles_hash_from_json_files(json_files, args)
+        unbottled_formulae = T.let([], T::Array[String])
 
         unless args.upload_only?
           bottle_args = ["bottle", "--merge", "--write"]
@@ -61,7 +62,8 @@ module Homebrew
           bottle_args << "--debug" if args.debug?
           bottle_args << "--keep-old" if args.keep_old?
           bottle_args << "--root-url=#{args.root_url}" if args.root_url
-          bottle_args << "--no-commit" if args.no_commit?
+          # A GitHub Packages bottle block is committed below, once it has its `manifest_sha256`.
+          bottle_args << "--no-commit" if args.no_commit? || github_packages?(bottles_hash)
           bottle_args << "--root-url-using=#{args.root_url_using}" if args.root_url_using
           bottle_args += json_files
 
@@ -86,6 +88,12 @@ module Homebrew
           end
 
           check_bottled_formulae!(bottles_hash)
+          unbottled_formulae = bottles_hash.select do |_, bottle_hash|
+            Formulary.from_path(HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"))
+                     .bottle_specification
+                     .checksums
+                     .empty?
+          end.keys
 
           Utils::BrewCommand.run!(*bottle_args)
 
@@ -98,20 +106,10 @@ module Homebrew
           # Reload the JSON files (in case `brew bottle --merge` generated
           # `all: $SHA256` bottles)
           bottles_hash = bottles_hash_from_json_files(json_files, args)
-
-          # Check the bottle commits did not break `brew audit`
-          unless args.no_commit?
-            audit_args = ["audit", "--skip-style"]
-            audit_args << "--verbose" if args.verbose?
-            audit_args << "--debug" if args.debug?
-            audit_args += bottles_hash.keys
-            Utils::BrewCommand.run!(*audit_args)
-          end
         end
 
-        check_transition_bottles!(bottles_hash)
-
         if github_releases?(bottles_hash)
+          check_bottle_commits!(bottles_hash)
           github_releases = GitHubReleases.new
           github_releases.upload_bottles(bottles_hash)
         elsif github_packages?(bottles_hash)
@@ -119,13 +117,72 @@ module Homebrew
           github_packages.upload_bottles(bottles_hash,
                                          keep_old:      args.keep_old?,
                                          dry_run:       args.dry_run?,
-                                         warn_on_error: args.warn_on_upload_failure?)
+                                         warn_on_error: args.warn_on_upload_failure?) do |manifest_sha256s|
+            pin_manifests!(bottles_hash, manifest_sha256s, unbottled_formulae)
+            check_bottle_commits!(bottles_hash)
+          end
         else
           odie "Service specified by root_url is not recognized"
         end
       end
 
       private
+
+      # Writes the digest of the image index about to be uploaded into each
+      # bottle block and commits it, so the block pins exactly what is uploaded.
+      # A dry run does too: for GitHub Packages it has always written and
+      # committed the bottle block and only left the registry untouched.
+      sig {
+        params(bottles_hash: T::Hash[String, T.untyped], manifest_sha256s: T::Hash[String, String],
+               unbottled_formulae: T::Array[String]).void
+      }
+      def pin_manifests!(bottles_hash, manifest_sha256s, unbottled_formulae)
+        bottles_hash.each do |formula_name, bottle_hash|
+          path = HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path")
+          manifest_sha256 = manifest_sha256s[formula_name]
+
+          if args.upload_only?
+            # No image is built for a formula whose upload is skipped, e.g. as it is already uploaded.
+            pinned_sha256 = Formulary.from_path(path).bottle_specification.manifest_sha256
+            next if pinned_sha256.nil? || manifest_sha256.nil? || pinned_sha256 == manifest_sha256
+
+            odie "#{formula_name}: bottle block pins manifest #{pinned_sha256} " \
+                 "but #{manifest_sha256} would be uploaded!"
+          end
+
+          if manifest_sha256
+            # The first `sha256` line of the block `brew bottle --merge --write` just wrote.
+            path.atomic_write(path.read.sub(/^( *)bottle do\n(?:(?! *sha256 ).*\n)*/) do |block_start|
+              "#{block_start}#{Regexp.last_match(1)}  manifest_sha256 \"#{manifest_sha256}\"\n"
+            end)
+          end
+          next if args.no_commit?
+
+          Utils::Git.set_name_email!
+          Utils::Git.setup_gpg!
+          path.parent.cd do
+            SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose",
+                                      "--message=#{Utils.name_from_full_name(formula_name)}: " \
+                                      "#{unbottled_formulae.include?(formula_name) ? "add" : "update"} " \
+                                      "#{bottle_hash.fetch("formula").fetch("pkg_version")} bottle.",
+                                      "--", path
+          end
+        end
+      end
+
+      sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
+      def check_bottle_commits!(bottles_hash)
+        # Check the bottle commits did not break `brew audit`
+        if !args.upload_only? && !args.no_commit?
+          audit_args = ["audit", "--skip-style"]
+          audit_args << "--verbose" if args.verbose?
+          audit_args << "--debug" if args.debug?
+          audit_args += bottles_hash.keys
+          Utils::BrewCommand.run!(*audit_args)
+        end
+
+        check_transition_bottles!(bottles_hash)
+      end
 
       sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
       def check_transition_bottles!(bottles_hash)

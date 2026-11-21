@@ -2569,6 +2569,64 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
+  describe "#audit_disabled_bottle" do
+    let(:disable) { 'disable! date: "2020-01-01", because: :unmaintained' }
+    let(:bottle) { %Q(bottle do\n    sha256 cellar: :any, arm64_sequoia: "#{"a" * 64}"\n  end) }
+    let(:auditor) do
+      formula_auditor("foo", <<~RUBY).tap do |fa|
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          revision 1
+          #{bottle}
+          #{disable}
+        end
+      RUBY
+        allow(fa.formula).to receive(:tap).and_return(instance_double(Tap, git?: true, path: dir))
+        allow(FormulaVersions).to receive(:new).and_return(
+          instance_double(FormulaVersions, formula_at_revision: PkgVersion.parse(base_pkg_version)),
+        )
+        fa.audit_disabled_bottle
+      end
+    end
+    let(:base_pkg_version) { "1.0" }
+
+    it "requires a disabled formula to drop its bottle block when its revision changes" do
+      expect(auditor.problems.first[:message]).to match(/remove the bottle block .* \(from 1\.0 to 1\.0_1\)/)
+    end
+
+    context "when the version and revision are unchanged" do
+      let(:base_pkg_version) { "1.0_1" }
+
+      it "accepts the bottle block of a disabled formula" do
+        expect(auditor.problems).to be_empty
+      end
+    end
+
+    context "when the version changes to one that compares equal" do
+      let(:base_pkg_version) { "1.0.0_1" }
+
+      it "requires the bottle block to be dropped, as bottle filenames contain the version" do
+        expect(auditor.problems.first&.fetch(:message)).to include("from 1.0.0_1 to 1.0_1")
+      end
+    end
+
+    context "when the formula has no bottle block" do
+      let(:bottle) { "" }
+
+      it "accepts a changed revision" do
+        expect(auditor.problems).to be_empty
+      end
+    end
+
+    context "when the formula is not disabled" do
+      let(:disable) { "" }
+
+      it "accepts a changed revision, as CI rebuilds its bottles" do
+        expect(auditor.problems).to be_empty
+      end
+    end
+  end
+
   describe "#audit_deprecate_disable" do
     specify "it warns when deprecate/disable reason is invalid" do
       fa = formula_auditor "foo", <<~RUBY

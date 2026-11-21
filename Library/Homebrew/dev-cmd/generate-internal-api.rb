@@ -85,8 +85,8 @@ module Homebrew
             odie "Failed to download bottle manifests." if download_queue.failed_downloads.present?
             bottle_manifests.each do |name, manifest|
               manifest_sha256s = manifest.platform_manifest_sha256s
-              all_formulae.fetch(name).dig("bottle", "stable", "files").each_value do |file|
-                file["manifest_sha256"] = manifest_sha256s.fetch(file.fetch("sha256"))
+              all_formulae.fetch(name).dig("bottle", "stable", "files").each do |tag, file|
+                file["manifest_sha256"] = manifest_sha256s.fetch([manifest.image_ref(tag), file.fetch("sha256")])
               end
             end
 

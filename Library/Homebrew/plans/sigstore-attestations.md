@@ -34,12 +34,13 @@ Pull requests must always fill in the repository's pull request template
 (`.github/PULL_REQUEST_TEMPLATE.md`), never bypass it (e.g. with
 `gh pr create --fill`).
 
-## Current state (16 November 2026)
+## Current state (20 November 2026)
 
 ### Client
 
-- `attestation.rb`: `Homebrew::Attestation.check_attestation` shells out to
-  `gh attestation verify` and raises `GhAuthNeeded` without
+- `attestation.rb`: `Homebrew::Attestation.check_attestation` verifies
+  bundles listed by `Attestation.prefetch` in Ruby and otherwise shells out
+  to `gh attestation verify`. It raises `GhAuthNeeded` without
   `GitHub::API.credentials`. `gh_executable` installs `gh` on demand and
   `sort_formulae_for_install` (called from `cmd/install.rb`, `cmd/upgrade.rb`
   and `cmd/reinstall.rb`) forces `gh` to install first.
@@ -47,18 +48,22 @@ Pull requests must always fill in the repository's pull request template
   exemption in `FormulaInstaller#verify_bottle_attestation?` exist for the
   same bootstrapping cycle.
 - `Attestation.prefetch` lists bundles for a whole install plan through
-  `POST /orgs/{org}/attestations/bulk-list` and hands them to `gh --bundle`.
+  `POST /orgs/{org}/attestations/bulk-list` for `Attestation.verify_bundle`.
   It needs a token and is called from `Install.fetch_formulae`,
   `Install.prelude_fetch_formulae` and `FormulaInstaller#fetch_dependencies`.
-- Policy today is `gh --repo Homebrew/homebrew-core` with no workflow or ref
-  constraint, a subject name equal to the bottle filename (any tag of the
-  same name and version for `:all` bottles) and a fallback to
+- Policy for a listed bundle is the expected claims table below. A bottle
+  with no listed bundle, or whose listed bundles are all rejected, is looked
+  up through `gh --repo Homebrew/homebrew-core` with no workflow or ref
+  constraint. Both paths require the file to match the formula checksum and
+  a subject name equal to the bottle filename (any tag of the same name and
+  version for `:all` bottles), and fall back to
   `trailofbits/homebrew-brew-verify` backfill attestations with the subject
   `<SHA-256 of bottle URL>--<filename>` and `BACKFILL_CUTOFF`. Invalid
   attestations are retried five times with exponential back-off.
 - `download_queue.rb`: `DownloadQueue#enqueue(check_attestation:)` runs
   `Utils::Attestation.check_attestation` inside the bottle's download
-  future, after the download, as one `gh` process per bottle.
+  future, after the download, as one `gh` process per bottle without a
+  listed bundle.
 - `utils/attestation.rb` maps failures to `CannotInstallFormulaError`.
   `UnsupportedTapError` only warns and `GhAuthInvalid` silently disables
   verification unless the user opted in.
@@ -74,8 +79,8 @@ Pull requests must always fill in the repository's pull request template
   SHA-256.
 - `Attestation.verify_bundle` uses Homebrew's `attestation/verifier.rb`,
   Ruby's standard library and OpenSSL to verify offline against
-  `attestation/trusted_root.json`. The vendored Sigstore dependencies have
-  been removed. No install path calls it yet.
+  `attestation/trusted_root.json` and enforces the expected claims below.
+  The vendored Sigstore dependencies have been removed.
 
 ### Publishing
 
@@ -137,10 +142,23 @@ independent review.
 
 Signer identities seen so far: `publish-commit-bottles.yml`,
 `dispatch-build-bottle.yml` and `dispatch-rebottle.yml` at
-`refs/heads/main` of Homebrew/homebrew-core
+`refs/heads/main` and `refs/heads/master` of Homebrew/homebrew-core
 (repository ID 52855516, owner ID 1503512, `workflow_dispatch`) and
-`backfill_signatures.yml` at `refs/heads/main` of
-trailofbits/homebrew-brew-verify (repository ID 754716714).
+`backfill_signatures.yml` at `refs/heads/main` and `refs/heads/backfill` of
+trailofbits/homebrew-brew-verify (repository ID 754716714, owner ID
+2314423). All ran on GitHub-hosted runners.
+
+Checked on 20 November 2026 against the policy of PR 6:
+
+| Sample | Result |
+|---|---|
+| Bundles from the attestation API for the first and last bottle tags of 23 formulae, verified in full | 45 of 45 bottles accepted |
+| Rekor signing certificates of one random bottle from each of 200 random formulae, identity claims only | 200 of 200 bottles accepted; 243 certificates |
+| Those 243 certificates by ref | 162 `main`, 63 `master` (26%), 18 backfill `main` |
+
+Before `master` and `backfill` were allowed, the first sample rejected
+`cowsay` (signed from `master` in December 2024) and the backfilled
+`aalib` bottle for `x86_64_linux` (signed from `backfill`).
 
 ### Prior art
 
@@ -214,9 +232,9 @@ Expected claims:
 | Claim | Homebrew/core | Backfill |
 |---|---|---|
 | OIDC issuer | `https://token.actions.githubusercontent.com` | same |
-| Repository | `Homebrew/homebrew-core`, repository ID 52855516, owner ID 1503512 | `trailofbits/homebrew-brew-verify`, repository ID 754716714 |
+| Repository | `Homebrew/homebrew-core`, repository ID 52855516, owner ID 1503512 | `trailofbits/homebrew-brew-verify`, repository ID 754716714, owner ID 2314423 |
 | Signer workflow | `publish-commit-bottles.yml`, `dispatch-build-bottle.yml` or `dispatch-rebottle.yml` | `backfill_signatures.yml` |
-| Ref | `refs/heads/main` | `refs/heads/main` |
+| Ref | `refs/heads/main`, or `refs/heads/master` if signed before 10 November 2026 | `refs/heads/main` or `refs/heads/backfill` |
 | Runner | GitHub-hosted | GitHub-hosted |
 | Signing time | inside the certificate's validity and signed by the log, or by a timestamp authority once Rekor v2 bundles are supported | same, and no later than `BACKFILL_CUTOFF` |
 | Statement | in-toto v1 with a SLSA provenance v1 predicate | same |
@@ -224,12 +242,15 @@ Expected claims:
 | Subject name | the bottle filename, which binds formula, version, tag and rebuild; any tag of the same name and version for `:all` | `<SHA-256 of bottle URL>--<filename>` |
 
 The mirror census in PR 11 must confirm the workflow and ref lists against
-every published bottle before PR 6's allow-list is final. A comment in
-`Attestation.check_core_attestation` says some backfill bundles were signed
-from a `backfill` branch. None has been seen, so that ref is not listed
-unless the census finds one. Until PR 13 a bundle the Ruby policy rejects is
-retried through `gh`, so a ref missing from the list costs a retry, not an
-install.
+every published bottle before PR 6's allow-list is final. Homebrew/homebrew-core
+signed from `master` until `main` became its default branch in 2025, and its
+workflows stopped accepting `master` on 9 November 2026
+([Homebrew/homebrew-core#324453](https://github.com/Homebrew/homebrew-core/pull/324453)),
+so a `master` signature is only valid before 10 November 2026: a `master`
+branch created later cannot sign. Some backfill bundles were signed from a
+`backfill` branch, which `BACKFILL_CUTOFF` bounds like the rest. Until PR 13
+a bundle the Ruby policy rejects is retried through `gh`, so a workflow or
+ref missing from the list costs a retry, not an install.
 
 ## Design decisions
 
@@ -539,13 +560,13 @@ runner and one residential connection.
 |---|---|---|---|
 | 1 | brew | 1 | This plan: threat model, policy, targets, gates and risks |
 | 2 | brew | 1 to 2 | Done: `manifest_sha256` in `bottle do`, checked when present |
-| 3 | brew, formulae.brew.sh | 2 to 3 | Done in brew: `bottle_manifest_checksum` in the API, fetched directly when present |
+| 3 | brew, formulae.brew.sh | 2 to 3 | Done: `bottle_manifest_checksum` in the API, fetched directly when present |
 | 4 | brew | 2 | Done: Homebrew's verifier replaces the vendored Sigstore dependencies |
 | 5 | brew | 2 | Done: `Attestation.verify_bundle`, offline, against a pinned trusted root |
-| 6 | brew | 3 | Enforce the trust policy |
+| 6 | brew | 3 | Done: trust policy enforced, listed bundles verified in Ruby |
 | 7 | brew | 4 to 5 | GitHub Packages distribution experiment and format contract |
 | 8 | brew | 6 | Publish bundles from `brew pr-upload` |
-| 9 | brew | 6 | Write the manifest digest at upload |
+| 9 | brew | 3 | Done: `brew pr-upload` writes the manifest digest at upload |
 | 10 | homebrew-core | 6 | Pass bundles to `brew pr-upload` |
 | 11 | brew, homebrew-core | 6 | Mirror existing attestations, pin then require manifest digests, census and coverage |
 | 12 | brew | 7 | Retrieve and verify through the download queue |
@@ -575,9 +596,24 @@ nothing else depends on them.
    by that digest instead of by tag, `Resource::BottleManifest` checks the
    bytes and `Formula#bottle_hash` carries it for the API generator.
    `brew bottle --merge --write` drops it, as a changed block makes it
-   stale, until PR 9 writes the new one. It must be in a stable release
+   stale, and PR 9 writes the new one. It must be in a stable release
    before homebrew/core uses it and may be absent until PR 11 requires it.
-3. **Per-platform manifest digest in the API.** Done in brew: for every
+   It has been in stable releases since 7.0.14; older versions cannot read
+   a formula that has one from the tap, which is accepted. Homebrew/core
+   gets it in three ways. On 20 November 2026 the ten most installed
+   formulae were pinned by hand, from the index each tag pointed to and
+   only where that index listed every bottle checksum in the block. From
+   PR 9 every newly bottled formula is pinned. The rest are pinned the
+   following week by the same pass, which a trial run completed for 8,726
+   of 8,735 formulae; none of this checks attestations, which PR 11 does.
+   The trial found four disabled formulae with no index for their version
+   (`freeling`, `promtail`, `pypy3.10` and `vineyard`): each one's version
+   or revision changed after its last bottle, which CI does not rebuild
+   for a disabled formula. Their bottle blocks are removed and
+   `brew audit` now requires a disabled formula to drop its bottle block
+   when its version or revision changes. It runs in the tap syntax job,
+   without `--git`. The five `portable-*` formulae have no bottle block.
+3. **Per-platform manifest digest in the API.** Done: for every
    formula whose bottle block has a digest, `brew generate-internal-api`
    fetches the index by that digest through the download queue and writes
    the digest of each bottle's own manifest, as `bottle_manifest_checksum`
@@ -586,17 +622,30 @@ nothing else depends on them.
    `Bottle#github_packages_manifest_resource` fetches that manifest by
    digest in place of the index and `Resource::BottleManifest` checks the
    bytes and that the manifest names the expected bottle. Older clients
-   drop the field. Left to do: have the formulae.brew.sh workflow keep
-   `HOMEBREW_CACHE/downloads/*.bottle_manifest.json` between runs, so a run
-   fetches only new indexes.
+   drop the field. Bottles for several tags can share a checksum, as 11%
+   of `arm64_sequoia` bottles do, but each tag has its own manifest and a
+   client accepts only that one, so the generator picks a manifest by its
+   name as well as its bottle checksum. The formulae.brew.sh workflow keeps
+   `HOMEBREW_CACHE/downloads/*.bottle_manifest.json` in the Actions cache
+   between runs, so a run fetches only new indexes. Measured on
+   20 November 2026 from a developer machine against a Homebrew/core tree
+   with every block pinned, with the runner's six parallel downloads:
+   `brew generate-internal-api` took 528 seconds when it had to fetch all
+   8,726 indexes (505 MB, 56 MB compressed) and 88 seconds with them
+   cached. Twelve parallel downloads fetch about 40% faster and 36 no
+   faster than that. The cache starts afresh each month to drop superseded
+   indexes and is not trusted: a restored index is checked against its
+   digest like a fetched one.
 4. **Replace the vendored verifier.** Done: Homebrew's verifier supersedes
    `sigstore` and its five `protobug*` dependencies. Their vendored code,
    Bundler entries, type definitions and special loading setup are removed.
    Ruby's standard library and OpenSSL supply the remaining dependencies.
+   It uses `pack` and `unpack1` in place of the `base64` gem, which
+   portable Ruby does not ship, so it loads without developer gems.
 5. **Verify bundles in Ruby.** Done: `Attestation.verify_bundle` takes
-   bundle JSON, a bottle SHA-256 and the signing workflow, and returns the
-   verified statement and signing time in the shape of a
-   `gh attestation verify` result, so PR 6 can swap it in. Anything else
+   bundle JSON, a bottle SHA-256 and the signing repository, and returns
+   the verified statement and signing time in the shape of a
+   `gh attestation verify` result, so PR 6 could swap it in. Anything else
    raises `InvalidAttestationError`.
    Unexpected exceptions are reported by class alone, without their message
    or cause, which can contain signature bytes. Only the exact Rekor v1
@@ -609,28 +658,39 @@ nothing else depends on them.
    when the SCT, DSSE or log-body check is omitted. All JSON decoding
    rejects duplicate keys and requires JSON 2.19.2 or newer before parsing,
    avoiding CVE-2026-33210 in the older duplicate-key error handling.
-   No install path calls it yet: bundles already in hand
-   (`prefetched_bundles`) stay on
-   `gh --bundle` until PR 6 enforces the
-   repository identity that `gh --repo` checks today. Every fatal message
+   Every fatal message
    from `Utils::Attestation.check_attestation` now names
    `HOMEBREW_NO_VERIFY_ATTESTATIONS` once. Every path already honours
    the opt-out through `EnvConfig.verify_attestations?`.
-6. **Enforce the trust policy.** Extend Homebrew's verifier with the expected
-   claims table's certificate and statement checks, and cross-check the
-   signed digest against the formula checksum as well as the file. Update
-   portable Ruby's bundled JSON 2.18.0 to meet the verifier's minimum;
-   the developer bundle already uses JSON 3.1.0. Only then verify bundles
-   already in hand in Ruby instead of `gh --bundle`, so
-   no release accepts a bundle that `gh --repo` rejects; `gh` stays for the
-   online lookup until PR 13. Specs cover a bundle for another bottle,
-   another platform or an older version of the same formula, a fork,
-   another branch or workflow of Homebrew/homebrew-core, a self-hosted
-   runner, a wrong issuer, a renamed repository with a different ID, a
-   backfill bundle after the cutoff and the `:all` naming rule.
-   TODO: Once Homebrew pins portable Ruby with JSON >= 2.19.2, remove the
-   verifier's version guard, `MINIMUM_JSON_VERSION` and version-gating
-   tests. Keep explicit duplicate-key rejection and its regression tests.
+6. **Enforce the trust policy.** Done: `Verifier::POLICIES` holds the
+   expected claims table for Homebrew/homebrew-core and the backfill
+   repository, and `verify_bundle` takes the signing repository and
+   rejects any other. The certificate must name the repository, its
+   numeric ID and its owner's, a GitHub-hosted runner, an allow-listed
+   workflow and one of the policy's refs, each with the last signing time
+   it is valid for; the statement must carry a SLSA provenance v1
+   predicate. `check_attestation` requires the file to match the formula
+   checksum and verifies bundles already in hand (`prefetched_bundles`)
+   with `verify_bundle` instead of `gh --bundle`, accepting any listed
+   bundle that verifies. The checks are a superset of `gh --repo`'s, so no
+   release accepts a bundle that it rejects; `gh` stays for the online
+   lookup, and as the retry for a bundle the Ruby policy rejects, until
+   PR 13. Specs use real bundles from every signer and ref, and cover a
+   bundle for another bottle, another platform, another rebuild or an
+   older version of the same formula, a fork, another branch or workflow
+   of Homebrew/homebrew-core, a pull request ref, a self-hosted runner, a
+   wrong issuer, a renamed repository with a different ID, a bundle signed
+   after its ref's cutoff and the `:all` naming rule. Mutation checks
+   prove rejection depends on each new check.
+   Portable Ruby 4.0.10 bundles JSON 3.1.0, so default installations meet
+   the verifier's minimum. The version guard, `MINIMUM_JSON_VERSION` and
+   the version-gating tests stay for now: on Linux an installation with no
+   portable Ruby runs a system Ruby 4.0 where there is one
+   (`utils/ruby.sh`), with whatever JSON that Ruby bundles, which was
+   2.18.0 for portable Ruby 4.0.9.
+   TODO: remove them once `brew` cannot verify with a Ruby whose JSON is
+   older than 2.19.2, e.g. by requiring portable Ruby to verify. Keep
+   explicit duplicate-key rejection and its regression tests.
 
 ### Distribution (weeks 4 to 6)
 
@@ -659,13 +719,19 @@ nothing else depends on them.
    option is not specific to Homebrew/core but the client policy is, so
    every other tap's bundles fail the upload until PR 21 adds a tap's own
    policy.
-9. **Write the manifest digest at upload.** Once PR 2 is in a stable
-   release, have `brew pr-upload` build the index before
-   `brew bottle --merge --write` writes the bottle block, so the block
-   carries the digest of the index about to be pushed, including under
-   `--keep-old`. It does so for every tap, with or without bundles, so
-   manifests are pinned whether or not a tap attests. Specs cover the
-   generated block and that the digest matches what is uploaded.
+9. **Write the manifest digest at upload.** Done, ahead of its week so
+   that Homebrew/core's pinned blocks grow with every publish. For bottles
+   uploaded to GitHub Packages `brew pr-upload` has
+   `brew bottle --merge --write` write the block without committing,
+   builds every image, writes each index digest into its block as
+   `manifest_sha256`, commits and only then uploads the images it built,
+   so the block carries the digest of the index pushed, including under
+   `--keep-old`. The index can only be built after the merge, which may
+   fold identical bottles into an `all` bottle. It does so for every tap,
+   with or without bundles, so manifests are pinned whether or not a tap
+   attests. With `--upload-only` the committed block is left alone and the
+   upload is refused if it pins another index. Specs cover the pinned
+   block, the commit and that the digest is that of the index built.
 10. **Pass bundles to `brew pr-upload`** in the three Homebrew/core signing
     workflows by giving the attest step an ID and passing its `bundle-path`
     output.
@@ -679,7 +745,8 @@ nothing else depends on them.
     fetches the rest from the Homebrew and backfill repositories, verifies
     each under the client policy and publishes it. It starts with a
     handful of formulae, pins each new index's digest in the formula's
-    bottle block in the same pass, is idempotent and resumable and reports
+    bottle block in the same pass, replacing the one already there,
+    is idempotent and resumable and reports
     a census (signer identities, bundle formats, log entry kinds and bundle
     sizes) and coverage. Bottles with no valid attestation, e.g. any
     published between the backfill cutoff and the first signed publish, are

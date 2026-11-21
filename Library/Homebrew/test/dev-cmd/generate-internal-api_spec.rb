@@ -8,12 +8,16 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
   it_behaves_like "parseable arguments"
 
   it "adds each bottle's own manifest digest from the index its bottle block pins" do
-    files = { arm64_sonoma: { "cellar" => ":any", "sha256" => "bottle-checksum" } }
+    # Bottles for several tags can share a checksum.
+    files = { arm64_sequoia: { "cellar" => ":any", "sha256" => "bottle-checksum" },
+              arm64_sonoma:  { "cellar" => ":any", "sha256" => "bottle-checksum" } }
     manifest = instance_double(
       Resource::BottleManifest,
       downloaded_and_valid?:     true,
-      platform_manifest_sha256s: { "bottle-checksum" => "manifest-checksum" },
+      platform_manifest_sha256s: { ["1.0.arm64_sequoia", "bottle-checksum"] => "sequoia-manifest-checksum",
+                                   ["1.0.arm64_sonoma", "bottle-checksum"]  => "sonoma-manifest-checksum" },
     )
+    allow(manifest).to receive(:image_ref) { |tag| "1.0.#{tag}" }
     formula = instance_double(
       Formula,
       name:                    "foo",
@@ -39,7 +43,8 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
 
     mktmpdir { |path| path.cd { described_class.new(["--dry-run"]).run } }
 
-    expect(files.dig(:arm64_sonoma, "manifest_sha256")).to eq("manifest-checksum")
+    expect(files.transform_values { |file| file.fetch("manifest_sha256") })
+      .to eq(arm64_sequoia: "sequoia-manifest-checksum", arm64_sonoma: "sonoma-manifest-checksum")
   end
 
   describe "regenerating the internal API" do

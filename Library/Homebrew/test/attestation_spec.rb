@@ -28,7 +28,7 @@ RSpec.describe Homebrew::Attestation do
   let(:fake_formula) { instance_double(Formula, bottle: fake_bottle, tap: instance_double(Tap, core_tap?: true)) }
   let(:fake_all_bottle) do
     instance_double(Bottle, cached_download:, filename: fake_bottle_filename, url: fake_bottle_url,
-                    tag: fake_all_bottle_tag)
+                    tag: fake_all_bottle_tag, resource: fake_bottle_resource)
   end
   let(:fake_result_json_resp) do
     instance_double(SystemCommand::Result,
@@ -50,6 +50,21 @@ RSpec.describe Homebrew::Attestation do
   end
 
   before { described_class.prefetched_bundles.clear }
+
+  # A bottle that the real `publish-commit-bottles.yml` bundle attests, listed for homebrew-core.
+  shared_context "with a listed homebrew-core bundle" do
+    let(:fake_bottle_digest) { "6647e78fa0031ae48458496a4c46dee645fa8f8dda44d35f3a095627590e77b1" }
+    let(:fake_bottle_filename) do
+      instance_double(Bottle::Filename, name: "gmp", version: "6.3.0",
+                                       to_s: "gmp--6.3.0.arm64_linux.bottle.1.tar.gz")
+    end
+    let(:listed_bundle) { (TEST_FIXTURE_DIR/"attestation/publish-commit-bottles.json").read }
+
+    before do
+      allow(Downloadable.verification_cache).to receive(:sha256).and_return(fake_bottle_digest)
+      described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [listed_bundle] }
+    end
+  end
 
   describe "::gh_executable" do
     it "calls ensure_executable" do
@@ -450,49 +465,77 @@ RSpec.describe Homebrew::Attestation do
         allow(GitHub::API).to receive(:credentials).and_return(fake_gh_creds)
       end
 
-      it "verifies the bottle against its listed bundle" do
+      it "rejects listed bundles that do not verify" do
         described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
-        bundle_contents = []
-        allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
-          bundle_contents << Pathname(args.fetch(args.index("--bundle") + 1)).read
-          fake_result_json_resp
-        end
 
-        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
-
-        expect(bundle_contents).to eq(["#{fake_bundle_line}\n"])
+        expect do
+          described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+        end.to raise_error(Homebrew::Attestation::InvalidAttestationError, /unsupported bundle form/)
       end
 
-      it "removes the bundle file after verification" do
-        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
-        bundle_paths = []
-        allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
-          bundle_paths << args.fetch(args.index("--bundle") + 1)
-          fake_result_json_resp
+      context "with a real bundle" do
+        include_context "with a listed homebrew-core bundle"
+
+        before { allow(described_class).to receive(:system_command!).and_raise("verification ran `gh`") }
+
+        it "verifies the bottle against its listed bundle without `gh`" do
+          expect(described_class.check_attestation(fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO)
+                                .dig("verificationResult", "verifiedTimestamps"))
+            .to eq([{ "timestamp" => "2026-09-02T14:33:41Z" }])
         end
 
-        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+        it "accepts the valid bundle among several listed" do
+          described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line, listed_bundle] }
 
-        expect(bundle_paths.fetch(0)).not_to exist
-      end
+          expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO }
+            .not_to raise_error
+        end
 
-      it "removes the bundle file when writing it fails" do
-        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
-        bundle_paths = []
-        allow(Tempfile).to receive(:create).and_wrap_original do |create, *args|
-          create.call(*args).tap do |file|
-            bundle_paths << file.path
-            allow(file).to receive(:puts).and_raise(Errno::ENOSPC)
+        test_each_hash({
+          "another platform"         => "gmp--6.3.0.arm64_tahoe.bottle.1.tar.gz",
+          "an older version"         => "gmp--6.2.1.arm64_linux.bottle.1.tar.gz",
+          "another rebuild"          => "gmp--6.3.0.arm64_linux.bottle.tar.gz",
+          "another formula's bottle" => "hello--2.12.3.arm64_linux.bottle.1.tar.gz",
+        }) do |bottle, filename|
+          it "rejects a listed bundle whose digest is signed for #{bottle}" do
+            allow(fake_bottle_filename).to receive(:to_s).and_return(filename)
+
+            expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO }
+              .to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
           end
         end
 
-        begin
-          described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
-        rescue Errno::ENOSPC
-          # The failed write is the point; the file must still be removed.
+        it "rejects a bottle that does not match its formula checksum" do
+          allow(fake_bottle_resource).to receive(:checksum).and_return(Checksum.new("0" * 64))
+
+          expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, /formula checksum/)
         end
 
-        expect(Pathname(bundle_paths.fetch(0))).not_to exist
+        it "rejects a listed bundle under another repository's policy" do
+          described_class.prefetched_bundles[fake_bottle_digest] = { "trailofbits" => [listed_bundle] }
+
+          expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::BACKFILL_REPO }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, /source repository does not match/)
+        end
+
+        context "with an :all bottle" do
+          let(:fake_bottle_tag) { fake_all_bottle_tag }
+
+          it "accepts any tag of the same name and version" do
+            allow(fake_bottle_filename).to receive(:to_s).and_return("gmp--6.3.0.all.bottle.1.tar.gz")
+
+            expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO }
+              .not_to raise_error
+          end
+
+          it "rejects another version" do
+            allow(fake_bottle_filename).to receive(:version).and_return("6.3.1")
+
+            expect { described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO }
+              .to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
+          end
+        end
       end
 
       it "raises a missing attestation error when another organisation holds the attestations" do
@@ -799,45 +842,52 @@ RSpec.describe Homebrew::Attestation do
       end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
-    it "verifies a backfilled bottle without looking homebrew-core up online" do
-      described_class.prefetched_bundles[fake_bottle_digest] =
-        { "Homebrew" => [], "trailofbits" => [fake_bundle_line] }
-      expect(described_class).to receive(:system_command!)
-        .with(fake_gh, args: array_including("--repo", Homebrew::Attestation::BACKFILL_REPO, "--bundle"),
-              env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
-              print_stderr: false, chdir: HOMEBREW_TEMP)
-        .once
-        .and_return(fake_result_json_resp_backfill)
+    context "with a listed backfill bundle" do
+      let(:fake_bottle_digest) { "0ebfa147cd1a513a86323167ab696a94b490dcd215d6685188bc376bf1313953" }
+      let(:fake_bottle_url) { "https://ghcr.io/v2/homebrew/core/figlet/blobs/sha256:#{fake_bottle_digest}" }
+      let(:fake_bottle_filename) do
+        instance_double(Bottle::Filename, name: "figlet", version: "2.2.5",
+                                         to_s: "figlet--2.2.5.arm64_ventura.bottle.tar.gz")
+      end
 
-      described_class.check_core_attestation fake_bottle
+      before do
+        allow(Downloadable.verification_cache).to receive(:sha256).and_return(fake_bottle_digest)
+        described_class.prefetched_bundles[fake_bottle_digest] =
+          { "Homebrew" => [], "trailofbits" => [(TEST_FIXTURE_DIR/"attestation/backfill.json").read] }
+      end
+
+      it "verifies the bottle without `gh`" do
+        expect(described_class).not_to receive(:system_command!)
+
+        described_class.check_core_attestation fake_bottle
+      end
+
+      it "rejects a bundle for a different URL" do
+        allow(fake_bottle).to receive(:url).and_return("https://example.org/#{fake_bottle_filename}")
+        allow(described_class).to receive(:system_command!).and_raise(Homebrew::Attestation::MissingAttestationError)
+
+        # The retry looks both repositories up online, where the stub holds no attestation.
+        expect { described_class.check_core_attestation fake_bottle }
+          .to raise_error(Homebrew::Attestation::MissingAttestationError)
+      end
     end
 
     it "retries online after a listed bundle fails to verify" do
       described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
-      bundle_runs = []
-      allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
-        bundle_runs << args.include?("--bundle")
-        raise ErrorDuringExecution.new([fake_gh.to_s], status: fake_error_status) if bundle_runs.length == 1
-
-        fake_result_json_resp
-      end
+      expect(described_class).to receive(:system_command!).once.and_return(fake_result_json_resp)
 
       described_class.check_core_attestation fake_bottle
-
-      expect(bundle_runs).to eq([true, false])
     end
 
-    it "retries online after a listed bundle fails validation" do
-      described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
-      bundle_runs = []
-      allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
-        bundle_runs << args.include?("--bundle")
-        (bundle_runs.length == 1) ? fake_json_resp_wrong_sub : fake_result_json_resp
+    context "with a listed bundle for another platform" do
+      include_context "with a listed homebrew-core bundle"
+
+      it "retries online" do
+        allow(fake_bottle_filename).to receive(:to_s).and_return("gmp--6.3.0.arm64_tahoe.bottle.1.tar.gz")
+        expect(described_class).to receive(:system_command!).once.and_return(fake_result_json_resp)
+
+        described_class.check_core_attestation fake_bottle
       end
-
-      described_class.check_core_attestation fake_bottle
-
-      expect(bundle_runs).to eq([true, false])
     end
   end
 
@@ -845,15 +895,11 @@ RSpec.describe Homebrew::Attestation do
     let(:digest) { "6647e78fa0031ae48458496a4c46dee645fa8f8dda44d35f3a095627590e77b1" }
     let(:bundle) { JSON.parse((TEST_FIXTURE_DIR/"attestation/publish-commit-bottles.json").read) }
 
-    def core_workflow(name)
-      "https://github.com/Homebrew/homebrew-core/.github/workflows/#{name}.yml@refs/heads/main"
-    end
-
-    def workflow = core_workflow("publish-commit-bottles")
+    def signing_repo = Homebrew::Attestation::HOMEBREW_CORE_REPO
 
     # The bottle digests attested by the named fixture: a real bundle from that signer.
-    def verified_digests(fixture, digest, workflow)
-      described_class.verify_bundle((TEST_FIXTURE_DIR/"attestation/#{fixture}.json").read, digest, workflow)
+    def verified_digests(fixture, digest, signing_repo)
+      described_class.verify_bundle((TEST_FIXTURE_DIR/"attestation/#{fixture}.json").read, digest, signing_repo)
                      .dig("verificationResult", "statement", "subject")
                      .map { |subject| subject.dig("digest", "sha256") }
     end
@@ -866,9 +912,9 @@ RSpec.describe Homebrew::Attestation do
     def corrupt(base64) = base64.sub(/[a-z]/i, &:swapcase)
 
     def corrupt_signature(base64)
-      bytes = Base64.strict_decode64(base64)
+      bytes = base64.unpack1("m0")
       bytes.setbyte(-1, bytes.bytes.fetch(-1) ^ 1)
-      Base64.strict_encode64(bytes)
+      [bytes].pack("m0")
     end
 
     before do
@@ -879,64 +925,72 @@ RSpec.describe Homebrew::Attestation do
     end
 
     it "verifies a publish-commit-bottles bundle" do
-      expect(verified_digests("publish-commit-bottles", digest, workflow)).to include(digest)
+      expect(verified_digests("publish-commit-bottles", digest, signing_repo)).to include(digest)
     end
 
     it "verifies a dispatch-build-bottle bundle" do
       digest = "08cea07f0d5aa44680d79cf97dbae12da8f80e85deb70b36f0e701be0896efd5"
-      workflow = core_workflow("dispatch-build-bottle")
 
-      expect(verified_digests("dispatch-build-bottle", digest, workflow)).to include(digest)
+      expect(verified_digests("dispatch-build-bottle", digest, signing_repo)).to include(digest)
     end
 
     it "verifies a dispatch-rebottle bundle" do
       digest = "d3a17c017f2a07e9b1fcdbb28a13bcb77a832a13ca822c526ed3d950b579cd41"
-      workflow = core_workflow("dispatch-rebottle")
 
-      expect(verified_digests("dispatch-rebottle", digest, workflow)).to include(digest)
+      expect(verified_digests("dispatch-rebottle", digest, signing_repo)).to include(digest)
     end
 
     it "verifies a backfill bundle" do
       digest = "0ebfa147cd1a513a86323167ab696a94b490dcd215d6685188bc376bf1313953"
-      workflow = "https://github.com/trailofbits/homebrew-brew-verify/.github/workflows/" \
-                 "backfill_signatures.yml@refs/heads/main"
 
-      expect(verified_digests("backfill", digest, workflow)).to include(digest)
+      expect(verified_digests("backfill", digest, Homebrew::Attestation::BACKFILL_REPO)).to include(digest)
+    end
+
+    it "verifies a bundle signed from `master` before homebrew-core's default branch was renamed" do
+      digest = "345e99255a69e9cb188a5a8e6bd8e6f50c334830c8a72877fc6b504c95e5cbd1"
+
+      expect(verified_digests("publish-commit-bottles-master", digest, signing_repo)).to include(digest)
+    end
+
+    it "verifies a backfill bundle signed from the `backfill` branch" do
+      digest = "6ba926f8aadec9e5c30880ae6e6497d44f9045d1ca1f680baf28e67309bd8ecd"
+
+      expect(verified_digests("backfill-branch", digest, Homebrew::Attestation::BACKFILL_REPO)).to include(digest)
     end
 
     it "accepts an uppercase expected SHA-256" do
-      expect(verified_digests("publish-commit-bottles", digest.upcase, workflow)).to include(digest)
+      expect(verified_digests("publish-commit-bottles", digest.upcase, signing_repo)).to include(digest)
     end
 
     it "returns the time the transparency log recorded the signature" do
-      result = described_class.verify_bundle(JSON.generate(bundle), digest, workflow)
+      result = described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo)
 
       expect(result.dig("verificationResult", "verifiedTimestamps"))
         .to eq([{ "timestamp" => "2026-09-02T14:33:41Z" }])
     end
 
     it "rejects a bundle for another bottle" do
-      expect { described_class.verify_bundle(JSON.generate(bundle), "0" * 64, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), "0" * 64, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError, /None of in-toto subjects matches/)
     end
 
-    it "rejects a bundle signed by another workflow" do
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, core_workflow("dispatch-rebottle")) }
-        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SANs do not match/)
+    it "rejects a repository without a trust policy" do
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, "thirdparty/homebrew-tap") }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /no trust policy/)
     end
 
     it "rejects a tampered statement" do
       envelope = bundle.fetch("dsseEnvelope")
       envelope["payload"] = [envelope.fetch("payload").unpack1("m").sub("gmp--6.3.0", "gmp--6.3.1")].pack("m0")
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
     it "rejects a tampered signature" do
       envelope_signature(bundle)["sig"] = corrupt(envelope_signature(bundle).fetch("sig"))
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
@@ -944,14 +998,14 @@ RSpec.describe Homebrew::Attestation do
       certificate = bundle.fetch("verificationMaterial").fetch("certificate")
       certificate["rawBytes"] = corrupt(certificate.fetch("rawBytes").reverse).reverse
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
     it "rejects a tampered log time without quoting signature bytes" do
       log_entry(bundle)["integratedTime"] = (log_entry(bundle).fetch("integratedTime").to_i + 1).to_s
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError,
                         "attestation verification failed: invalid inclusion promise")
     end
@@ -959,7 +1013,7 @@ RSpec.describe Homebrew::Attestation do
     it "rejects whitespace in the signed log time" do
       log_entry(bundle)["integratedTime"] = " #{log_entry(bundle).fetch("integratedTime")}"
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
@@ -967,14 +1021,14 @@ RSpec.describe Homebrew::Attestation do
       log_entry(bundle).delete("inclusionPromise")
       log_entry(bundle)["integratedTime"] = (log_entry(bundle).fetch("integratedTime").to_i + 1).to_s
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError, /unsupported bundle form/)
     end
 
     it "rejects a field under the other name protobuf reads it by" do
       bundle["dsse_envelope"] = bundle.delete("dsseEnvelope")
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError, /unsupported bundle form/)
     end
 
@@ -982,19 +1036,19 @@ RSpec.describe Homebrew::Attestation do
       hashes = log_entry(bundle).fetch("inclusionProof").fetch("hashes")
       hashes[0] = corrupt(hashes.fetch(0))
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
     it "rejects a log entry for another signature" do
       log_entry(bundle)["canonicalizedBody"] = ['{"apiVersion":"0.0.1","kind":"dsse","spec":{}}'].pack("m0")
 
-      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
     it "rejects malformed JSON" do
-      expect { described_class.verify_bundle("{", digest, workflow) }
+      expect { described_class.verify_bundle("{", digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
@@ -1003,7 +1057,7 @@ RSpec.describe Homebrew::Attestation do
         stub_const("JSON::VERSION", json_version)
         allow(JSON).to receive(:parse).and_raise("untrusted input reached the parser")
 
-        expect { described_class.verify_bundle('{"%%":1,"%%":2}', digest, workflow) }
+        expect { described_class.verify_bundle('{"%%":1,"%%":2}', digest, signing_repo) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /requires JSON >= 2\.19\.2/)
       end
     end
@@ -1012,7 +1066,7 @@ RSpec.describe Homebrew::Attestation do
       it "allows verification with JSON #{json_version}" do
         stub_const("JSON::VERSION", json_version)
 
-        expect(verified_digests("publish-commit-bottles", digest, workflow)).to include(digest)
+        expect(verified_digests("publish-commit-bottles", digest, signing_repo)).to include(digest)
       end
     end
 
@@ -1020,7 +1074,7 @@ RSpec.describe Homebrew::Attestation do
       require "attestation/verifier"
       allow(Homebrew::Attestation::Verifier).to receive(:verify).and_raise(ArgumentError, "signature bytes")
       error = begin
-        described_class.verify_bundle(JSON.generate(bundle), digest, workflow)
+        described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo)
       rescue Homebrew::Attestation::InvalidAttestationError => e
         e
       end
@@ -1036,15 +1090,16 @@ RSpec.describe Homebrew::Attestation do
       let(:entry) { verifier.parse_bundle(JSON.generate(bundle)).log_entry }
       let(:leaf) do
         OpenSSL::X509::Certificate.new(
-          Base64.strict_decode64(bundle.fetch("verificationMaterial").fetch("certificate").fetch("rawBytes")),
+          bundle.fetch("verificationMaterial").fetch("certificate").fetch("rawBytes").unpack1("m0"),
         )
       end
       let(:issuer) { verifier.verify_certificate(leaf, time).fetch(1) }
+      let(:policy) { Homebrew::Attestation::Verifier::POLICIES.fetch(0) }
 
       def proof = entry.inclusion_proof
       def body = entry.body
-      def payload = Base64.strict_decode64(bundle.fetch("dsseEnvelope").fetch("payload"))
-      def signature = Base64.strict_decode64(envelope_signature(bundle).fetch("sig"))
+      def payload = bundle.fetch("dsseEnvelope").fetch("payload").unpack1("m0")
+      def signature = envelope_signature(bundle).fetch("sig").unpack1("m0")
       def time = Time.at(entry.integrated_time).utc
       def key_id = entry.log_id
       def key = verifier.trusted_key(verifier.trusted_root.transparency_logs, key_id, time)
@@ -1062,7 +1117,7 @@ RSpec.describe Homebrew::Attestation do
           it "rejects a duplicate #{field} in the bundle" do
             duplicate = JSON.generate(bundle).sub(%Q("#{field}":), %Q("#{field}":null,"#{field}":))
 
-            expect { described_class.verify_bundle(duplicate, digest, workflow) }
+            expect { described_class.verify_bundle(duplicate, digest, signing_repo) }
               .to raise_error(Homebrew::Attestation::InvalidAttestationError,
                               "attestation verification failed: JSON::ParserError")
           end
@@ -1071,7 +1126,7 @@ RSpec.describe Homebrew::Attestation do
         it "rejects a duplicate key with another JSON escape spelling" do
           duplicate = JSON.generate(bundle).sub('"mediaType":', '"media\\u0054ype":null,"mediaType":')
 
-          expect { described_class.verify_bundle(duplicate, digest, workflow) }
+          expect { described_class.verify_bundle(duplicate, digest, signing_repo) }
             .to raise_error(Homebrew::Attestation::InvalidAttestationError,
                             "attestation verification failed: JSON::ParserError")
         end
@@ -1130,7 +1185,7 @@ RSpec.describe Homebrew::Attestation do
             end
             leaf.tbs_bytes
             bundle.fetch("verificationMaterial").fetch("certificate")["rawBytes"] =
-              Base64.strict_encode64(leaf.to_der)
+              [leaf.to_der].pack("m0")
           when "altered_dsse"
             envelope_signature(bundle)["sig"] = corrupt_signature(envelope_signature(bundle).fetch("sig"))
             allow(verifier).to receive(:verify_body) # The log also binds the signature.
@@ -1141,17 +1196,17 @@ RSpec.describe Homebrew::Attestation do
             case tamper
             when "log_payload" then logged.fetch("spec").fetch("payloadHash")["value"] = "0" * 64
             when "log_signature" then logged.fetch("spec").fetch("signatures").fetch(0)["signature"] =
-                                        Base64.strict_encode64("other")
+                                        ["other"].pack("m0")
             when "log_certificate" then logged.fetch("spec").fetch("signatures").fetch(0)["verifier"] =
-                                          Base64.strict_encode64("other")
+                                          ["other"].pack("m0")
             end
-            log_entry(bundle)["canonicalizedBody"] = Base64.strict_encode64(JSON.generate(logged))
+            log_entry(bundle)["canonicalizedBody"] = [JSON.generate(logged)].pack("m0")
           when "statement_type"
             statement = JSON.parse(payload).merge("_type" => "https://in-toto.io/Statement/v0.1")
-            bundle.fetch("dsseEnvelope")["payload"] = Base64.strict_encode64(JSON.generate(statement))
+            bundle.fetch("dsseEnvelope")["payload"] = [JSON.generate(statement)].pack("m0")
           end
 
-          expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+          expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
             .to raise_error(Homebrew::Attestation::InvalidAttestationError)
         end
       end
@@ -1165,9 +1220,9 @@ RSpec.describe Homebrew::Attestation do
         expect(OpenSSL::X509::Certificate.new(certificate_der).extensions)
           .to include(have_attributes(oid: "1.3.6.1.4.1.57264.1.1", value_der: "https://example.com"))
         bundle.fetch("verificationMaterial").fetch("certificate")["rawBytes"] =
-          Base64.strict_encode64(certificate_der)
+          [certificate_der].pack("m0")
 
-        expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError,
                           "attestation verification failed: OIDC issuer does not match")
       end
@@ -1176,7 +1231,7 @@ RSpec.describe Homebrew::Attestation do
         inclusion = log_entry(bundle).fetch("inclusionProof")
         inclusion["treeSize"] = (inclusion.fetch("treeSize").to_i + 1).to_s
 
-        expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
       end
 
@@ -1189,13 +1244,13 @@ RSpec.describe Homebrew::Attestation do
       end
 
       it "rejects an inclusion proof for another root" do
-        expect { verifier.verify_inclusion(body, proof.with(encoded_root_hash: Base64.strict_encode64("x" * 32))) }
+        expect { verifier.verify_inclusion(body, proof.with(encoded_root_hash: ["x" * 32].pack("m0"))) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /inclusion proof/)
       end
 
       it "rejects a signed checkpoint for another root" do
         expect do
-          verifier.verify_checkpoint(proof.with(encoded_root_hash: Base64.strict_encode64("x" * 32)), key_id, key)
+          verifier.verify_checkpoint(proof.with(encoded_root_hash: ["x" * 32].pack("m0")), key_id, key)
         end
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
       end
@@ -1276,15 +1331,16 @@ RSpec.describe Homebrew::Attestation do
         else
           issuer_url
         end
-        leaf.extensions = leaf.extensions.reject { |extension| extension.oid.start_with?("1.3.6.1.4.1.57264.1.") } +
-                          [OpenSSL::X509::Extension.new(issuer_extension, value)]
+        leaf.extensions = leaf.extensions.reject do |extension|
+          %w[1.3.6.1.4.1.57264.1.1 1.3.6.1.4.1.57264.1.8].include?(extension.oid)
+        end + [OpenSSL::X509::Extension.new(issuer_extension, value)]
       end
 
       test_each(%w[1.3.6.1.4.1.57264.1.1 1.3.6.1.4.1.57264.1.8]) do |issuer_extension|
         it "accepts the exact GitHub Actions issuer in #{issuer_extension}" do
           replace_issuer(issuer_extension, Homebrew::Attestation::GITHUB_ACTIONS_ISSUER)
 
-          expect { verifier.verify_identity(leaf, workflow) }.not_to raise_error
+          expect { verifier.verify_identity(leaf, policy, time) }.not_to raise_error
         end
       end
 
@@ -1298,14 +1354,86 @@ RSpec.describe Homebrew::Attestation do
         it "rejects the issuer #{issuer_url} in #{issuer_extension}" do
           replace_issuer(issuer_extension, issuer_url)
 
-          expect { verifier.verify_identity(leaf, workflow) }
+          expect { verifier.verify_identity(leaf, policy, time) }
             .to raise_error(Homebrew::Attestation::InvalidAttestationError, /OIDC issuer/)
         end
       end
 
-      it "requires an exact workflow URI" do
-        expect { verifier.verify_identity(leaf, "#{workflow}/extra") }
+      test_each_hash({
+        "a self-hosted runner"                     => ["1.3.6.1.4.1.57264.1.11", "self-hosted", /runner environment/],
+        "a fork"                                   => ["1.3.6.1.4.1.57264.1.12", "https://github.com/fork/homebrew-core",
+                                                       /source repository does/],
+        "another branch"                           => ["1.3.6.1.4.1.57264.1.14", "refs/heads/other",
+                                                       /source repository ref/],
+        "a renamed repository with a different ID" => ["1.3.6.1.4.1.57264.1.15", "52855517", /source repository ID/],
+        "another owner of the same name"           => ["1.3.6.1.4.1.57264.1.17", "1503513", /owner ID/],
+      }) do |signer, (extension_id, value, message)|
+        it "rejects a certificate for #{signer}" do
+          leaf.extensions = leaf.extensions.reject { |extension| extension.oid == extension_id } +
+                            [OpenSSL::X509::Extension.new(extension_id, OpenSSL::ASN1::UTF8String.new(value).to_der)]
+
+          expect { verifier.verify_identity(leaf, policy, time) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, message)
+        end
+      end
+
+      it "requires the runner environment claim" do
+        leaf.extensions = leaf.extensions.reject { |extension| extension.oid == "1.3.6.1.4.1.57264.1.11" }
+
+        expect { verifier.verify_identity(leaf, policy, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /runner environment/)
+      end
+
+      it "rejects a repeated claim" do
+        leaf.extensions += [OpenSSL::X509::Extension.new("1.3.6.1.4.1.57264.1.11",
+                                                         OpenSSL::ASN1::UTF8String.new("self-hosted").to_der)]
+
+        expect { verifier.verify_identity(leaf, policy, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /runner environment/)
+      end
+
+      test_each_hash({
+        "another workflow"      => "Homebrew/homebrew-core/.github/workflows/tests.yml@refs/heads/main",
+        "a pull request"        => "Homebrew/homebrew-core/.github/workflows/dispatch-rebottle.yml@refs/pull/1/merge",
+        "a fork"                => "fork/homebrew-core/.github/workflows/dispatch-rebottle.yml@refs/heads/main",
+        "a longer workflow URI" => "Homebrew/homebrew-core/.github/workflows/dispatch-rebottle.yml@refs/heads/main/x",
+      }) do |signer, workflow|
+        it "rejects a certificate signed by #{signer}" do
+          leaf.extensions = leaf.extensions.reject { |extension| extension.oid == "subjectAltName" } + [
+            OpenSSL::X509::ExtensionFactory.new.create_extension("subjectAltName",
+                                                                 "URI:https://github.com/#{workflow}", true),
+          ]
+
+          expect { verifier.verify_identity(leaf, policy, time) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SANs/)
+        end
+      end
+
+      it "requires the workflow to have run from the source repository ref" do
+        leaf.extensions = leaf.extensions.reject { |extension| extension.oid == "1.3.6.1.4.1.57264.1.14" } + [
+          OpenSSL::X509::Extension.new("1.3.6.1.4.1.57264.1.14",
+                                       OpenSSL::ASN1::UTF8String.new("refs/heads/master").to_der),
+        ]
+
+        expect { verifier.verify_identity(leaf, policy, time) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SANs/)
+      end
+
+      test_each_hash({
+        "backfill"                      => ["0ebfa147cd1a513a86323167ab696a94b490dcd215d6685188bc376bf1313953",
+                                            "refs/heads/main", Time.utc(2024, 3, 9)],
+        "publish-commit-bottles-master" => ["345e99255a69e9cb188a5a8e6bd8e6f50c334830c8a72877fc6b504c95e5cbd1",
+                                            "refs/heads/master", Time.utc(2024, 12, 1)],
+      }) do |fixture, (digest, ref, cutoff)|
+        it "rejects a #{fixture} bundle signed after the #{ref} cutoff" do
+          policies = Homebrew::Attestation::Verifier::POLICIES.map do |trusted|
+            trusted.with(refs: trusted.refs.merge(ref => cutoff))
+          end
+          stub_const("Homebrew::Attestation::Verifier::POLICIES", policies)
+
+          expect { verified_digests(fixture, digest, policies.fetch((fixture == "backfill") ? 1 : 0).repository) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, /signed after the #{ref} cutoff/)
+        end
       end
 
       it "rejects a DSSE signature over another payload" do
@@ -1316,6 +1444,13 @@ RSpec.describe Homebrew::Attestation do
       it "rejects a log body for another envelope" do
         expect { verifier.verify_body(body, "#{payload} ", signature, leaf) }
           .to raise_error(Homebrew::Attestation::InvalidAttestationError, /log body/)
+      end
+
+      it "requires a SLSA provenance v1 predicate" do
+        statement = JSON.parse(payload).merge("predicateType" => "https://slsa.dev/provenance/v0.2")
+
+        expect { verifier.verify_statement(JSON.generate(statement), digest) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SLSA provenance v1/)
       end
 
       it "requires an in-toto v1 statement" do
@@ -1379,7 +1514,7 @@ RSpec.describe Homebrew::Attestation do
           when "parsing" then "{"
           else JSON.generate(bundle)
           end
-          described_class.verify_bundle(input, "0" * 64, workflow)
+          described_class.verify_bundle(input, "0" * 64, signing_repo)
         end
 
         expect { Utils::Attestation.check_attestation(fake_bottle, quiet: true) }

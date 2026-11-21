@@ -1008,9 +1008,6 @@ module Homebrew
 
     sig { void }
     def audit_stable_version
-      return unless @git
-      return unless formula.tap # skip formula not from core or any taps
-      return unless formula.tap!.git? # git log is required
       return unless (stable = formula.stable)
 
       current_version = stable.version
@@ -1166,11 +1163,6 @@ module Homebrew
 
     sig { void }
     def audit_version_scheme
-      return unless @git
-      return unless formula.tap # skip formula not from core or any taps
-      return unless formula.tap!.git? # git log is required
-      return if formula.stable.blank?
-
       current_version_scheme = formula.version_scheme
 
       _, base_ref_version_info = committed_version_info
@@ -1186,9 +1178,6 @@ module Homebrew
 
     sig { void }
     def audit_unconfirmed_checksum_change
-      return unless @git
-      return unless formula.tap # skip formula not from core or any taps
-      return unless formula.tap!.git? # git log is required
       return unless (current_stable = formula.stable)
 
       current_version = current_stable.version
@@ -1259,6 +1248,24 @@ module Homebrew
       problem error if error
     end
 
+    # CI does not build bottles for a disabled formula, so once its version or
+    # revision changes its bottle block names bottles that will never exist.
+    sig { void }
+    def audit_disabled_bottle
+      return if !formula.disabled? || formula.bottle_specification.checksums.empty?
+
+      tap = formula.tap
+      return if tap.nil? || !tap.git?
+
+      # Few formulae get this far, so unlike the other history checks this does not need `--git`.
+      base_pkg_version = FormulaVersions.new(formula).formula_at_revision(git_audit_base_ref(tap), &:pkg_version)
+      # Compared as strings because bottle filenames differ for versions that compare equal, e.g. 1.0 and 1.0.0.
+      return if base_pkg_version.nil? || base_pkg_version.to_s == formula.pkg_version.to_s
+
+      problem "Disabled formulae are not rebottled: remove the bottle block when changing the version or revision " \
+              "(from #{base_pkg_version} to #{formula.pkg_version}), e.g. `brew bump-revision --remove-bottle-block`."
+    end
+
     sig { override.params(output: T.nilable(String)).void }
     def problem_if_output(output)
       problem(output) if output
@@ -1306,6 +1313,7 @@ module Homebrew
       changed_paths.select { |path| expected_paths.include?(path.expand_path.to_s) }
     end
 
+    # Both are empty without `--git`, a tap with Git history or a stable version.
     sig { params(formula: Formula).returns([T::Hash[Symbol, T.untyped], T::Hash[Symbol, T.untyped]]) }
     def committed_version_info(formula: @formula)
       empty_result = [{}, {}]

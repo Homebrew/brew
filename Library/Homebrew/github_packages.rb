@@ -98,15 +98,29 @@ class GitHubPackages
     T::Hash[String, String],
   )
 
+  # An image built from a formula's bottles, ready to upload.
+  class Image < T::Struct
+    const :root, Pathname
+    const :uri, String
+    const :package_url, String
+    const :index_sha256, String
+    # The image index on GitHub Packages when this image was built, which `--keep-old` adds to.
+    const :base_index_sha256, T.nilable(String)
+  end
+
+  # Builds every image before uploading any. The block is given the SHA-256 of
+  # each image index by formula name, which is what a bottle block's
+  # `manifest_sha256` pins, so they can be committed before they are uploaded.
   sig {
     params(
       bottles_hash:  T::Hash[String, T.untyped],
       keep_old:      T::Boolean,
       dry_run:       T::Boolean,
       warn_on_error: T::Boolean,
+      _block:        T.nilable(T.proc.params(manifest_sha256s: T::Hash[String, String]).void),
     ).void
   }
-  def upload_bottles(bottles_hash, keep_old:, dry_run:, warn_on_error:)
+  def upload_bottles(bottles_hash, keep_old:, dry_run:, warn_on_error:, &_block)
     user = Homebrew::EnvConfig.github_packages_user
     token = Homebrew::EnvConfig.github_packages_token
 
@@ -119,19 +133,27 @@ class GitHubPackages
 
     load_schemas!
 
-    bottles_hash.each do |formula_full_name, bottle_hash|
-      # First, check that we won't encounter an error in the middle of uploading bottles.
-      preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
-                      keep_old:, dry_run:, warn_on_error:)
-    end
+    # First, check and build them all so that we won't encounter an error in
+    # the middle of uploading bottles.
+    images = bottles_hash.to_h do |formula_full_name, bottle_hash|
+      [formula_full_name,
+       build_image(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)]
+    end.compact
 
-    # We intentionally iterate over `bottles_hash` twice to
-    # avoid erroring out in the middle of uploading bottles.
+    yield images.transform_values(&:index_sha256) if block_given?
+
     bottle_count = bottles_hash.count
     bottles_hash.each_with_index do |(formula_full_name, bottle_hash), index|
-      # Next, upload the bottles after checking them all.
-      upload_bottle(user, token, skopeo, formula_full_name, bottle_hash,
-                    keep_old:, dry_run:, warn_on_error:)
+      # We run the preupload check again to prevent TOCTOU bugs. A bottle block may now
+      # pin this image, so failing this check is an error and never only a warning.
+      if (image = images[formula_full_name]) &&
+         (result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
+                                   keep_old:, dry_run:, warn_on_error: false))
+        # Uploading would remove any bottles added to the image index since this image was built.
+        odie "#{image.uri} changed while its image was being built!" if result.last != image.base_index_sha256
+
+        upload_image(user, token, skopeo, image, dry_run:)
+      end
       next if bottle_count < 3
 
       uploaded_count = index + 1
@@ -200,18 +222,19 @@ class GitHubPackages
     params(
       user: String, token: String, skopeo: Pathname, formula_full_name: String,
       bottle_hash: T::Hash[String, T.untyped], keep_old: T::Boolean, dry_run: T::Boolean, warn_on_error: T::Boolean
-    ).void
+    ).returns(T.nilable(Image))
   }
-  def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
-    # We run the preupload check twice to prevent TOCTOU bugs.
+  def build_image(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
     result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
                              keep_old:, dry_run:, warn_on_error:)
     # Skip upload if preupload check returned early.
     return if result.nil?
 
-    formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old = *result
+    formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old,
+    base_index_sha256 = *result
 
-    root = Pathname("#{formula_name}--#{version_rebuild}")
+    # Formulae in different taps can share a name and version.
+    root = Pathname("#{formula_full_name}--#{version_rebuild}")
     FileUtils.rm_rf root
     root.mkpath
 
@@ -434,8 +457,15 @@ class GitHubPackages
     validate_schema!(IMAGE_INDEX_SCHEMA_URI, index_json)
     write_hash(root, index_json, "index.json")
 
+    package_name = "#{GitHubPackages.repo_without_prefix(repo)}/#{image_name}"
+    Image.new(root:, uri: image_uri, index_sha256: index_json_sha256, base_index_sha256:,
+              package_url: "https://github.com/orgs/#{org}/packages/container/package/#{package_name}")
+  end
+
+  sig { params(user: String, token: String, skopeo: Pathname, image: Image, dry_run: T::Boolean).void }
+  def upload_image(user, token, skopeo, image, dry_run:)
     puts
-    args = ["copy", "--retry-times=3", "--format=oci", "--all", "oci:#{root}", image_uri.to_s]
+    args = ["copy", "--retry-times=3", "--format=oci", "--all", "--preserve-digests", "oci:#{image.root}", image.uri]
     if dry_run
       puts "#{skopeo} #{args.join(" ")} --dest-creds=#{user}:$HOMEBREW_GITHUB_PACKAGES_TOKEN"
     else
@@ -450,8 +480,7 @@ class GitHubPackages
         retry
       end
 
-      package_name = "#{GitHubPackages.repo_without_prefix(repo)}/#{image_name}"
-      ohai "Uploaded to https://github.com/orgs/#{org}/packages/container/package/#{package_name}"
+      ohai "Uploaded to #{image.package_url}"
     end
   end
 
@@ -546,7 +575,7 @@ class GitHubPackages
       user: String, token: String, skopeo: Pathname, _formula_full_name: String,
       bottle_hash: T::Hash[String, T.untyped], keep_old: T::Boolean, dry_run: T::Boolean, warn_on_error: T::Boolean
     ).returns(
-      T.nilable([String, String, String, Version, Integer, String, String, String, T::Boolean]),
+      T.nilable([String, String, String, Version, Integer, String, String, String, T::Boolean, T.nilable(String)]),
     )
   }
   def preupload_check(user, token, skopeo, _formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
@@ -570,6 +599,7 @@ class GitHubPackages
     else
       inspect_args << "--creds=#{user}:#{token}"
       inspect_result = system_command(skopeo, print_stderr: false, args: inspect_args)
+      index_sha256 = Digest::SHA256.hexdigest(inspect_result.stdout) if inspect_result.status.success?
 
       # Order here is important.
       if !inspect_result.status.success? && !inspect_result.stderr.match?(/(name|manifest) unknown/)
@@ -595,7 +625,7 @@ class GitHubPackages
       end
     end
 
-    [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old]
+    [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old, index_sha256]
   end
 
   sig { params(directory: Pathname, hash: T::Hash[T.any(String, Symbol), T.untyped], filename: T.nilable(String)).returns([String, Integer]) }
