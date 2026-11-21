@@ -85,6 +85,9 @@ class Cask::Cask
   def desc(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def desktop_entry(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def dictionary(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
