@@ -54,9 +54,9 @@ module Homebrew
           if block
             block_return_value = case block.parameters[0]
             when [:opt, :headers], [:req, :headers], [:rest], [:req]
-              regex.present? ? yield(merged_headers, regex) : yield(merged_headers)
+              yield(merged_headers, *Array(regex))
             when [:opt, :all_headers], [:req, :all_headers]
-              regex.present? ? yield(headers, regex) : yield(headers)
+              yield(headers, *Array(regex))
             else
               raise ArgumentError,
                     "First argument of #{Utils.demodulize(name)} `strategy` block must be `headers` or `all_headers`"

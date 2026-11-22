@@ -85,7 +85,7 @@ module Homebrew
             end
 
             receipt = YAML.safe_load_file(File.join(ENV["KREW_ROOT"].presence || "#{Dir.home}/.krew",
-                                                    "receipts", "#{Pathname.new(name).basename}.yaml"))
+                                                    "receipts", "#{File.basename(name)}.yaml"))
             spec = receipt["spec"] if receipt.is_a?(Hash)
             installed = spec["version"] if spec.is_a?(Hash)
             latest = command_output(krew, args: ["info", name])[/^VERSION: (\S+)$/, 1]

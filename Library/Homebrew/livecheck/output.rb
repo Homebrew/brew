@@ -108,7 +108,8 @@ module Homebrew
         puts "URL (processed):  #{url}" if url != original_url
         puts "URL Options:      #{url_options}" if url_options.present?
         if strategies.present? && verbose
-          puts "Strategies:       #{strategies.map { |s| livecheck_strategy_names(s) }.join(", ")}"
+          strategy_names = strategies.map { |s| livecheck_strategy_names(s) }.join(", ")
+          puts "Strategies:       #{strategy_names}"
         end
         puts "Strategy:         #{livecheck_strategy_names(strategy)}" if strategy
         puts "Regex:            #{regex.inspect}" if regex.present?

@@ -21,7 +21,8 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
   def symlink_location
     return @symlink_location if @symlink_location
 
-    symlink_location = @cache/Utils.safe_filename("#{name}--#{version}#{Pathname(parse_basename(url)).extname}")
+    extension = Pathname(parse_basename(url)).extname
+    symlink_location = @cache/Utils.safe_filename("#{name}--#{version}#{extension}")
     @symlink_location = T.let(symlink_location, T.nilable(Pathname))
     symlink_location
   end

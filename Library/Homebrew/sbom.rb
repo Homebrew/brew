@@ -160,7 +160,8 @@ class SBOM
   # Returns an SPDX identifier, escaping punctuation and the dot escape delimiter.
   sig { params(id: String).returns(String) }
   def self.spdx_id(id)
-    "SPDXRef-#{id.gsub(/[^a-zA-Z0-9-]/) { |character| ".#{character.unpack1("H*")}." }}"
+    escaped_id = id.gsub(/[^a-zA-Z0-9-]/) { |character| ".#{character.unpack1("H*")}." }
+    "SPDXRef-#{escaped_id}"
   end
 
   sig { params(full_name: String, version: T.nilable(T.any(String, Version))).returns(String) }

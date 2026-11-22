@@ -34,7 +34,8 @@ RSpec.describe Homebrew::Bundle::Npm do
     end
 
     def npm_result(json, status)
-      npm.write "#!/bin/sh\nprintf '%s' #{JSON.generate(json).shellescape}\nexit #{status}\n"
+      escaped_json = JSON.generate(json).shellescape
+      npm.write "#!/bin/sh\nprintf '%s' #{escaped_json}\nexit #{status}\n"
       npm.chmod 0755
     end
 

@@ -124,7 +124,8 @@ module Homebrew
               tapline += ", trusted: true"
             elsif trusted.present?
               trusted_options = trusted.map do |key, values|
-                "#{key}: [#{values.map(&:inspect).join(", ")}]"
+                quoted_values = values.map(&:inspect).join(", ")
+                "#{key}: [#{quoted_values}]"
               end.join(", ")
               tapline += ", trusted: { #{trusted_options} }"
             end

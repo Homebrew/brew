@@ -79,7 +79,7 @@ module FormulaCellarChecks
       install to "libexec" and then symlink or wrap binaries into "bin".
       See formulae 'activemq', 'jruby', etc. for examples.
       The offending files are:
-        #{jars * "\n  "}
+        #{jars.join("\n  ")}
     EOS
   end
 
@@ -110,7 +110,7 @@ module FormulaCellarChecks
       Non-libraries were installed to "#{formula.lib}".
       Installing non-libraries to "lib" is discouraged.
       The offending files are:
-        #{non_libraries * "\n  "}
+        #{non_libraries.join("\n  ")}
     EOS
   end
 
@@ -124,7 +124,7 @@ module FormulaCellarChecks
     <<~EOS
       Non-executables were installed to "#{bin}".
       The offending files are:
-        #{non_exes * "\n  "}
+        #{non_exes.join("\n  ")}
     EOS
   end
 
@@ -142,7 +142,7 @@ module FormulaCellarChecks
       Homebrew suggests that this software is installed to "libexec" and then
       symlinked as needed.
       The offending files are:
-        #{generics * "\n  "}
+        #{generics.join("\n  ")}
     EOS
   end
 
@@ -156,7 +156,7 @@ module FormulaCellarChecks
       These '.pth' files are likely to cause link conflicts.
       Easy install is now deprecated, do not use it.
       The offending files are:
-        #{pth_found * "\n  "}
+        #{pth_found.join("\n  ")}
     EOS
   end
 
@@ -196,7 +196,7 @@ module FormulaCellarChecks
       They should instead be installed into:
         #{share}/emacs/site-lisp/#{name}
       The offending files are:
-        #{elisps * "\n  "}
+        #{elisps.join("\n  ")}
     EOS
   end
 
@@ -231,9 +231,9 @@ module FormulaCellarChecks
 
     <<~EOS
       Packages have been installed for:
-        #{pythons * "\n  "}
+        #{pythons.join("\n  ")}
       but this formula depends on:
-        #{python_deps * "\n  "}
+        #{python_deps.join("\n  ")}
     EOS
   end
 
@@ -257,7 +257,7 @@ module FormulaCellarChecks
     <<~EOS
       Files were found with references to the Homebrew shims directory.
       The offending files are:
-        #{matches * "\n  "}
+        #{matches.join("\n  ")}
     EOS
   end
 
@@ -414,10 +414,11 @@ module FormulaCellarChecks
     s = ""
 
     if mismatches.present? && !mismatches_expected
+      mismatch_list = mismatches.map { |m| "#{m.first}\t(#{m.last})" } * "\n  "
       s += <<~EOS
         Binaries built for a non-native architecture were installed into #{formula}'s prefix.
         The offending files are:
-          #{mismatches.map { |m| "#{m.first}\t(#{m.last})" } * "\n  "}
+          #{mismatch_list}
       EOS
     end
 
@@ -425,7 +426,7 @@ module FormulaCellarChecks
       s += <<~EOS
         Unexpected universal binaries were found.
         The offending files are:
-          #{compatible_universal_binaries.keys * "\n  "}
+          #{compatible_universal_binaries.keys.join("\n  ")}
       EOS
     end
 
@@ -550,12 +551,13 @@ module FormulaCellarChecks
     prebuilt.reject! { |file, _source| file.extname == ".node" || addon_dirs.include?(file.dirname) }
     return if prebuilt.empty?
 
+    prebuilts = prebuilt.map { |file, source| "#{file}\t(#{source})" } * "\n  "
     <<~EOS
       Prebuilt executables from npm packages were installed into #{formula}'s prefix.
       Each is byte-identical to a file in a package npm recorded downloading,
       so it was shipped rather than built from source.
       The offending files are:
-        #{prebuilt.map { |file, source| "#{file}\t(#{source})" } * "\n  "}
+        #{prebuilts}
     EOS
   end
 
@@ -589,7 +591,11 @@ module FormulaCellarChecks
 
   sig { params(dir: T.any(Pathname, String), pattern: String).returns(T::Array[String]) }
   def relative_glob(dir, pattern)
-    File.directory?(dir) ? Dir.chdir(dir) { Dir[pattern] } : []
+    if File.directory?(dir)
+      Dir.chdir(dir) { Dir[pattern] }
+    else
+      []
+    end
   end
 
   sig { params(file: T.any(Pathname, String), objdump: Pathname).returns(T::Boolean) }

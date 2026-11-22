@@ -460,10 +460,11 @@ class Bottle
     end
     manifest_path = "#{image_name}/manifests/#{manifest_reference}"
     resource.sha256(manifest_sha256) if manifest_sha256
+    media_type = @manifest_checksum ? "manifest" : "index"
     resource.url(
       "#{root_url}/#{manifest_path}",
       using:   CurlGitHubPackagesDownloadStrategy,
-      headers: ["Accept: application/vnd.oci.image.#{@manifest_checksum ? "manifest" : "index"}.v1+json"],
+      headers: ["Accept: application/vnd.oci.image.#{media_type}.v1+json"],
     )
     # Give a legacy mirror the first chance to serve the manifest. Many
     # contain only bottle archives, so retain GHCR as a fallback. By

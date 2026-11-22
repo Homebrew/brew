@@ -83,7 +83,11 @@ module Homebrew
       else
         []
       end
-      ambiguous_names = full_name ? [] : ambiguous_packages(formulae_and_casks_to_check - ambiguous_casks)
+      ambiguous_names = if full_name
+        []
+      else
+        ambiguous_packages(formulae_and_casks_to_check - ambiguous_casks)
+      end
 
       has_a_newer_upstream_version = T.let(false, T::Boolean)
 
@@ -96,9 +100,8 @@ module Homebrew
       formulae_checked = formulae_and_casks_to_check.map.with_index do |formula_or_cask, i|
         formula = formula_or_cask if formula_or_cask.is_a?(Formula)
         cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
-        if (head = formula&.head)
-          head.downloader.quiet!
-        end
+        head = formula&.head
+        head&.downloader&.quiet!
 
         use_full_name = full_name || ambiguous_names.include?(formula_or_cask)
         name = package_or_resource_name(formula_or_cask, full_name: use_full_name)
@@ -174,9 +177,7 @@ module Homebrew
               quiet:,
               verbose:,
             )
-            next status_hash(resource, "error", [NO_VERSIONS_MSG], verbose:) if res_version_info.empty?
-
-            res_version_info
+            res_version_info.presence || status_hash(resource, "error", [NO_VERSIONS_MSG], verbose:)
           end.compact_blank
           Homebrew.failed = true if resource_version_info.any? { |info| info[:status] == "error" }
           resource_version_info.each { |info| info.delete(:meta) } if json && !verbose
@@ -205,12 +206,17 @@ module Homebrew
         info = {}
         info[:formula] = name if formula
         info[:cask] = name if cask
+        # HEAD-only formulae compare commit hashes rather than ordered versions.
+        outdated = if formula&.head_only?
+          current != latest
+        else
+          current < latest
+        end
         info[:version] = {
           current:             current_str,
           latest:              latest_str,
           latest_throttled:    version_info&.dig(:latest_throttled),
-          # HEAD-only formulae compare commit hashes rather than ordered versions.
-          outdated:            formula&.head_only? ? (current != latest) : (current < latest),
+          outdated:,
           newer_than_upstream: (formula&.stable? || cask) && (current > latest),
         }.compact
         info[:meta] = {
@@ -302,7 +308,8 @@ module Homebrew
         elsif cask
           puts "Cask:             #{cask_name(formula_or_cask, full_name:)}"
         end
-        puts "livecheck block?: #{livecheck_defined ? "Yes" : "No"}"
+        defined_label = livecheck_defined ? "Yes" : "No"
+        puts "livecheck block?: #{defined_label}"
         if livecheck_throttle || livecheck_throttle_days
           throttle_items = []
           if livecheck_throttle
@@ -315,8 +322,8 @@ module Homebrew
         end
 
         livecheck_references.each do |ref_formula_or_cask|
-          puts "#{ref_formula_or_cask.is_a?(Formula) ? "Formula Ref:      " : "Cask Ref:         "}" \
-               "#{package_or_resource_name(ref_formula_or_cask, full_name:)}"
+          reference_label = ref_formula_or_cask.is_a?(Formula) ? "Formula Ref:      " : "Cask Ref:         "
+          puts "#{reference_label}#{package_or_resource_name(ref_formula_or_cask, full_name:)}"
         end
       end
 
@@ -365,7 +372,10 @@ module Homebrew
             end
           end
         end
-        puts "Homebrew curl?:   #{livecheck_homebrew_curl ? "Yes" : "No"}" if debug && !livecheck_homebrew_curl.nil?
+        if debug && !livecheck_homebrew_curl.nil?
+          curl_label = livecheck_homebrew_curl ? "Yes" : "No"
+          puts "Homebrew curl?:   #{curl_label}"
+        end
 
         # Only use arguments that the strategy's `#find_versions` method
         # supports
@@ -487,7 +497,8 @@ module Homebrew
       if debug
         puts "\n\n"
         puts "Resource:         #{resource.name}"
-        puts "livecheck block?: #{livecheck_defined ? "Yes" : "No"}"
+        defined_label = livecheck_defined ? "Yes" : "No"
+        puts "livecheck block?: #{defined_label}"
       end
 
       resource_version_info = {}
@@ -535,7 +546,11 @@ module Homebrew
             resource_owner = resource.owner
             raise "Resource owner is nil" if resource_owner.nil?
 
-            formula = full_name ? T.cast(resource_owner, ::Formula).full_name : resource_owner.name
+            formula = if full_name
+              T.cast(resource_owner, ::Formula).full_name
+            else
+              resource_owner.name
+            end
             puts "Formula Ref:      #{formula} (parent)"
           end
         end
@@ -619,7 +634,11 @@ module Homebrew
           resource_owner = resource.owner
           raise "Resource owner is nil" if resource_owner.nil?
 
-          formula = full_name ? T.cast(resource_owner, ::Formula).full_name : resource_owner.name
+          formula = if full_name
+            T.cast(resource_owner, ::Formula).full_name
+          else
+            resource_owner.name
+          end
           resource_version_info[:meta][:references] =
             [{ formula:, symbol: :parent }]
         end

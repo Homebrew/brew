@@ -290,7 +290,8 @@ module Cask
     def summary
       s = +""
       s << "#{Homebrew::EnvConfig.install_badge}  " unless Homebrew::EnvConfig.no_emoji?
-      s << "#{@cask} was successfully #{upgrade? ? "upgraded" : "installed"}!"
+      action = upgrade? ? "upgraded" : "installed"
+      s << "#{@cask} was successfully #{action}!"
       s.freeze
     end
 
@@ -452,10 +453,10 @@ module Cask
         Array(arch[:bits]).include?(@current_arch[:bits])
       end
 
+      architectures = @cask.depends_on.arch.join(", ")
       raise CaskError,
             "#{@cask}: This cask depends on hardware architecture being one of " \
-            "[#{@cask.depends_on.arch.join(", ")}], " \
-            "but you are running #{@current_arch}."
+            "[#{architectures}], but you are running #{@current_arch}."
     end
 
     sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }
@@ -744,7 +745,8 @@ module Cask
     }
     def uninstall_artifacts(clear: false, successor: nil, quit: true, zap_stanzas: [])
       odebug "Uninstalling artifacts"
-      odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
+      artifact_count = ::Utils.pluralize("artifact", artifacts.length, include_count: true)
+      odebug "#{artifact_count} defined", artifacts
 
       directive_artifacts = [*artifacts.grep(Artifact::Uninstall), *zap_stanzas]
 

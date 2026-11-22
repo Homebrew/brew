@@ -80,7 +80,10 @@ class BuildEnvironment
       case key
       when "CC", "CXX", "LD"
         value = T.cast(value, String)
-        string << " => #{Pathname.new(value).realpath}" if value.present? && File.symlink?(value)
+        if value.present? && File.symlink?(value)
+          resolved_path = Pathname.new(value).realpath
+          string << " => #{resolved_path}"
+        end
       end
       string.freeze
       out.puts string

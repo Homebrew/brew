@@ -30,7 +30,7 @@ module OS
         <<~EOS
           Header files that shadow system header files were installed to "#{formula.include}"
           The offending files are:
-            #{files * "\n  "}
+            #{files.join("\n  ")}
         EOS
       end
 
@@ -50,7 +50,7 @@ module OS
           These object files were linked against the deprecated system OpenSSL or
           the system's private LibreSSL.
           Adding `depends_on "openssl"` to the formula may help.
-            #{system_openssl * "\n  "}
+            #{system_openssl.join("\n  ")}
         EOS
       end
 
@@ -69,7 +69,7 @@ module OS
           These python extension modules were linked directly to a Python
           framework binary. They should be linked with -undefined dynamic_lookup
           instead of -lpython or -framework Python.
-            #{framework_links * "\n  "}
+            #{framework_links.join("\n  ")}
         EOS
       end
 
@@ -126,7 +126,7 @@ module OS
           Libraries were compiled with a flat namespace.
           This can cause linker errors due to name collisions and
           is often due to a bug in detecting the macOS version.
-            #{flat_namespace_files * "\n  "}
+            #{flat_namespace_files.join("\n  ")}
            Learn more about this in:
             #{Formatter.url("https://developer.apple.com/forums/thread/689991?answerId=687895022#687895022")}
         EOS

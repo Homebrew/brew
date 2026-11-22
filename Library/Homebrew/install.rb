@@ -367,9 +367,9 @@ module Homebrew
               dry_run_action
             end
           end
-          groups.keys.sort.each do |action|
-            group = groups.fetch(action)
-            ohai "Would #{action} #{Utils.pluralize("formula", group.count, include_count: true)}:"
+          groups.sort.each do |action, group|
+            formula_count = Utils.pluralize("formula", group.count, include_count: true)
+            ohai "Would #{action} #{formula_count}:"
             puts Formatter.version_changes(group.map do |installer|
               formula = installer.formula
               size = bottle_download_size(formula, debug: installer.debug?) if installer.pour_bottle?
@@ -388,8 +388,7 @@ module Homebrew
               Upgrade.formula_version_change(dependency)
             end
           end
-          source_builds = source_build_formulae(formula_installers)
-          if source_builds.any?
+          if (source_builds = source_build_formulae(formula_installers)).any?
             ohai source_build_heading(source_builds.count)
             puts source_builds
           end
@@ -482,8 +481,8 @@ module Homebrew
 
       sig { params(count: Integer, dry_run: T::Boolean).returns(String) }
       def source_build_heading(count, dry_run: true)
-        "#{count} homebrew/core #{Utils.pluralize("formula", count)} " \
-          "#{dry_run ? "that would build" : "built"} from source"
+        build_status = dry_run ? "that would build" : "built"
+        "#{count} homebrew/core #{Utils.pluralize("formula", count)} #{build_status} from source"
       end
 
       sig { params(summary: DependencySummary, formula: T.nilable(Formula)).void }
@@ -492,8 +491,9 @@ module Homebrew
           group = group.uniq
           next if group.empty?
 
-          ohai "Would #{verb} #{Utils.pluralize("dependency", group.count, include_count: true)}" \
-               "#{" for #{formula.name}" if formula}:"
+          dependency_count = Utils.pluralize("dependency", group.count, include_count: true)
+          dependent_suffix = formula ? " for #{formula.name}" : ""
+          ohai "Would #{verb} #{dependency_count}#{dependent_suffix}:"
           puts Formatter.version_changes(group)
         end
       end
@@ -595,8 +595,7 @@ module Homebrew
           unless skip_cask_deps
             dep_names.concat(
               ::Utils::TopologicalHash.graph_package_dependencies([cask]).tsort.grep(Cask::Cask).filter_map do |dep|
-                next if dep.full_name == cask.full_name
-                next if dep.installed?
+                next if dep.full_name == cask.full_name || dep.installed?
 
                 dep.full_name
               end,
@@ -618,15 +617,16 @@ module Homebrew
         )
 
         if (casks_to_print = (include_installed ? casks : casks.reject(&:installed?)).presence)
-          ohai "Would #{action} #{::Utils.pluralize("cask", casks_to_print.count, include_count: true)}:"
+          cask_count = ::Utils.pluralize("cask", casks_to_print.count, include_count: true)
+          ohai "Would #{action} #{cask_count}:"
           puts casks_to_print.map(&:full_name).join(" ")
         end
 
         dependencies.flat_map do |cask, dep_names|
           next [] if dep_names.blank?
 
-          ohai "Would install #{::Utils.pluralize("dependency", dep_names.count, include_count: true)} " \
-               "for #{cask.full_name}:"
+          dependency_count = ::Utils.pluralize("dependency", dep_names.count, include_count: true)
+          ohai "Would install #{dependency_count} for #{cask.full_name}:"
           puts dep_names.join(" ")
           dep_names
         end

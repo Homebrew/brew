@@ -14,7 +14,11 @@ cask "with-languages" do
     "en-US"
   end
 
-  archive = (language == "zh-CN") ? "container.tar.gz" : "caffeine.zip"
+  archive = if language == "zh-CN"
+    "container.tar.gz"
+  else
+    "caffeine.zip"
+  end
   url "file://#{TEST_FIXTURE_DIR}/cask/#{archive}"
   name "Caffeine"
   homepage "https://brew.sh/"

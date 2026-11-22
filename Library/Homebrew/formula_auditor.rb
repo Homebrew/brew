@@ -146,10 +146,11 @@ module Homebrew
 
         if valid_versioned_aliases.empty? && alias_name != latest_versioned_formula
           if formula.tap
+            relative_path = formula.path.to_s.gsub(formula.tap!.path.to_s, "..")
             problem <<~EOS
               Formula has other versions so create a versioned alias:
                 cd #{formula.tap!.alias_dir}
-                ln -s #{formula.path.to_s.gsub(formula.tap!.path.to_s, "..")} #{alias_name}
+                ln -s #{relative_path} #{alias_name}
             EOS
           else
             problem "Formula has other versions so create an alias named '#{alias_name}'."

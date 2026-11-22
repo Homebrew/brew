@@ -567,7 +567,7 @@ module Cask
       @ruby_source_checksum ||= begin
         sfp = sourcefile_path
         {
-          sha256: sfp ? Digest::SHA256.file(sfp).hexdigest : nil,
+          sha256: (Digest::SHA256.file(sfp).hexdigest if sfp),
         }.freeze
       end
     end

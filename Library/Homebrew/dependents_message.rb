@@ -27,7 +27,8 @@ class DependentsMessage
 
   sig { void }
   def output
-    installed_deps = "#{Utils::Text.to_sentence(deps)}, which #{deps.one? ? "is" : "are"} currently installed"
+    verb = deps.one? ? "is" : "are"
+    installed_deps = "#{Utils::Text.to_sentence(deps)}, which #{verb} currently installed"
     it_is_or_they_are = reqs.one? ? "it is" : "they are"
     to_build_or_by = @build ? "to build" : "by"
     ofail <<~EOS

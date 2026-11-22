@@ -46,17 +46,20 @@ module Homebrew
         end
         link_libgcc = glibc_installed ? "-nostdlib -L#{libgcc} -L#{glibc_lib}" : "+"
         homebrew_rpath = version_major.to_i >= 11
+        include_flags = system_header_dirs.map { |p| "-idirafter #{p}" }.join(" ")
+        rpath_flag = homebrew_rpath ? "" : " -rpath #{HOMEBREW_PREFIX}/lib"
+        rpath_spec = homebrew_rpath ? "*homebrew_rpath:\n-rpath #{HOMEBREW_PREFIX}/lib\n" : ""
         specs_string += <<~EOS
           *cpp_unique_options:
-          + -isysroot #{HOMEBREW_PREFIX}/nonexistent #{system_header_dirs.map { |p| "-idirafter #{p}" }.join(" ")}
+          + -isysroot #{HOMEBREW_PREFIX}/nonexistent #{include_flags}
 
           *link_libgcc:
           #{link_libgcc} -L#{libdir} -L#{HOMEBREW_PREFIX}/lib
 
           *link:
-          + --dynamic-linker #{HOMEBREW_PREFIX}/lib/ld.so -rpath #{libdir}#{" -rpath #{HOMEBREW_PREFIX}/lib" unless homebrew_rpath}
+          + --dynamic-linker #{HOMEBREW_PREFIX}/lib/ld.so -rpath #{libdir}#{rpath_flag}
 
-          #{"*homebrew_rpath:\n-rpath #{HOMEBREW_PREFIX}/lib\n" if homebrew_rpath}
+          #{rpath_spec}
         EOS
         specs_string.gsub!(" %o ", "\\0%(homebrew_rpath) ") if homebrew_rpath
         specs.write specs_string
@@ -159,7 +162,11 @@ module Homebrew
         version_major_minor = context_version_major_minor
         raise ArgumentError, "PHP configuration requires a version" if version_major_minor.nil?
 
-        pear_dir = (context_name == "php") ? "pear" : "pear@#{version_major_minor}"
+        pear_dir = if context_name == "php"
+          "pear"
+        else
+          "pear@#{version_major_minor}"
+        end
         pear_path = HOMEBREW_PREFIX/"share"/pear_dir
         FileUtils.cp_r "#{pear_prefix}/.", pear_path
         php_ext_dir = context_path("opt_prefix")/"lib/php"/php_basename
@@ -316,7 +323,11 @@ module Homebrew
             temporary_path = Pathname(temporary_directory)
             UnpackStrategy.detect(archive).extract(to: temporary_path)
             children = temporary_path.children
-            source_path = (children.one? && children.fetch(0).directory?) ? children.fetch(0) : temporary_path
+            source_path = if children.one? && children.fetch(0).directory?
+              children.fetch(0)
+            else
+              temporary_path
+            end
             Dir.chdir(source_path) do
               run_command pypy, "-s", "setup.py", "--no-user-cfg", "install", "--force", "--verbose"
             end

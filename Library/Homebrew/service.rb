@@ -678,7 +678,12 @@ module Homebrew
                    .join(" ")
 
       options = []
-      options << "Type=#{(@launch_only_once == true) ? "oneshot" : "simple"}"
+      service_type = if @launch_only_once == true
+        "oneshot"
+      else
+        "simple"
+      end
+      options << "Type=#{service_type}"
       options << "ExecStart=#{cmd}"
 
       if @keep_alive.present?
@@ -686,7 +691,8 @@ module Homebrew
           # Use on-failure instead of always to allow manual stops via systemctl
           options << "Restart=on-failure"
         elsif @keep_alive.key?(:successful_exit)
-          options << "Restart=#{@keep_alive[:successful_exit] ? "on-success" : "on-failure"}"
+          restart_policy = @keep_alive[:successful_exit] ? "on-success" : "on-failure"
+          options << "Restart=#{restart_policy}"
         end
       end
       options << "RestartSec=#{restart_delay}" if @restart_delay.present?
@@ -720,7 +726,8 @@ module Homebrew
       if cron_weekday != "*" &&
          (weekday_number = cron_weekday&.to_i) &&
          (0..7).cover?(weekday_number)
-        "#{Date::ABBR_DAYNAMES[weekday_number % 7]} "
+        weekday = Date::ABBR_DAYNAMES[weekday_number % 7]
+        "#{weekday} "
       else
         ""
       end
@@ -734,8 +741,16 @@ module Homebrew
       options << "OnUnitActiveSec=#{@interval}" if @run_type == RUN_TYPE_INTERVAL
 
       if @run_type == RUN_TYPE_CRON
-        minutes = (@cron[:Minute] == "*") ? "*" : format("%02d", @cron[:Minute])
-        hours   = (@cron[:Hour] == "*") ? "*" : format("%02d", @cron[:Hour])
+        minutes = if @cron[:Minute] == "*"
+          "*"
+        else
+          format("%02d", @cron[:Minute])
+        end
+        hours = if @cron[:Hour] == "*"
+          "*"
+        else
+          format("%02d", @cron[:Hour])
+        end
         options << "OnCalendar=#{cron_weekday_to_systemd_weekday(@cron[:Weekday])}" \
                    "*-#{@cron[:Month]}-#{@cron[:Day]} #{hours}:#{minutes}:00"
       end

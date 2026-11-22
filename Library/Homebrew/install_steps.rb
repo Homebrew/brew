@@ -976,12 +976,17 @@ module Homebrew
           when "remove"
             step_paths(step, "paths").flat_map { |path| expand_path_glob(path) }.map(&:parent)
           when "inreplace", "change_dylib_id"
-            path = resolve_step_path(step, (step["type"] == "inreplace") ? "path" : "source")
+            inreplace = step["type"] == "inreplace"
+            path = resolve_step_path(step, inreplace ? "path" : "source")
             [path.exist? ? path : path.parent]
           when "link_dir", "link_children"
             [resolve_step_path(step, "target")]
           when "run"
-            paths = step.key?("stdout_path") ? [resolve_step_path(step, "stdout_path").parent] : []
+            paths = if step.key?("stdout_path")
+              [resolve_step_path(step, "stdout_path").parent]
+            else
+              []
+            end
             if step.key?("writable_paths")
               paths.concat(step_paths(step, "writable_paths").map do |path|
                 resolve_path(path)
@@ -1279,7 +1284,11 @@ module Homebrew
         env = step["env"] || {}
         environment = T.cast(env, PathSpec)
                        .transform_values { |value| expand_template_tokens(value.to_s) }
-        input = step.key?("stdin_path") ? resolve_step_path(step, "stdin_path").read : []
+        input = if step.key?("stdin_path")
+          resolve_step_path(step, "stdin_path").read
+        else
+          []
+        end
         working_directory = resolve_step_path(step, "chdir") if step.key?("chdir")
         result = @command.run(command, args:, sudo: step["sudo"] == true, env: environment, input:,
                                      must_succeed: step["allow_failure"] != true,
@@ -1383,9 +1392,9 @@ module Homebrew
         ohai "Changing ownership of paths required by #{@context}..."
         args = []
         args << "-R" if step["non_recursive"] != true
-        @command.run!("chown", args: [*args, "--", "#{step["user"] || ::User.current}:#{step["group"] || "staff"}",
-                                      *paths],
-                               sudo: nil)
+        owner = step["user"] || ::User.current
+        group = step["group"] || "staff"
+        @command.run!("chown", args: [*args, "--", "#{owner}:#{group}", *paths], sudo: nil)
       end
 
       sig { params(step: Step).void }
@@ -1428,7 +1437,8 @@ module Homebrew
         prefix = context_path("prefix")
         case using
         when "postgresql_initdb"
-          run_command bin/"initdb", "--locale=#{step["locale"] || "en_US.UTF-8"}", "-E", "UTF-8", path
+          locale = step["locale"] || "en_US.UTF-8"
+          run_command bin/"initdb", "--locale=#{locale}", "-E", "UTF-8", path
         when "mysql_initialize"
           with_env(TMPDIR: nil) do
             run_command bin/"mysqld", "--initialize-insecure", "--user=#{ENV.fetch("USER")}",
@@ -1510,7 +1520,11 @@ module Homebrew
 
       sig { params(source: Pathname, target: Pathname).returns(Pathname) }
       def step_destination(source, target)
-        target.directory? ? target/source.basename : target
+        if target.directory?
+          target/source.basename
+        else
+          target
+        end
       end
 
       sig { params(spec: PathSpec).returns(T::Array[Pathname]) }

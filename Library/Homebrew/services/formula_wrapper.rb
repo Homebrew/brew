@@ -402,8 +402,9 @@ module Homebrew
         if service_file_generated?
           load_service.to_systemd_timer
         else
+          service_pattern = Regexp.union(service_names.map { |name| "#{name}.service" })
           timer_file.read.sub(
-            /^([ \t]*Unit[ \t]*=[ \t]*)#{Regexp.union(service_names.map { |name| "#{name}.service" })}([ \t]*)$/,
+            /^([ \t]*Unit[ \t]*=[ \t]*)#{service_pattern}([ \t]*)$/,
           ) do
             "#{Regexp.last_match(1)}#{service_name}.service#{Regexp.last_match(2)}"
           end

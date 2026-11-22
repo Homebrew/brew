@@ -30,7 +30,8 @@ class Migrator
   class MigratorNoOldpathError < RuntimeError
     sig { params(oldname: String).void }
     def initialize(oldname)
-      super "#{HOMEBREW_CELLAR/oldname} doesn't exist."
+      old_cellar = HOMEBREW_CELLAR/oldname
+      super "#{old_cellar} doesn't exist."
     end
   end
 
@@ -44,8 +45,9 @@ class Migrator
         "Please try to use fully-qualified #{tap}/#{oldname} to refer to the formula.\n"
       end
 
+      source_tap = tap || "path or url"
       super <<~EOS
-        #{formula.name} from #{formula.tap} is given, but old name #{oldname} was installed from #{tap || "path or url"}.
+        #{formula.name} from #{formula.tap} is given, but old name #{oldname} was installed from #{source_tap}.
         #{msg}To force migration, run:
           brew migrate --force #{oldname}
       EOS
@@ -290,7 +292,8 @@ class Migrator
           FileUtils.rm_rf c
         rescue Errno::EACCES
           conflicted = true
-          onoe "#{new_cellar/c.basename} already exists."
+          destination = new_cellar/c.basename
+          onoe "#{destination} already exists."
         end
       end
     end

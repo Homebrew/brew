@@ -55,7 +55,7 @@ module Homebrew
         }
         def self.versions_from_content(content, regex, &block)
           if block
-            block_return_value = regex.present? ? yield(content, regex) : yield(content)
+            block_return_value = yield(content, *Array(regex))
             return Strategy.handle_block_return(block_return_value)
           end
 

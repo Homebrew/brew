@@ -364,7 +364,8 @@ The default pattern for the `Sparkle` strategy is to generate `"#{item.short_ver
 livecheck do
   url "https://www.example.com/example.xml"
   strategy :sparkle do |item|
-    "#{item.short_version},#{item.version}:#{item.url[%r{/(\d+)/[^/]+\.zip}i, 1]}"
+    download_id = item.url[%r{/(\d+)/[^/]+\.zip}i, 1]
+    "#{item.short_version},#{item.version}:#{download_id}"
   end
 end
 ```

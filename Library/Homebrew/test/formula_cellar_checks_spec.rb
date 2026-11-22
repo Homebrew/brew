@@ -80,7 +80,8 @@ RSpec.describe FormulaCellarChecks do
 
     index = npm_cache/"index-v5/00/00/index"
     index.dirname.mkpath
-    integrity = "sha512-#{[[hex].pack("H*")].pack("m0")}"
+    digest = [[hex].pack("H*")].pack("m0")
+    integrity = "sha512-#{digest}"
     index.open("a") do |io|
       keys.each { |key| io.puts("0000\t#{JSON.generate({ key:, integrity: })}") }
     end

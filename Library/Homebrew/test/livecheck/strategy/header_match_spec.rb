@@ -114,7 +114,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::HeaderMatch do
       # Returning a string from block, explicit regex.
       expect(
         header_match.versions_from_content([headers[:location]], regexes[:latest]) do |headers, regex|
-          headers["location"] ? headers["location"][regex, 1] : nil
+          headers["location"]&.[](regex, 1)
         end,
       ).to eq(matches[:location])
       expect(

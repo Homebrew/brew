@@ -30,7 +30,10 @@ RSpec.describe Cask::Download, :cask do
       let(:version) do
         "1.2.3,kch23dmbz6whmoogcbss45yi4c2kkq15gmemwys0hgwd3l7cahmx2ciagrlrgppatxaxarzazmdoerzmiisuf7mul4lgcays2dl3nl"
       end
-      let(:url_to_s) { "https://example.com/app.dmg?#{Array.new(50) { |i| "param#{i}=value#{i}" }.join("&")}" }
+      let(:url_to_s) do
+        query = Array.new(50) { |i| "param#{i}=value#{i}" }.join("&")
+        "https://example.com/app.dmg?#{query}"
+      end
 
       it "returns the cask token" do
         expect(download_name).to eq "example-cask"

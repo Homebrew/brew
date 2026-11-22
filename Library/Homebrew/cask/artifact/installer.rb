@@ -28,9 +28,10 @@ module Cask
       def install_phase(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
                         command: SystemCommand)
         if manual_install
+          escaped_path = cask.staged_path.join(path).to_s.shellescape
           puts <<~EOS
             Cask #{cask} only provides a manual installer. To run it and complete the installation:
-              open #{cask.staged_path.join(path).to_s.shellescape}
+              open #{escaped_path}
           EOS
         else
           ohai "Running #{self.class.dsl_key} script '#{path}'"

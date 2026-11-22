@@ -61,10 +61,11 @@ module Cask
       if new_caskroom_path.directory? && !new_caskroom_path.symlink?
         # Keep the source installed when the destination belongs to another tap.
         if CaskLoader.load_installed_tab(new_cask.token).tap != new_cask.tap
+          new_full_name = [new_cask.tap, new_cask.token].compact.join("/")
           raise CaskError, <<~EOS
             #{new_cask.token} is already installed from another tap.
             To switch to the migration target, run:
-              brew reinstall --cask #{[new_cask.tap, new_cask.token].compact.join("/")}
+              brew reinstall --cask #{new_full_name}
           EOS
         end
 
@@ -162,7 +163,8 @@ module Cask
         if (old_pin_path = old_cask.pin_path).symlink? && (pinned_version = old_cask.pinned_version)
           new_pin_path = new_cask.pin_path
           puts "rm #{old_pin_path}"
-          puts "ln -s #{(new_caskroom_path/pinned_version).relative_path_from(new_pin_path.dirname)} #{new_pin_path}"
+          relative_target = (new_caskroom_path/pinned_version).relative_path_from(new_pin_path.dirname)
+          puts "ln -s #{relative_target} #{new_pin_path}"
         end
       else
         oh1 "Migrating cask #{Formatter.identifier(old_token)} to #{Formatter.identifier(new_token)}"

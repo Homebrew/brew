@@ -37,12 +37,13 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end,
       partially_disabled_arch: lambda do
         path = mktmpdir/"test_partially_disabled_arch.rb"
+        architecture = Hardware::CPU.arm? ? "arm" : "intel"
         path.write <<~RUBY
           class TestPartiallyDisabledArch < Formula
             desc "Partially disabled (arch) test formula"
             homepage "https://brew.sh"
             url "https://brew.sh/test-0.0.1.tgz"
-            on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+            on_#{architecture} do
               disable! date: "2020-06-25", because: :unmaintained
             end
           end
@@ -52,12 +53,13 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end.call,
       partially_disabled_os:   lambda do
         path = mktmpdir/"test_partially_disabled_os.rb"
+        system = OS.mac? ? "macos" : "linux"
         path.write <<~RUBY
           class TestPartiallyDisabledOs < Formula
             desc "Partially disabled (OS) test formula"
             homepage "https://brew.sh"
             url "https://brew.sh/test-0.0.1.tgz"
-            on_#{OS.mac? ? "macos" : "linux"} do
+            on_#{system} do
               disable! date: "2020-06-25", because: :unmaintained
             end
           end
@@ -118,6 +120,8 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
     }
   end
   let(:casks) do
+    architecture = Hardware::CPU.arm? ? "arm" : "intel"
+    system = OS.mac? ? "macos" : "linux"
     {
       basic:                                 Cask::Cask.new("test") do
         version "0.0.1,2"
@@ -164,7 +168,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           desc "Partially disabled (arch) test cask"
           homepage "https://brew.sh"
 
-          on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+          on_#{architecture} do
             disable! date: "2020-06-25", because: :unmaintained
           end
         end
@@ -179,7 +183,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           desc "Partially disabled (OS) test cask"
           homepage "https://brew.sh"
 
-          on_#{OS.mac? ? "macos" : "linux"} do
+          on_#{system} do
             disable! date: "2020-06-25", because: :unmaintained
           end
         end

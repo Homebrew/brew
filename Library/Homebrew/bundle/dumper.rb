@@ -51,7 +51,8 @@ module Homebrew
             package_type.dump_output(describe:, no_restart:)
           end
         end
-        "#{content.reject(&:empty?).join("\n")}\n"
+        entries = content.reject(&:empty?).join("\n")
+        "#{entries}\n"
       end
 
       sig {

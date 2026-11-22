@@ -437,8 +437,12 @@ module Homebrew
         else
           package
         end
-        "#{self.class.check_label} #{name} needs to be " \
-          "#{(!no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)) ? "upgraded" : "installed"}."
+        action = if !no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)
+          "upgraded"
+        else
+          "installed"
+        end
+        "#{self.class.check_label} #{name} needs to be #{action}."
       end
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
