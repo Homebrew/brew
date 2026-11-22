@@ -83,7 +83,7 @@ module Cask
         next if all_requireds.include?(dependent.token)
 
         d = CaskDependent.new(dependent)
-        dependencies = d.recursive_requirements.filter_map { |r| r.cask if r.is_a?(CaskDependent::Requirement) }
+        dependencies = d.requirements.filter_map { |r| r.cask if r.is_a?(CaskDependent::Requirement) }
         found_dependents = dependencies.intersection(all_requireds)
         next if found_dependents.empty?
 

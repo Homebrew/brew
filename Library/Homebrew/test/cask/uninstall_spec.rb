@@ -299,6 +299,21 @@ RSpec.describe Cask::Uninstall, :cask do
       end.to output(output).to_stderr
     end
 
+    it "ignores unavailable formula dependencies of installed casks" do
+      depends_on_unavailable_formula = Cask::CaskLoader.from_content(<<~RUBY)
+        cask "with-unavailable-formula" do
+          depends_on formula: "unavailable-formula"
+        end
+      RUBY
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
+
+      allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_unavailable_formula, local_transmission])
+
+      expect do
+        described_class.check_dependent_casks(local_transmission, named_args: ["local-transmission-zip"])
+      end.not_to output.to_stderr
+    end
+
     it "does not output an error if no dependents found" do
       depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
       local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission"))
