@@ -6,6 +6,10 @@ require "on_system"
 module OnSystem
   # Platform blocks common to formulae, resources, services and casks.
   module DSL
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
+
     ARCH_OPTIONS.each do |arch|
       define_method(:"on_#{arch}") do |&block|
         T.bind(self, DSL)
@@ -115,7 +119,7 @@ module OnSystem
     }
     def on_system(linux, macos:, &block)
       mark_on_system_block(os: true)
-      Kernel.raise ArgumentError, "The first argument to `on_system` must be `:linux`" if linux != :linux
+      raise ArgumentError, "The first argument to `on_system` must be `:linux`" if linux != :linux
 
       os_version, _, or_condition = macos.to_s.partition(/_(?=or_)/)
       return if !OnSystem.os_condition_met?(os_version.to_sym, or_condition.presence&.to_sym) &&
