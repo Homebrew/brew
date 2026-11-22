@@ -363,8 +363,8 @@ module Cask
         end
       end
 
-      ohai "Reopening #{bundle_ids.count} #{::Utils.pluralize("application",
-                                                              bundle_ids.count)} closed during upgrade:"
+      applications = ::Utils.pluralize("application", bundle_ids.count, include_count: true)
+      ohai "Reopening #{applications} closed during upgrade:"
       bundle_ids.each do |bundle_id|
         puts bundle_id
         # Let Launch Services supply the user's environment.
