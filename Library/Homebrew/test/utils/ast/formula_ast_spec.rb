@@ -28,8 +28,9 @@ RSpec.describe Utils::AST::FormulaAST do
     end
 
     it "preserves surrounding comments and removes only the selected HEAD patch" do
+      modified_patch = patch.sub("a" * 40, "c" * 40)
       ast = described_class.new("class Foo < Formula\n# Keep this explanation\n" \
-                                "#{patch}\nhead do\n#{patch.sub("a" * 40, "c" * 40)}\nend\nend\n")
+                                "#{patch}\nhead do\n#{modified_patch}\nend\nend\n")
       ast.remove_patches do |node|
         [node].select { |patch_node| patch_node.source.include?("https://github.com/example/project/commit/#{"c" * 40}.patch") }
       end

@@ -34,17 +34,18 @@ RSpec.describe "sudo detection" do # rubocop:disable RSpec/DescribeClass
   end
 
   it "does not probe sudo during startup" do
+    sudo_setup = (HOMEBREW_LIBRARY_PATH/"brew.sh").read
+                 .split("# Use this configuration file")
+                 .fetch(1)
+                 .split("# Remove internal variables")
+                 .fetch(0)
+                 .lines
+                 .drop(1)
+                 .join
     Open3.capture3("/bin/bash", "-c", <<~SH)
       /usr/bin/sudo() { "#{sudo}" "$@"; }
       command() { echo "#{sudo}"; }
-      #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read
-                                          .split("# Use this configuration file")
-                                          .fetch(1)
-                                          .split("# Remove internal variables")
-                                          .fetch(0)
-                                          .lines
-                                          .drop(1)
-                                          .join}
+      #{sudo_setup}
     SH
 
     expect(sudo_log).not_to exist

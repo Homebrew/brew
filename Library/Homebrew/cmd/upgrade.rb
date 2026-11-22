@@ -571,20 +571,20 @@ module Homebrew
 
         named = args.named.present?
         version_changes = named ? summary.version_changes : summary.all_version_changes
+        action = dry_run ? "Would upgrade" : "Upgraded"
         if show_upgrade_summary && version_changes.present?
           version_change_count = version_changes.uniq.count
+          requested_prefix = named ? "requested " : ""
           show_final_upgrade_summary_section(
-            "#{dry_run ? "Would upgrade" : "Upgraded"} #{version_change_count} " \
-            "#{"requested " if named}outdated " \
-            "#{Utils.pluralize("package", version_change_count)}",
+            "#{action} #{version_change_count} " \
+            "#{requested_prefix}outdated #{Utils.pluralize("package", version_change_count)}",
             Formatter.version_changes(version_changes),
           )
         end
         if show_upgrade_summary && named && summary.dependent_version_changes.present?
           dependent_count = summary.dependent_version_changes.uniq.count
           show_final_upgrade_summary_section(
-            "#{dry_run ? "Would upgrade" : "Upgraded"} #{dependent_count} " \
-            "#{Utils.pluralize("dependent", dependent_count)}",
+            "#{action} #{dependent_count} #{Utils.pluralize("dependent", dependent_count)}",
             Formatter.version_changes(summary.dependent_version_changes),
           )
         end

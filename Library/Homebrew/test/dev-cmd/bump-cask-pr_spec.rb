@@ -97,12 +97,13 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     it "updates a cask disabled only on the current arch" do
       cask_path = CoreCaskTap.instance.new_cask_path("test")
       cask_path.dirname.mkpath
+      architecture = Hardware::CPU.arm? ? "arm" : "intel"
       cask_path.write <<~RUBY
         cask "test" do
           version "1.2.3"
           sha256 :no_check
 
-          on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+          on_#{architecture} do
             disable! date: "2020-01-01", because: :unmaintained
           end
         end
@@ -124,12 +125,13 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     it "updates a cask disabled only on the current OS" do
       cask_path = CoreCaskTap.instance.new_cask_path("test")
       cask_path.dirname.mkpath
+      platform = OS.mac? ? "macos" : "linux"
       cask_path.write <<~RUBY
         cask "test" do
           version "1.2.3"
           sha256 :no_check
 
-          on_#{OS.mac? ? "macos" : "linux"} do
+          on_#{platform} do
             disable! date: "2020-01-01", because: :unmaintained
           end
         end

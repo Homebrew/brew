@@ -268,11 +268,12 @@ module RuboCop
                   install_steps_block_source(:post_install_steps, step_lines, post_install_def.source_range.column),
                 )
               else
+                step_block = install_steps_block_source(:post_install_steps, step_lines,
+                                                        post_install_def.source_range.column)
+                indentation = " " * post_install_def.source_range.column
                 corrector.insert_before(
                   post_install_def.source_range,
-                  "#{install_steps_block_source(:post_install_steps, step_lines,
-                                                post_install_def.source_range.column)}\n\n" \
-                  "#{" " * post_install_def.source_range.column}",
+                  "#{step_block}\n\n#{indentation}",
                 )
               end
 

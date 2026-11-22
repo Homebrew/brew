@@ -26,12 +26,13 @@ RSpec.describe Homebrew::DevCmd::Bump do
   end
   let(:f_partially_disabled_arch) do
     path = mktmpdir/"partially_disabled_arch_formula.rb"
+    architecture = Hardware::CPU.arm? ? "arm" : "intel"
     path.write <<~RUBY
       class PartiallyDisabledArchFormula < Formula
         desc "Partially disabled (arch) formula"
         url "https://brew.sh/test-1.2.3.tgz"
 
-        on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+        on_#{architecture} do
           disable! date: "2020-01-01", because: "Testing"
         end
       end
@@ -41,12 +42,13 @@ RSpec.describe Homebrew::DevCmd::Bump do
   end
   let(:f_partially_disabled_os) do
     path = mktmpdir/"partially_disabled_os_formula.rb"
+    platform = OS.mac? ? "macos" : "linux"
     path.write <<~RUBY
       class PartiallyDisabledOsFormula < Formula
         desc "Partially disabled (OS) formula"
         url "https://brew.sh/test-1.2.3.tgz"
 
-        on_#{OS.mac? ? "macos" : "linux"} do
+        on_#{platform} do
           disable! date: "2020-01-01", because: "Testing"
         end
       end
@@ -85,6 +87,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     RUBY
   end
   let(:c_partially_disabled_arch) do
+    architecture = Hardware::CPU.arm? ? "arm" : "intel"
     Cask::CaskLoader.from_content(<<~RUBY)
       cask "partially_disabled_arch_cask" do
         version "1.2.3"
@@ -92,13 +95,14 @@ RSpec.describe Homebrew::DevCmd::Bump do
         name "Partially Disabled Arch Cask"
         desc "Partially disabled (arch) cask"
 
-        on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+        on_#{architecture} do
           disable! date: "2020-01-01", because: "Testing"
         end
       end
     RUBY
   end
   let(:c_partially_disabled_os) do
+    platform = OS.mac? ? "macos" : "linux"
     Cask::CaskLoader.from_content(<<~RUBY)
       cask "partially_disabled_os_cask" do
         version "1.2.3"
@@ -106,7 +110,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
         name "Partially Disabled OS Cask"
         desc "Partially disabled (OS) cask"
 
-        on_#{OS.mac? ? "macos" : "linux"} do
+        on_#{platform} do
           disable! date: "2020-01-01", because: "Testing"
         end
       end

@@ -14,7 +14,8 @@ RSpec.describe Utils do
       [Formula, nil, "foo", "foo"],
       [Cask::Cask, nil, "foo", "foo"],
     ].each do |klass, tap_name, full_name, expected|
-      it "qualifies #{klass} from #{tap_name || "no tap"}" do
+      tap_description = tap_name || "no tap"
+      it "qualifies #{klass} from #{tap_description}" do
         T.bind(self, RSpec::Core::ExampleGroup)
 
         package = instance_double(klass, full_name:, tap: tap_name ? Tap.fetch(tap_name) : nil)

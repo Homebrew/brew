@@ -196,7 +196,8 @@ RSpec.describe SharedAudits do
     end
 
     it "ignores the IANA record for the TLD when the registry publishes no date" do
-      mock_whois stdout: "#{whois_output.lines.take(5).join}Domain: brew.sh\nStatus: connect\n"
+      whois_header = whois_output.lines.take(5).join
+      mock_whois stdout: "#{whois_header}Domain: brew.sh\nStatus: connect\n"
 
       expect(described_class.new_domain_problem("https://brew.sh")).to be_nil
     end

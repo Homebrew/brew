@@ -112,6 +112,7 @@ module Homebrew
           end
 
           commit_message = "#{updated_formula.name}: bump python resources"
+          message = args.message.presence || "Created with `brew bump-python-resources-pr`."
           info = Homebrew::Bump::BumpInfo.new(
             commits:     [
               Homebrew::Bump::Commit.new(
@@ -122,7 +123,7 @@ module Homebrew
             ],
             branch_name: args.branch || "bump-python-resources-#{updated_formula.name}-#{Time.now.to_i}",
             pr_message:  <<~MSG,
-              #{args.message.presence || "Created with `brew bump-python-resources-pr`."}
+              #{message}
 
               The following resources have known vulnerabilities:
 

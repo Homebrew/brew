@@ -94,8 +94,9 @@ RSpec.describe Homebrew::DevCmd::Cat do
   it "prints the content of a given Formula and Cask", :cask, :integration_test do
     formula_file = setup_test_formula "testball"
 
+    cask_source = Regexp.escape(cask_path("local-caffeine").read)
     expect { brew "cat", "testball", "local-caffeine" }
-      .to output(/#{Regexp.escape(formula_file.read)}.*#{Regexp.escape(cask_path("local-caffeine").read)}/m).to_stdout
+      .to output(/#{Regexp.escape(formula_file.read)}.*#{cask_source}/m).to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
   end

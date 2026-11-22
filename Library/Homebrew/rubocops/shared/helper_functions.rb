@@ -225,7 +225,7 @@ module RuboCop
           node:        T.nilable(RuboCop::AST::Node),
           method_name: Symbol,
           args:        Object,
-          _block:      T.nilable(T.proc.params(method: RuboCop::AST::Node).void),
+          _block:      T.nilable(T.proc.params(method: RuboCop::AST::SendNode).void),
         ).returns(T::Array[RuboCop::AST::SendNode])
       }
       def find_method_with_args(node, method_name, *args, &_block)

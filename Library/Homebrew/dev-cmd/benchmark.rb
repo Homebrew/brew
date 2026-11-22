@@ -111,15 +111,16 @@ module Homebrew
         begin
           Dir.mktmpdir("brew-benchmark") do |temporary_directory|
             runs.to_i.times do |iteration|
+              run = iteration + 1
               # Machines drift by tens of milliseconds over a run, so rotate rather
               # than repeat the order: every workload is then measured from several
               # positions instead of always the same one.
               scenarios.rotate(iteration).each do |scenario|
-                ohai "#{scenario.workload.tr("_", " ")} #{scenario.operation}",
-                     "run #{iteration + 1}, #{scenario.formulae.length} formulae"
+                workload_name = scenario.workload.tr("_", " ")
+                ohai "#{workload_name} #{scenario.operation}",
+                     "run #{run}, #{scenario.formulae.length} formulae"
                 prepare(scenario, install_formula)
-                samples << measure(hyperfine, scenario, iteration + 1, samples.length + 1,
-                                   Pathname(temporary_directory))
+                samples << measure(hyperfine, scenario, run, samples.length + 1, Pathname(temporary_directory))
               end
             end
           end
@@ -129,7 +130,7 @@ module Homebrew
 
         output = Pathname("benchmark/results.json").expand_path
         output.dirname.mkpath
-        output.write("#{JSON.pretty_generate({
+        report = JSON.pretty_generate({
           "schema_version" => 1,
           "generated_at"   => Time.now.utc.iso8601,
           "brew_version"   => HOMEBREW_VERSION,
@@ -137,7 +138,8 @@ module Homebrew
           "formulae"       => formulae,
           "phases"         => PHASES,
           "samples"        => samples.map(&:serialize),
-        })}\n")
+        })
+        output.write("#{report}\n")
         ohai "Benchmark results"
         puts "#{"operation".ljust(10)}#{"workload".ljust(15)}#{"batch".rjust(5)}#{"wall".rjust(10)}  slowest phases"
         samples.group_by { |sample| [sample.operation, sample.workload, sample.batch_size] }
@@ -149,10 +151,15 @@ module Homebrew
           end
           slowest = means.reject { |_, total| total.zero? }
                          .max_by(3) { |_, total| total }
-                         .map { |phase, total| "#{phase} #{total / 1000}ms" }
+                         .map do |phase, total|
+                           milliseconds = total / 1000
+                           "#{phase} #{milliseconds}ms"
+                         end
           wall = workload_samples.sum(&:wall_time_seconds) / workload_samples.length
-          puts "#{operation.ljust(10)}#{workload.tr("_", " ").ljust(15)}#{batch_size.to_s.rjust(5)}" \
-               "#{format("%.3fs", wall).rjust(10)}  #{slowest.join(", ")}"
+          workload_column = workload.tr("_", " ").ljust(15)
+          wall_column = format("%.3fs", wall).rjust(10)
+          puts "#{operation.ljust(10)}#{workload_column}#{batch_size.to_s.rjust(5)}" \
+               "#{wall_column}  #{slowest.join(", ")}"
         end
         ohai "Full results written to #{output}"
       end

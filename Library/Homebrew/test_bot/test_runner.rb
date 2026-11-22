@@ -87,14 +87,14 @@ module Homebrew
             output_lines = []
 
             if ignored_steps.present?
-              output_lines += [
-                "Warning: #{ignored_steps.count} failed step#{"s" if ignored_steps.count > 1} ignored!",
-              ]
+              ignored_count = Utils.pluralize("failed step", ignored_steps.count, include_count: true)
+              output_lines << "Warning: #{ignored_count} ignored!"
               output_lines += ignored_steps.map(&:command_trimmed)
             end
 
             if failed_steps.present?
-              output_lines += ["Error: #{failed_steps.count} failed step#{"s" if failed_steps.count > 1}!"]
+              failed_count = Utils.pluralize("failed step", failed_steps.count, include_count: true)
+              output_lines << "Error: #{failed_count}!"
               output_lines += failed_steps.map(&:command_trimmed)
             end
 

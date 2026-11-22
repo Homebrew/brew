@@ -236,7 +236,7 @@ RSpec.describe Homebrew::API do
       end
 
       test_each([false, true]) do |corrupt|
-        it "holds the shared download lock when refreshing a #{corrupt ? "corrupt fresh" : "stale"} cache" do
+        it "holds the shared download lock when refreshing the cache (corrupt: #{corrupt})" do
           if corrupt
             target.write json_invalid
             FileUtils.touch(target)

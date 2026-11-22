@@ -247,8 +247,9 @@ module OS
       sig { returns(String) }
       def self.installation_instructions
         if OS::Mac.version.prerelease?
+          major_version = minimum_version.split(".").first
           <<~EOS
-            Install the Command Line Tools for Xcode #{minimum_version.split(".").first} from:
+            Install the Command Line Tools for Xcode #{major_version} from:
               #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}
           EOS
         else

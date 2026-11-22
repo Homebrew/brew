@@ -37,13 +37,13 @@ desc "Run HTMLProofer to validate the HTML output."
 task test: :build do
   require "html-proofer"
 
-  HOMEBREW_USER_AGENT = ENV.fetch("HOMEBREW_USER_AGENT", nil).freeze
+  user_agent = [ENV.fetch("HOMEBREW_USER_AGENT", nil), "HTMLProofer/#{HTMLProofer::VERSION}"].compact.join(" ")
   HTMLProofer.check_directory(
     "./_site",
     parallel:            { in_threads: 4 },
     typhoeus:            {
       headers: {
-        "User-Agent" => "#{"#{HOMEBREW_USER_AGENT} " if HOMEBREW_USER_AGENT}HTMLProofer/#{HTMLProofer::VERSION}",
+        "User-Agent" => user_agent,
       },
     },
     favicon:             true,

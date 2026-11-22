@@ -287,7 +287,7 @@ class Reporter
         rescue Exception => e # rubocop:disable Lint/RescueException
           if Homebrew::EnvConfig.developer?
             require "utils/backtrace"
-            onoe "#{e.message}\n#{Utils::Backtrace.clean(e)&.join("\n")}"
+            onoe [e.message, Utils::Backtrace.clean(e)].join("\n")
           end
         end
         next
@@ -394,12 +394,13 @@ class Reporter
   def ensure_trusted_migration_target!(type, full_name, reinstall: false)
     return true if Homebrew::Trust.trusted?(type, full_name)
 
+    command = reinstall ? "reinstall" : "install"
     opoo <<~EOS
       Not automatically installing #{full_name} because the migration target is
       not trusted.
       To complete the migration yourself, run:
         brew trust --#{type} #{full_name}
-        brew #{reinstall ? "reinstall" : "install"} --#{type} #{full_name}
+        brew #{command} --#{type} #{full_name}
     EOS
     false
   end

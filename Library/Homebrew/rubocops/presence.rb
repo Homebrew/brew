@@ -126,7 +126,8 @@ module RuboCop
         sig { params(node: RuboCop::AST::IfNode).returns(String) }
         def current(node)
           if !node.ternary? && node.source.include?("\n")
-            "#{node.loc.keyword.with(end_pos: node.condition.loc.selector.end_pos).source} ... end"
+            condition = node.loc.keyword.with(end_pos: node.condition.loc.selector.end_pos).source
+            "#{condition} ... end"
           else
             node.source.gsub(/\n\s*/, " ")
           end

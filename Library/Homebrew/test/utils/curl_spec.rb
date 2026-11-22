@@ -253,47 +253,50 @@ RSpec.describe "Utils::Curl" do
   let(:response_text) do
     response_text = {}
 
+    ok_headers = response_hash[:ok][:headers]
     response_text[:ok] = <<~EOS
-      HTTP/1.1 #{response_hash[:ok][:status_code]} #{response_hash[:ok][:status_text]}\r
-      Cache-Control: #{response_hash[:ok][:headers]["cache-control"]}\r
-      Content-Type: #{response_hash[:ok][:headers]["content-type"]}\r
-      Date: #{response_hash[:ok][:headers]["date"]}\r
-      Expires: #{response_hash[:ok][:headers]["expires"]}\r
-      Last-Modified: #{response_hash[:ok][:headers]["last-modified"]}\r
-      Content-Length: #{response_hash[:ok][:headers]["content-length"]}\r
+      HTTP/1.1 #{response_hash.dig(:ok, :status_code)} #{response_hash.dig(:ok, :status_text)}\r
+      Cache-Control: #{ok_headers["cache-control"]}\r
+      Content-Type: #{ok_headers["content-type"]}\r
+      Date: #{ok_headers["date"]}\r
+      Expires: #{ok_headers["expires"]}\r
+      Last-Modified: #{ok_headers["last-modified"]}\r
+      Content-Length: #{ok_headers["content-length"]}\r
       \r
     EOS
 
-    response_text[:ok_no_status_text] = response_text[:ok].sub(" #{response_hash[:ok][:status_text]}", "")
+    response_text[:ok_no_status_text] = response_text[:ok].sub(" #{response_hash.dig(:ok, :status_text)}", "")
     response_text[:ok_blank_header_name] = response_text[:ok].sub(
-      "#{response_hash[:ok][:headers]["date"]}\r\n",
-      "#{response_hash[:ok][:headers]["date"]}\r\n: Test\r\n",
+      "#{ok_headers["date"]}\r\n",
+      "#{ok_headers["date"]}\r\n: Test\r\n",
     )
     response_text[:ok_blank_header_value] = response_text[:ok].sub(
-      "#{response_hash[:ok][:headers]["date"]}\r\n",
-      "#{response_hash[:ok][:headers]["date"]}\r\nRange:\r\n",
+      "#{ok_headers["date"]}\r\n",
+      "#{ok_headers["date"]}\r\nRange:\r\n",
     )
 
+    redirect = response_hash[:redirection]
     response_text[:redirection] = response_text[:ok].sub(
-      "HTTP/1.1 #{response_hash[:ok][:status_code]} #{response_hash[:ok][:status_text]}\r",
-      "HTTP/1.1 #{response_hash[:redirection][:status_code]} #{response_hash[:redirection][:status_text]}\r\n" \
-      "Location: #{response_hash[:redirection][:headers]["location"]}\r",
+      "HTTP/1.1 #{response_hash.dig(:ok, :status_code)} #{response_hash.dig(:ok, :status_text)}\r",
+      "HTTP/1.1 #{redirect[:status_code]} #{redirect[:status_text]}\r\n" \
+      "Location: #{redirect.dig(:headers, "location")}\r",
     )
 
     response_text[:redirection_to_ok] = "#{response_text[:redirection]}#{response_text[:ok]}"
 
+    final_redirect = response_text[:redirection].sub(location_urls[0], location_urls[2])
+    first_redirect = response_text[:redirection].sub(location_urls[0], location_urls[1])
     response_text[:redirections_to_ok] = <<~EOS
-      #{response_text[:redirection].sub(location_urls[0], location_urls[2])}
-      #{response_text[:redirection].sub(location_urls[0], location_urls[1])}
+      #{final_redirect}
+      #{first_redirect}
       #{response_text[:redirection]}
       #{response_text[:ok]}
     EOS
 
+    cookies = response_hash[:duplicate_header][:headers]["set-cookie"]
     response_text[:duplicate_header] = response_text[:ok].sub(
       /\r\n\Z/,
-      "Set-Cookie: #{response_hash[:duplicate_header][:headers]["set-cookie"][0]}\r\n" \
-      "Set-Cookie: #{response_hash[:duplicate_header][:headers]["set-cookie"][1]}\r\n" \
-      "Set-Cookie: #{response_hash[:duplicate_header][:headers]["set-cookie"][2]}\r\n\r\n",
+      "Set-Cookie: #{cookies[0]}\r\nSet-Cookie: #{cookies[1]}\r\nSet-Cookie: #{cookies[2]}\r\n\r\n",
     )
 
     response_text
@@ -813,7 +816,7 @@ RSpec.describe "Utils::Curl" do
         ["7.54.1", "7.55.0", [], "", 56],
         ["7.55.0", "7.54.1", %w[--header @-], "Authorization: token test-token\n", 56],
       ]) do |version, system_version, header_args, input, exit_status|
-        it "uses brewed curl #{version} with system curl #{system_version} and exit status #{exit_status || 0}" do
+        it "uses brewed curl #{version} with system curl #{system_version} and exit status #{exit_status.to_i}" do
           ENV["HOMEBREW_CURL_VERSION"] = system_version
           prefix = HOMEBREW_CELLAR/"curl/#{version}_1"
           (prefix/"bin").mkpath
@@ -1387,21 +1390,23 @@ RSpec.describe "Utils::Curl" do
     end
 
     it "returns an absolute URL when absolutize is true and a base URL is provided" do
+      redirect_headers = response_hash[:redirection_no_scheme][:headers]
       expect(
         curl_response_last_location(
           [response_hash[:redirection_no_scheme], response_hash[:ok]],
           absolutize: true,
           base_url:   "https://brew.sh/test",
         ),
-      ).to eq("https:#{response_hash[:redirection_no_scheme][:headers]["location"]}")
+      ).to eq("https:#{redirect_headers["location"]}")
 
+      redirect_headers = response_hash[:redirection_root_relative][:headers]
       expect(
         curl_response_last_location(
           [response_hash[:redirection_root_relative], response_hash[:ok]],
           absolutize: true,
           base_url:   "https://brew.sh/test",
         ),
-      ).to eq("https://brew.sh#{response_hash[:redirection_root_relative][:headers]["location"]}")
+      ).to eq("https://brew.sh#{redirect_headers["location"]}")
 
       expect(
         curl_response_last_location(

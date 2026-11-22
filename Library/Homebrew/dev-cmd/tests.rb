@@ -111,7 +111,8 @@ module Homebrew
             "parallel_runtime_rspec", ("generic" if args.generic?), ("online" if args.online?), "log"
           ].compact.join(".")
 
-          parallel_rspec_log_path = "#{ENV["CI"] ? "tests" : HOMEBREW_CACHE}/#{parallel_rspec_log_name}"
+          log_dir = ENV["CI"] ? "tests" : HOMEBREW_CACHE
+          parallel_rspec_log_path = "#{log_dir}/#{parallel_rspec_log_name}"
           # A run that may not record every file must not replace the log a full run
           # reads: `--only`, `--changed` and `--shard` cover a subset by design, and
           # `--fail-fast` stops its workers early.

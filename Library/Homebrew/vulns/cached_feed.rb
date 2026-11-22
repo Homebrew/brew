@@ -43,8 +43,8 @@ module Homebrew
       rescue ErrorDuringExecution, Error => e
         raise unless cache_file.exist?
 
-        opoo "Failed to refresh #{cache_filename} (#{e.message.lines.first&.strip}); " \
-             "using cached copy from #{cache_file.mtime}."
+        error_message = e.message.lines.first&.strip
+        opoo "Failed to refresh #{cache_filename} (#{error_message}); using cached copy from #{cache_file.mtime}."
         from_file(cache_file)
       end
 

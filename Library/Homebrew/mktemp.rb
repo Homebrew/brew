@@ -114,7 +114,8 @@ class Mktemp
           # Cover for misconfigured NSS setups
           nil
         end
-        opoo "Failed setting group \"#{group_name || group_id}\" on #{tmpdir}"
+        group = group_name || group_id
+        opoo "Failed setting group \"#{group}\" on #{tmpdir}"
       end
 
       tmpdir

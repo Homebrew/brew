@@ -357,7 +357,8 @@ module Homebrew
         hidden = true if odeprecated || odisabled
         description = option_description(description, names, hidden:)
         if odisabled
-          description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
+          replacement_note = replacement.present? ? "; replaced by #{replacement}" : ""
+          description += " (disabled#{replacement_note})"
         else
           process_option(names, description, type: flag_type, hidden:, subcommands:)
         end

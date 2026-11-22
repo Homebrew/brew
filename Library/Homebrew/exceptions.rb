@@ -560,8 +560,9 @@ class FormulaConflictError < RuntimeError
     message = []
     message << "Cannot install #{formula.full_name} because conflicting formulae are installed."
     message.concat conflicts.map { |c| conflict_message(c) } << ""
+    conflict_names = conflicts.map(&:name) * " "
     message << <<~EOS
-      Please `brew unlink #{conflicts.map(&:name) * " "}` before continuing.
+      Please `brew unlink #{conflict_names}` before continuing.
 
       Unlinking removes a formula's symlinks from #{HOMEBREW_PREFIX}. You can
       link the formula again after the install finishes. You can `--force` this
@@ -1018,11 +1019,12 @@ end
 class CyclicDependencyError < RuntimeError
   sig { params(strongly_connected_components: T::Array[T.untyped]).void }
   def initialize(strongly_connected_components)
+    cycle_list = strongly_connected_components.select { |packages| packages.count > 1 }
+                                              .map { |packages| Utils::Text.to_sentence(packages) }
+                                              .join("\n  ")
     super <<~EOS
       The following packages contain cyclic dependencies:
-        #{strongly_connected_components.select { |packages| packages.count > 1 }
-                                                .map { |packages| Utils::Text.to_sentence(packages) }
-                                                .join("\n  ")}
+        #{cycle_list}
     EOS
   end
 end

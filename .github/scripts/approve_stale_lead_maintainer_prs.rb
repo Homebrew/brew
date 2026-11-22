@@ -295,8 +295,9 @@ class StaleLeadMaintainerPrApproval
       next if submitted_at < data.created_at
       next if T.cast(review_user.fetch("type"), String) == "Bot"
 
-      "@#{T.cast(review_user.fetch("login"), String)} #{T.cast(review.fetch("state"), String).downcase} " \
-        "at #{submitted_at.utc.iso8601}"
+      login = T.cast(review_user.fetch("login"), String)
+      state = T.cast(review.fetch("state"), String).downcase
+      "@#{login} #{state} at #{submitted_at.utc.iso8601}"
     end
     data.no_human_review_since_creation = data.human_reviews_since_creation.empty?
     data.copilot_reviewed = reviews.any? do |review|
@@ -348,17 +349,17 @@ class StaleLeadMaintainerPrApproval
 
       name = T.cast(check_run.fetch("name"), String)
       url = T.cast(check_run.fetch("html_url", nil), T.nilable(String))
-      "#{name}: #{status}#{"/#{conclusion}" unless conclusion.nil?}" \
-        "#{" (#{url})" unless url.nil?}"
+      result = [status, conclusion].compact.join("/")
+      url ? "#{name}: #{result} (#{url})" : "#{name}: #{result}"
     end
     data.failing_ci_jobs << "No check runs found." if check_runs.empty?
     T.cast(commit_status.fetch("statuses"), GitHubPayloads).each do |status|
-      next if T.cast(status.fetch("state"), String) == "success"
+      state = T.cast(status.fetch("state"), String)
+      next if state == "success"
 
       context = T.cast(status.fetch("context"), String)
       url = T.cast(status.fetch("target_url", nil), T.nilable(String))
-      data.failing_ci_jobs << "#{context}: #{T.cast(status.fetch("state"), String)}" \
-                              "#{" (#{url})" unless url.nil?}"
+      data.failing_ci_jobs << (url ? "#{context}: #{state} (#{url})" : "#{context}: #{state}")
     end
     data.ci_passing = data.failing_ci_jobs.empty?
 
@@ -392,7 +393,8 @@ class StaleLeadMaintainerPrApproval
     puts "- Result: #{result}"
     puts "- Author: @#{data.author}"
     puts "- Not from a fork: #{status_label(data.not_from_fork)}"
-    puts "- Not a draft: #{status_label(!data.draft)}"
+    ready_for_review = !data.draft
+    puts "- Not a draft: #{status_label(ready_for_review)}"
     puts "- Weekday approval window: #{status_label(data.weekday_approval_window)}"
     puts "- Created at: #{data.created_at.utc.iso8601}"
     puts "- Created at least #{HUMAN_REVIEW_WINDOW_HOURS} hours ago: #{status_label(data.old_enough_for_approval)}"
@@ -412,14 +414,16 @@ class StaleLeadMaintainerPrApproval
     else
       puts "- Human reviews since creation: not checked"
     end
-    puts "- Copilot reviewed: #{status_label(data.reviews_checked ? data.copilot_reviewed : nil)}"
+    copilot_reviewed = data.copilot_reviewed if data.reviews_checked
+    puts "- Copilot reviewed: #{status_label(copilot_reviewed)}"
     sensitive_files_unchanged = data.sensitive_files_unchanged if data.sensitive_files_checked
     puts "- .github/ and sensitive files unchanged: #{status_label(sensitive_files_unchanged)}"
     if data.sensitive_files_checked && !data.changed_sensitive_files.empty?
       puts "- Changed .github/ or sensitive files:"
       data.changed_sensitive_files.each { |file| puts "  - #{file}" }
     end
-    puts "- CI passing: #{status_label(data.ci_checked ? data.ci_passing : nil)}"
+    ci_passing = data.ci_passing if data.ci_checked
+    puts "- CI passing: #{status_label(ci_passing)}"
     if data.ci_checked
       puts "- Failing CI jobs:"
       if data.failing_ci_jobs.empty?
@@ -487,7 +491,8 @@ class StaleLeadMaintainerPrApproval
         summary.puts "- Pull request: [##{data.number}](#{data.pr_url})"
         summary.puts "- Author: [@#{data.author}](#{data.author_url})"
         summary.puts "- Not from a fork: #{data.not_from_fork}"
-        summary.puts "- Not a draft: #{!data.draft}"
+        ready_for_review = !data.draft
+        summary.puts "- Not a draft: #{ready_for_review}"
         summary.puts "- Weekday approval window: #{data.weekday_approval_window}"
         summary.puts "- Created at: #{data.created_at.utc.iso8601}"
         summary.puts "- Created at least #{HUMAN_REVIEW_WINDOW_HOURS} hours ago: " \

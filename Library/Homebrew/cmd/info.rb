@@ -305,10 +305,11 @@ module Homebrew
           puts "Formula from #{github_info(formula)}"
           puts "Not installed"
         else
-          puts "Formula from #{formula.tap&.name ||
-                                T.cast(tab.source["tap"], T.nilable(String)) ||
-                                T.cast(tab.source["path"], T.nilable(String)) ||
-                                github_info(formula)}"
+          source = formula.tap&.name ||
+                   T.cast(tab.source["tap"], T.nilable(String)) ||
+                   T.cast(tab.source["path"], T.nilable(String)) ||
+                   github_info(formula)
+          puts "Formula from #{source}"
           puts Utils::InfoDisplay.installation_summary(version, tab)
         end
       end
@@ -409,11 +410,11 @@ module Homebrew
           next if deps.empty?
 
           optional_type = ["recommended", "optional"].include?(type)
-          tab_deps = tab_runtime_deps if kegs.any? && type == "required"
-          mark_uninstalled = kegs.any? && !optional_type
-          "#{type.capitalize} (#{deps.count}): " \
-            "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
-                                     formula_outdated: outdated, missing_library_deps:)}"
+          tab_deps = tab_runtime_deps if installed && type == "required"
+          mark_uninstalled = installed && !optional_type
+          dependency_list = decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
+                                                  formula_outdated: outdated, missing_library_deps:)
+          "#{type.capitalize} (#{deps.count}): #{dependency_list}"
         end
         missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
         if missing_library_names.present?
@@ -502,7 +503,8 @@ module Homebrew
         return unless HOMEBREW_CELLAR.exist?
 
         count = Formula.racks.length
-        puts "#{Utils.pluralize("keg", count, include_count: true)}, #{HOMEBREW_CELLAR.dup.abv}"
+        keg_count = Utils.pluralize("keg", count, include_count: true)
+        puts "#{keg_count}, #{HOMEBREW_CELLAR.dup.abv}"
       end
 
       sig { void }
@@ -553,18 +555,20 @@ module Homebrew
             puts oh1_title(info_summary_title(
                              formula_or_cask.full_name,
                              formula_or_cask.desc.presence&.then do |desc|
-                               "#{if formula_or_cask.name.present?
-                                    "(#{formula_or_cask.name.join(", ")}) "
-                               end}#{desc}"
+                               display_names = if formula_or_cask.name.present?
+                                 "(#{formula_or_cask.name.join(", ")}) "
+                               end
+                               "#{display_names}#{desc}"
                              end,
                              installed:,
                            ))
             if installed
-              puts "Cask from #{T.cast(formula_or_cask.tap, T.nilable(Tap))&.name ||
-                                 T.cast(tab.source["tap"], T.nilable(String)) ||
-                                 formula_or_cask.sourcefile_path&.to_s ||
-                                 T.cast(tab.source["path"], T.nilable(String)) ||
-                                 github_info(formula_or_cask)}"
+              source = T.cast(formula_or_cask.tap, T.nilable(Tap))&.name ||
+                       T.cast(tab.source["tap"], T.nilable(String)) ||
+                       formula_or_cask.sourcefile_path&.to_s ||
+                       T.cast(tab.source["path"], T.nilable(String)) ||
+                       github_info(formula_or_cask)
+              puts "Cask from #{source}"
               puts Utils::InfoDisplay.installation_summary(installed_version, tab)
             else
               puts "Cask from #{github_info(formula_or_cask)}"
@@ -668,7 +672,8 @@ module Homebrew
       def info_summary_title(name, description, installed:)
         name = pretty_installed(name) if installed
 
-        "#{name}#{": #{description}" if description.present?}"
+        description_suffix = description.present? ? ": #{description}" : ""
+        "#{name}#{description_suffix}"
       end
 
       sig { params(formula: Formula, verbose: T::Boolean).returns(T::Array[Utils::InfoDisplay::InstalledVersion]) }
@@ -756,7 +761,8 @@ module Homebrew
       def dep_display_s(dep)
         return dep.name if dep.option_tags.empty?
 
-        "#{dep.name} #{dep.option_tags.map { |o| "--#{o}" }.join(" ")}"
+        options = dep.option_tags.map { |o| "--#{o}" }.join(" ")
+        "#{dep.name} #{options}"
       end
 
       sig { params(cask: Cask::Cask).void }

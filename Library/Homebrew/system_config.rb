@@ -137,15 +137,21 @@ module SystemConfig
       if tap.installed?
         out.puts "#{tap_name} origin: #{tap.remote}" if tap.remote != tap.default_remote
         head, last_commit, branch = tap.git_repository.head_info
-        out.puts "#{tap_name} HEAD: #{head || "(none)"}"
-        out.puts "#{tap_name} last commit: #{last_commit || "never"}"
+        display_head = head || "(none)"
+        out.puts "#{tap_name} HEAD: #{display_head}"
+        display_commit = last_commit || "never"
+        out.puts "#{tap_name} last commit: #{display_commit}"
         default_branches = %w[main master].freeze
-        out.puts "#{tap_name} branch: #{branch || "(none)"}" if default_branches.exclude?(branch)
+        if default_branches.exclude?(branch)
+          display_branch = branch || "(none)"
+          out.puts "#{tap_name} branch: #{display_branch}"
+        end
       end
 
       json_file = Homebrew::API::HOMEBREW_CACHE_API/json_file_name
       if json_file.exist?
-        out.puts "#{tap_name} JSON: #{json_file.mtime.utc.strftime("%d %b %H:%M UTC")}"
+        modified_at = json_file.mtime.utc.strftime("%d %b %H:%M UTC")
+        out.puts "#{tap_name} JSON: #{modified_at}"
       elsif !tap.installed?
         out.puts "#{tap_name}: N/A"
       end
@@ -180,7 +186,8 @@ module SystemConfig
         value = Homebrew::EnvConfig.public_send(Homebrew::EnvConfig.env_method_name(env_symbol, hash))
 
         if hash[:boolean]
-          out.puts "#{env}: #{value ? "set" : "false"}"
+          setting = value ? "set" : "false"
+          out.puts "#{env}: #{setting}"
           next
         end
 
