@@ -358,7 +358,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     after { Formula["pinnedball"].unpin }
 
     test_each([[], ["--yes"], ["--dry-run"]]) do |flags|
-      it "lists pinned formula versions once with #{flags.presence || "default options"}" do
+      it "lists pinned formula versions once with flags #{flags.inspect}" do
         expect { described_class.new(["--formula", *flags]).run }
           .to output("==> 1 Pinned formula\npinnedball 1.0 -> 2.0\n").to_stdout
           .and not_to_output(/Not upgrading.*pinned/).to_stderr
@@ -373,7 +373,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   context "with pinned casks", :cask do
     test_each([[], ["--yes"], ["--dry-run"]]) do |flags|
-      it "lists pinned cask versions once with #{flags.presence || "default options"}" do
+      it "lists pinned cask versions once with flags #{flags.inspect}" do
         %w[local-caffeine local-transmission-zip].each do |token|
           InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/#{token}")))
           Cask::CaskLoader.load(token).pin
@@ -392,7 +392,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
         %w[local-caffeine local-transmission-zip].each { |token| Cask::CaskLoader.load(token).unpin }
       end
 
-      it "lists a named pinned cask's version with #{flags.presence || "default options"}" do
+      it "lists a named pinned cask's version with flags #{flags.inspect}" do
         InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
         Cask::CaskLoader.load("local-caffeine").pin
 
@@ -844,7 +844,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   test_each([[], ["testball"]]) do |named|
-    it "keeps the dry-run plan when dependencies cannot be computed with #{named.presence || "no names"}" do
+    it "keeps the dry-run plan when dependencies cannot be computed with names #{named.inspect}" do
       cmd = described_class.new(["--dry-run", *named])
       formula = formula("testball") do
         T.bind(self, T.class_of(Formula))
@@ -863,12 +863,12 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
         ),
       )
 
+      requested_prefix = named.any? ? "requested " : ""
       expect do
         cmd.upgrade_outdated_formulae!([])
         cmd.show_final_upgrade_summary
       end
-        .to output("==> Would upgrade 1 #{"requested " if named.any?}outdated package\n" \
-                   "testball 0.1 -> 0.2\n").to_stdout
+        .to output("==> Would upgrade 1 #{requested_prefix}outdated package\ntestball 0.1 -> 0.2\n").to_stdout
         .and output("Error: testball: Unsatisfied requirements failed this build.\n").to_stderr
     end
   end
@@ -1431,7 +1431,11 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     allow(incompatible_installer).to receive(:check_requirements)
       .and_raise(Cask::CaskError, "bad-cask: This cask requires Linux.")
     allow(Cask::Installer).to receive(:new) do |cask, **|
-      (cask == incompatible_cask) ? incompatible_installer : compatible_installer
+      if cask == incompatible_cask
+        incompatible_installer
+      else
+        compatible_installer
+      end
     end
     expect(Homebrew::Install).to receive(:enqueue_cask_installers).with([compatible_installer])
                                                                   .and_return([compatible_installer])

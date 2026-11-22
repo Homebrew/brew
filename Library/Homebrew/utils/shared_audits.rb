@@ -127,7 +127,11 @@ module SharedAudits
       # `# whois.nic.sh` on macOS, `Found a referral to whois.nic.sh.` on Linux.
       if lines.first&.start_with?("% IANA WHOIS server")
         referral_index = lines.index { |line| line.start_with?("# whois.", "Found a referral to ") }
-        lines = referral_index ? lines.drop(referral_index + 1) : []
+        lines = if referral_index
+          lines.drop(referral_index + 1)
+        else
+          []
+        end
       end
 
       lines.each do |line|

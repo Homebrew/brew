@@ -479,7 +479,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     EOS
 
     allow(command).to receive(:previous_maintainer_reports).with("2025-12-01").and_return([])
-    csv_without_history = "#{csv.lines(chomp: true).map { |line| line.rpartition(",").first }.join("\n")}\n"
+    csv_rows = csv.lines(chomp: true).map { |line| line.rpartition(",").first }.join("\n")
+    csv_without_history = "#{csv_rows}\n"
     expect(File).to receive(:write).with("brew-contributions-2025-12-01-to-2026-03-01.csv", csv_without_history)
 
     expect do
@@ -576,7 +577,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         ],
         scan_contributions:                {
           "alice" => Homebrew::DevCmd::Contributions::PRIMARY_REPOS.to_h do |repository|
-            count = (repository == "Homebrew/homebrew-cask") ? 0 : 5
+            cask_repository = repository == "Homebrew/homebrew-cask"
+            count = cask_repository ? 0 : 5
             [repository, { merged_pr_merger: count, approved_pr_review: 0, closed_issue: 0 }]
           end,
         },
@@ -678,7 +680,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       report = Dir.chdir(mktmpdir) do
         from = Date.new(2026, 9, 1)
         while from < Date.new(2026, 11, 24)
-          Pathname("brew-contributions-#{from}-to-#{from + 7}.csv")
+          end_date = from + 7
+          Pathname("brew-contributions-#{from}-to-#{end_date}.csv")
             .write("username,brew first approvals,brew total,core total,cask total\nalice,0,1,1,0\n")
           from += 7
         end
@@ -1349,7 +1352,9 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     }
     allow(Utils).to receive(:safe_popen_read).and_return("brew", "core", "cask")
     allow(command).to receive(:parse_git_log) do |output, _|
-      { "alice" => (output == "cask") ? no_contributions.merge(coauthor: 500) : no_contributions.dup }
+      contributions = no_contributions.dup
+      contributions[:coauthor] = 500 if output == "cask"
+      { "alice" => contributions }
     end
     allow(GitHub).to receive(:search_issues)
       .with("", is: "merged", user: "Homebrew", author: "alice", merged: "2025-12-01..2026-02-28")
@@ -1475,7 +1480,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         { "data"   => { "repository" => (1..100).to_h do |number|
           next ["pr1", nil] if number == 1
 
-          ["pr#{number}", { "author" => { "login" => (number <= 50) ? "ALICE" : "bob" } }]
+          first_batch = number <= 50
+          ["pr#{number}", { "author" => { "login" => first_batch ? "ALICE" : "bob" } }]
         end },
           "errors" => [{ "type" => "NOT_FOUND", "path" => ["repository", "pr1"], "message" => "PR unavailable" }] }
       end
@@ -1494,7 +1500,9 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     it "does not assess inactivity when an unavailable PR could change the result" do
       allow(GitHub::API).to receive_messages(open_graphql: { "data" => {
         "repository" => (1..40).to_h do |number|
-          ["pr#{number}", (number == 1) ? nil : { "author" => { "login" => "bob" } }]
+          next ["pr1", nil] if number == 1
+
+          ["pr#{number}", { "author" => { "login" => "bob" } }]
         end,
       } }, open_rest: { "items" => [], "total_count" => 0 })
 

@@ -55,6 +55,14 @@ module Homebrew
         const :cooldown_skipped_versions, T::Hash[Symbol, Version], default: {}
         const :duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
         const :open_bump_pull_requests, T.nilable(T.any(T::Array[String], String))
+
+        sig { params(type: Symbol).returns(String) }
+        def version_notes(type)
+          notes = +""
+          notes << NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[type]
+          notes << " (deprecated)" if deprecated[type]
+          notes
+        end
       end
 
       cmd_args do
@@ -144,9 +152,10 @@ module Homebrew
             tap = Tap.fetch(args.tap)
             raise UsageError, "`--tap` requires `--auto` for official taps." if tap.official?
 
-            formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.from_path(path) }
-            casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.from_path(path) }
-            formulae + casks
+            formula_files = args.cask? ? [] : tap.formula_files
+            cask_files = args.formula? ? [] : tap.cask_files
+            formula_files.map { |path| Formulary.from_path(path) } +
+              cask_files.map { |path| Cask::CaskLoader.from_path(path) }
           elsif args.installed?
             formulae = args.cask? ? [] : Formula.installed
             casks = args.formula? ? [] : Cask::Caskroom.casks
@@ -191,7 +200,8 @@ module Homebrew
         if formula_or_cask.is_a?(Formula)
           skip = disabled || formula_or_cask.head_only?
           name = formula_or_cask.name
-          text = "Formula is #{disabled ? "disabled" : "HEAD-only"} so not accepting updates.\n"
+          formula_status = disabled ? "disabled" : "HEAD-only"
+          text = "Formula is #{formula_status} so not accepting updates.\n"
         else
           version = formula_or_cask.version
           skip = disabled || version.nil? || version.latest?
@@ -449,7 +459,6 @@ module Homebrew
       def retrieve_and_display_info_and_open_pr(formula_or_cask, name, repositories, ambiguous_cask: false)
         version_info = retrieve_versions_by_arch(formula_or_cask:, repositories:)
 
-        deprecated = version_info.deprecated
         multiple_versions = version_info.multiple_versions
         current_version = version_info.current_version
         new_version = version_info.new_version
@@ -480,22 +489,16 @@ module Homebrew
             version = current_version.public_send(type)
             next unless version
 
-            "#{type.to_s.tr("_", " ")}: #{version}" \
-              "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[type]}" \
-              "#{" (deprecated)" if deprecated[type]}"
+            architecture = type.to_s.tr("_", " ")
+            "#{architecture}: #{version}#{version_info.version_notes(type)}"
           end.join("\n                          ")
         elsif multiple_versions[:current]
-          "arm:   #{current_version.arm || current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:arm]}" \
-            "#{" (deprecated)" if deprecated[:arm]}" \
-            "\n                          " \
-            "intel: #{current_version.intel || current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:intel]}" \
-            "#{" (deprecated)" if deprecated[:intel]}"
+          arm_version = current_version.arm || current_version.general
+          intel_version = current_version.intel || current_version.general
+          "arm:   #{arm_version}#{version_info.version_notes(:arm)}" \
+            "\n                          intel: #{intel_version}#{version_info.version_notes(:intel)}"
         else
-          "#{current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general]}" \
-            "#{" (deprecated)" if deprecated[:general]}"
+          "#{current_version.general}#{version_info.version_notes(:general)}"
         end
 
         new_versions = if multiple_versions[:new] && (new_version.linux_arm || new_version.linux_intel)
@@ -503,7 +506,8 @@ module Homebrew
             version = new_version.public_send(type)
             next unless version
 
-            "#{type.to_s.tr("_", " ")}: #{version}"
+            architecture = type.to_s.tr("_", " ")
+            "#{architecture}: #{version}"
           end.join("\n                          ")
         elsif multiple_versions[:new] && new_version.arm && new_version.intel
           "arm:   #{new_version.arm}
@@ -517,7 +521,8 @@ module Homebrew
           cooldown_days = Utils.pluralize("day", Homebrew::RELEASE_COOLDOWN_DAYS, include_count: true)
           "#{cooldown_skipped_version} (released less than #{cooldown_days} ago)"
         else
-          "#{new_versions}#{" (throttled)" if throttled}"
+          throttle_note = throttled ? " (throttled)" : ""
+          "#{new_versions}#{throttle_note}"
         end
         ohai title
         puts <<~EOS
@@ -651,7 +656,8 @@ module Homebrew
             end
             next if current_arch_version.blank? || new_arch_version <= current_arch_version
 
-            version_args << "--version-#{arch.to_s.tr("_", "-")}=#{new_arch_version}"
+            arch_flag = arch.to_s.tr("_", "-")
+            version_args << "--version-#{arch_flag}=#{new_arch_version}"
           end
         elsif multiple_versions[:current]
           if (new_version_general = new_version.general) && !message?(new_version_general)
@@ -659,7 +665,8 @@ module Homebrew
               current_arch_version = current_version.public_send(arch)
               next if current_arch_version.blank? || new_version_general <= current_arch_version
 
-              version_args << "--version-#{arch.to_s.tr("_", "-")}=#{new_version_general}"
+              arch_flag = arch.to_s.tr("_", "-")
+              version_args << "--version-#{arch_flag}=#{new_version_general}"
             end
           end
 
@@ -1026,7 +1033,8 @@ module Homebrew
           skip_message = skip_messages.join("; ") if skip_messages.present?
           return "error: #{skip_message}", nil if skip_status == "error" && skip_message
 
-          return "skipped - #{skip_message || skip_status}", nil
+          detail = skip_message || skip_status
+          return "skipped - #{detail}", nil
         end
 
         version_info = Livecheck.latest_version(

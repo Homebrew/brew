@@ -81,7 +81,9 @@ module RuboCop
             next if !nodes.key?(:arm) || !nodes.key?(:intel)
 
             offending_node(nodes[:arm][:node])
-            replacement_string = "sha256 arm: #{nodes[:arm][:value].inspect}, intel: #{nodes[:intel][:value].inspect}"
+            arm_value = nodes[:arm][:value].inspect
+            intel_value = nodes[:intel][:value].inspect
+            replacement_string = "sha256 arm: #{arm_value}, intel: #{intel_value}"
             if comments_in_node_ranges?(nodes[:arm][:node], nodes[:intel][:node])
               problem "Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks"
               next
@@ -181,7 +183,8 @@ module RuboCop
                 linux_arches = [:arm64, :intel]
               end
               next unless linux_arches.all? do |arch|
-                values.key?((arch == :arm64) ? :arm64_linux : :x86_64_linux)
+                arm64 = arch == :arm64
+                values.key?(arm64 ? :arm64_linux : :x86_64_linux)
               end
             end
 
@@ -299,17 +302,23 @@ module RuboCop
             continuation = " " * (version_node.source_range.column + prefix.length)
             pairs.each_with_index.map do |(key, value), index|
               key_with_padding = "#{key}:".ljust(width + 2)
-              "#{index.zero? ? prefix : continuation}#{key_with_padding}#{value}"
+              line_prefix = index.zero? ? prefix : continuation
+              "#{line_prefix}#{key_with_padding}#{value}"
             end.join(",\n")
           end
 
           problem OS_SHA256_MESSAGE do |corrector|
+            indentation = " " * version_node.source_range.column
             corrector.insert_after(range_by_whole_lines(version_node.source_range, include_final_newline: false),
-                                   "\n#{" " * version_node.source_range.column}#{replacement}")
+                                   "\n#{indentation}#{replacement}")
             os_blocks_and_sha256 = [[macos_block, macos_sha256], [linux_block, linux_sha256]]
             remove_both_os_blocks = os_blocks_and_sha256.all? { |block, node| block.block_body == node }
             os_blocks_and_sha256.each_with_index do |(block, node), index|
-              removal_node = (block.block_body == node) ? block : node
+              removal_node = if block.block_body == node
+                block
+              else
+                node
+              end
               range = range_by_whole_lines(removal_node.source_range, include_final_newline: true)
               if remove_both_os_blocks && index.zero? &&
                  (preceding_blank_line = processed_source.buffer.source[...range.begin_pos].to_s[/\n[ \t]*\n\z/])

@@ -47,7 +47,7 @@ module Homebrew
             (method_name.count(".") + method_name.count("#")) <= 1
           )
             method_name = method_name.delete_prefix(object.namespace.to_s)
-            method = (method_name.delete_prefix(".") == object.name(true).to_s) ? nil : "{#{method_name}}"
+            method = ("{#{method_name}}" if method_name.delete_prefix(".") != object.name(true).to_s)
           end
 
           if replacement &&

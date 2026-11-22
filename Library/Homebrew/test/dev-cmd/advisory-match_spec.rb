@@ -69,9 +69,10 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
   end
 
   def history_result(introduced: "2.27.0", fixed: "2.28.1", state: :range, reasons: [])
+    range = state == :range
     Homebrew::Vulns::Match::ReconciledHistory.new(
       state:, reasons:,
-      intervals: (state == :range) ? [Homebrew::Vulns::Match::Interval.new(introduced:, fixed:)] : []
+      intervals: range ? [Homebrew::Vulns::Match::Interval.new(introduced:, fixed:)] : []
     )
   end
 
@@ -143,7 +144,11 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
       before do
         allow(matcher).to receive(:reconcile_history).and_call_original
         allow(Homebrew::Vulns::OSV).to receive(:query_batch) do |packages|
-          packages.map { |pkg| (pkg[:name] == "certifi") ? [{ "id" => "CVE-2024-1234" }] : [] }
+          packages.map do |pkg|
+            next [] if pkg[:name] != "certifi"
+
+            [{ "id" => "CVE-2024-1234" }]
+          end
         end
         allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-1234")
                                                               .and_return(resource_data)
@@ -190,7 +195,11 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
       it "does not create records for additional fresh upstream hits" do
         allow(Homebrew::Vulns::OSV).to receive(:query_batch) do |packages|
           packages.map do |pkg|
-            (pkg[:name] == "certifi") ? [{ "id" => "CVE-2024-1234" }, { "id" => "CVE-2024-9999" }] : []
+            if pkg[:name] == "certifi"
+              [{ "id" => "CVE-2024-1234" }, { "id" => "CVE-2024-9999" }]
+            else
+              []
+            end
           end
         end
         allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-9999")
@@ -2371,7 +2380,8 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
   it "requires manual ranges for a new record when state overrides conflict with upstream history" do
     %w[affected fixed].each do |state|
-      stub_osv_hit("CVE-2024-1234", fixed: (state == "affected") ? "2.28.1" : "2.32.0")
+      affected = state == "affected"
+      stub_osv_hit("CVE-2024-1234", fixed: affected ? "2.28.1" : "2.32.0")
       expect(FormulaVersions).not_to receive(:new)
 
       Dir.mktmpdir do |dir|

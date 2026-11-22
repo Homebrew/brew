@@ -44,7 +44,7 @@ module RuboCop
 
           predicate = PREDICATES.fetch(list)
           add_offense(node, message: format(MSG, predicate:, list:)) do |corrector|
-            negation = (node.method_name == :exclude?) ? "!" : ""
+            negation = node.method?(:exclude?) ? "!" : ""
             corrector.replace(node, "#{negation}#{api.source}.#{predicate}(#{arg.source})")
           end
         end

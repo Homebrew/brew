@@ -285,10 +285,11 @@ RSpec.describe Homebrew::TestBot::Formulae do
       def write_impact_formula(name, dependencies)
         path = repository/"Formula/#{name}.rb"
         path.dirname.mkpath
+        depends_on_lines = dependencies.map { |dependency| "depends_on #{dependency.inspect}" }.join("\n  ")
         path.write <<~RUBY
           class #{Formulary.class_s(name)} < Formula
             url "https://example.com/#{name}-1.0.tar.gz"
-            #{dependencies.map { |dependency| "depends_on #{dependency.inspect}" }.join("\n  ")}
+            #{depends_on_lines}
           end
         RUBY
       end
@@ -620,7 +621,11 @@ RSpec.describe Homebrew::TestBot::Formulae do
       Dir.mktmpdir do |tmpdir|
         tag = Utils::Bottles.tag
         sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-        other_tag = (tag.to_s == "arm64_tahoe") ? "tahoe" : "arm64_tahoe"
+        other_tag = if tag.to_s == "arm64_tahoe"
+          "tahoe"
+        else
+          "arm64_tahoe"
+        end
         other_sha256 = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
         tap_path = Pathname(tmpdir)
         formula_path = tap_path/"Formula/foo.rb"
@@ -687,7 +692,11 @@ RSpec.describe Homebrew::TestBot::Formulae do
     it "writes a warning annotation when matching checksums have different cellars" do
       Dir.mktmpdir do |tmpdir|
         tag = Utils::Bottles.tag
-        other_tag = (tag.to_s == "arm64_tahoe") ? "tahoe" : "arm64_tahoe"
+        other_tag = if tag.to_s == "arm64_tahoe"
+          "tahoe"
+        else
+          "arm64_tahoe"
+        end
         sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         tap_path = Pathname(tmpdir)
         formula_path = tap_path/"Formula/foo.rb"
@@ -708,7 +717,11 @@ RSpec.describe Homebrew::TestBot::Formulae do
     it "does not write a warning annotation when platform bottles can become an all bottle" do
       Dir.mktmpdir do |tmpdir|
         tag = Utils::Bottles.tag
-        other_tag = (tag.to_s == "arm64_tahoe") ? "tahoe" : "arm64_tahoe"
+        other_tag = if tag.to_s == "arm64_tahoe"
+          "tahoe"
+        else
+          "arm64_tahoe"
+        end
         sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         tap_path = Pathname(tmpdir)
         formula_path = tap_path/"Formula/foo.rb"

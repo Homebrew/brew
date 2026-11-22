@@ -142,7 +142,11 @@ module Utils
         maintainers = data.fetch("maintainers", {})
         rows = ["current", *(2009..year).map(&:to_s).reverse].map do |period|
           current = period == "current"
-          revision = (current || period == year.to_s) ? head : revisions[period]
+          revision = if current || period == year.to_s
+            head
+          else
+            revisions[period]
+          end
           catalogue = if @name == "Homebrew/brew" || revision.nil?
             0
           else

@@ -55,9 +55,10 @@ RSpec.describe Sponsors do
         else
           [activity]
         end
+        since = Date.today << 12
         allow(GitHub::API).to receive(:paginate_graphql).with(
           a_string_including("includePrivate: false", "sponsorsActivities", "since: $since", "REFUND"),
-          variables: { since: "#{Date.today << 12}T00:00:00Z" }, scopes: ["user"],
+          variables: { since: "#{since}T00:00:00Z" }, scopes: ["user"],
         ).and_yield("organization" => {
           "sponsorsActivities" => { "nodes" => nodes, "pageInfo" => { "hasNextPage" => false } },
         })
@@ -152,8 +153,9 @@ RSpec.describe Sponsors do
         expected = if !hidden && ((frequency == "MONTHLY" && status == "ACTIVE") ||
                                  (frequency == "YEARLY" && %w[ACTIVE CANCELLED].include?(status)) ||
                                  (frequency == "ONETIME" && status == "PAID"))
+          monthly = frequency == "MONTHLY"
           [{ name: "Sponsor", url: "https://opencollective.com/sponsor", logo: "https://example.com/logo.png",
-             type: "Organization", monthly_amount: (frequency == "MONTHLY") ? 1200 : 100,
+             type: "Organization", monthly_amount: monthly ? 1200 : 100,
              tier_descriptions: ["Name and logo in our README"] }]
         else
           []
@@ -176,8 +178,9 @@ RSpec.describe Sponsors do
           { data: { account: { orders: { totalCount: 2, nodes: [order] } } } }.to_json,
         )
 
+        within_window = slug == "sponsor" && months_ago == 11
         expect(described_class.open_collective.map { |sponsor| sponsor[:monthly_amount] })
-          .to eq((slug == "sponsor" && months_ago == 11) ? [250] : [])
+          .to eq(within_window ? [250] : [])
       end
     end
 

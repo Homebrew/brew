@@ -290,7 +290,11 @@ module ELFShim
       # `unpack` directives for the specification's Elf_Half, Elf_Word and
       # Elf_Xword in the file's byte order. Elf_Addr and Elf_Off are a word in
       # 32-bit files and an xword in 64-bit ones.
-      half, word, xword = (ident.getbyte(DATA_OFFSET) == ELFDATA2LSB) ? ["v", "V", "Q<"] : ["n", "N", "Q>"]
+      half, word, xword = if ident.getbyte(DATA_OFFSET) == ELFDATA2LSB
+        ["v", "V", "Q<"]
+      else
+        ["n", "N", "Q>"]
+      end
       address = elf64 ? xword : word
 
       # The ELF header after e_ident and each program header, field by field in

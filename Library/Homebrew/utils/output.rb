@@ -173,12 +173,14 @@ module Utils
 
         if provider
           message = "Report problems specific to this configuration to the third-party provider."
-          return (url = provider.issues_url) ? "#{message}\n  #{Formatter.url(url)}" : message
+          url = provider.issues_url
+          return url ? "#{message}\n  #{Formatter.url(url)}" : message
         end
 
         if destination.is_a?(Tap) && (tier == 1 || !destination.official?)
           message = "#{tap_action} to the #{destination.full_name} tap"
-          return (url = destination.issues_url) ? "#{message}:\n  #{Formatter.url(url)}" : "#{message}."
+          url = destination.issues_url
+          return url ? "#{message}:\n  #{Formatter.url(url)}" : "#{message}."
         end
 
         if [2, 3].include?(tier)

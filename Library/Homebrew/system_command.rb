@@ -198,9 +198,14 @@ class SystemCommand
 
     args = positional_args.compact + args.compact
     if Context.current.verbose?
-      command = "#{executable} #{args * " "}".gsub(RUBY_PATH.to_s, "ruby")
-                                             .gsub($LOAD_PATH.join(File::PATH_SEPARATOR), "$LOAD_PATH")
-      ((out == :err) ? $stderr : $stdout).puts Formatter.redact_secrets(command, secrets)
+      command = "#{executable} #{args.join(" ")}".gsub(RUBY_PATH.to_s, "ruby")
+                                                 .gsub($LOAD_PATH.join(File::PATH_SEPARATOR), "$LOAD_PATH")
+      stream = if out == :err
+        $stderr
+      else
+        $stdout
+      end
+      stream.puts Formatter.redact_secrets(command, secrets)
     end
     return if attached_success?(executable, args, env:, out:)
 

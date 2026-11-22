@@ -19,8 +19,8 @@ module RuboCop
 
         sig { params(extend_os: String, os_method: String).returns(String) }
         def extend_offense_message(extend_os, os_method)
-          "Don't use `OS.#{os_method}?` in `extend/os/#{extend_os}`, it is " \
-            "always `#{(extend_os == os_method) ? "true" : "false"}`."
+          always = extend_os == os_method
+          "Don't use `OS.#{os_method}?` in `extend/os/#{extend_os}`, it is always `#{always}`."
         end
 
         sig { params(node: RuboCop::AST::Node).void }

@@ -93,7 +93,11 @@ module Utils
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + max_seconds
         Homebrew::API.with_no_api_env do
           unless state.seeded
-            entries = state.baseline.empty? ? [] : git("ls-tree", "-rz", state.baseline).split("\0")
+            entries = if state.baseline.empty?
+              []
+            else
+              git("ls-tree", "-rz", state.baseline).split("\0")
+            end
             pending = entries.filter_map do |entry|
               metadata, path = entry.split("\t", 2)
               next if path.nil? || !formula_path?(path) || state.packages.key?(path)

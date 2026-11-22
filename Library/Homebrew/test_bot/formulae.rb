@@ -80,7 +80,8 @@ module Homebrew
 
           progress_text = +"Test progress: "
           progress_text += "#{@tested_formulae_count} formula(e) tested, "
-          progress_text += "#{@testing_formulae_count - @tested_formulae_count} remaining"
+          remaining = @testing_formulae_count - @tested_formulae_count
+          progress_text += "#{remaining} remaining"
           info_header progress_text
         end
 
@@ -135,7 +136,11 @@ module Homebrew
           missing_bottles = @bottle_checksums.keys.reject do |bottle_path|
             next true if bottle_path.exist?
 
-            what = (bottle_path.extname == ".json") ? "JSON" : "tarball"
+            what = if bottle_path.extname == ".json"
+              "JSON"
+            else
+              "tarball"
+            end
             onoe "Missing bottle #{what}: #{bottle_path}"
             false
           end
@@ -157,7 +162,11 @@ module Homebrew
           ).reject do |local_bottle|
             next true if @bottle_checksums.key?(local_bottle.realpath)
 
-            what = (local_bottle.extname == ".json") ? "JSON" : "tarball"
+            what = if local_bottle.extname == ".json"
+              "JSON"
+            else
+              "tarball"
+            end
             onoe "Unexpected bottle #{what}: #{local_bottle}"
             false
           end
@@ -257,20 +266,23 @@ module Homebrew
           rescue DownloadError, FormulaUnavailableError, Resource::BottleManifest::Error
             nil
           end
+          dependency_change = added_dependency_names.count - removed_dependency_names.count
           message = "Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
                     "#{added_dependency_names.count} added, #{removed_dependency_names.count} removed " \
-                    "(net change: #{added_dependency_names.count - removed_dependency_names.count}). " \
-                    "Installed size change: "
+                    "(net change: #{dependency_change}). Installed size change: "
           unknown_size_count = size_changes.count(&:nil?)
           message << if size_changes.drop(added_dependency_names.count).any?(&:nil?)
             "unknown"
           else
             size = size_changes.compact.sum
-            "#{"at least " if unknown_size_count.positive?}" \
-              "#{"+" if size.positive?}#{Formatter.disk_usage_readable(size)}"
+            size_qualifier = unknown_size_count.positive? ? "at least " : ""
+            size_sign = size.positive? ? "+" : ""
+            "#{size_qualifier}#{size_sign}#{Formatter.disk_usage_readable(size)}"
           end
-          message << " (#{Utils.pluralize("unknown size", unknown_size_count, include_count: true)})" \
-            if unknown_size_count.positive?
+          if unknown_size_count.positive?
+            unknown_sizes = Utils.pluralize("unknown size", unknown_size_count, include_count: true)
+            message << " (#{unknown_sizes})"
+          end
           message << "."
           message << " Added: `#{added_dependency_names.join("`, `")}`." if added_dependency_names.present?
           message << " Removed: `#{removed_dependency_names.join("`, `")}`." if removed_dependency_names.present?
@@ -601,7 +613,13 @@ module Homebrew
           dep_f.deps.each do |child|
             next if child.build?
 
-            next if !child.required? && (build.any_args_or_options? ? build.without?(child) : !child.recommended?)
+            unless child.required?
+              if build.any_args_or_options?
+                next if build.without?(child)
+              elsif !child.recommended?
+                next
+              end
+            end
 
             dependencies << child
           end
@@ -701,7 +719,7 @@ module Homebrew
           if deps_without_compatible_bottles.present? && !bottled_on_current_version
             message = <<~EOS
               #{formula_name} has dependencies without compatible bottles:
-                #{deps_without_compatible_bottles * "\n  "}
+                #{deps_without_compatible_bottles.join("\n  ")}
             EOS
             skipped formula_name, message
             return

@@ -84,7 +84,7 @@ module RuboCop
           arg = node.first_argument
           replacement = case node.method_name
           when :decode64, :strict_decode64
-            directive = (node.method_name == :decode64) ? "m" : "m0"
+            directive = node.method?(:decode64) ? "m" : "m0"
             chainable = if arg.is_a?(RuboCop::AST::SendNode)
               !arg.operator_method? && !arg.assignment_method?
             else
@@ -93,7 +93,7 @@ module RuboCop
             end
             "#{arg.source}.unpack1(\"#{directive}\")" if chainable
           when :encode64, :strict_encode64
-            directive = (node.method_name == :encode64) ? "m" : "m0"
+            directive = node.method?(:encode64) ? "m" : "m0"
             "[#{arg.source}].pack(\"#{directive}\")" if !arg.splat_type? && !arg.block_pass_type?
           end
           return if replacement.nil?

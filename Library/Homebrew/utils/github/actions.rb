@@ -31,7 +31,11 @@ module GitHub
       return false if ENV.fetch("HOMEBREW_TESTS", false)
       return false unless env_set?
 
-      std = (type == :notice) ? $stdout : $stderr
+      std = if type == :notice
+        $stdout
+      else
+        $stderr
+      end
       std.puts Annotation.new(type, message)
 
       true

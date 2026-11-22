@@ -139,7 +139,11 @@ module Homebrew
           .returns(T.nilable(DistroMap))
       }
       def self.resolve_contributions(contributions)
-        chosen = contributions.one? ? contributions : contributions.select { |c| c.fetch(:preferred) }
+        chosen = if contributions.one?
+          contributions
+        else
+          contributions.select { |c| c.fetch(:preferred) }
+        end
         chosen.fetch(0).fetch(:distros) if chosen.one?
       end
 

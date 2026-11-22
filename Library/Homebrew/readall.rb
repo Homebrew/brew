@@ -25,7 +25,11 @@ module Readall
     sig { params(message: String, category: T.nilable(Symbol)).void }
     def warn(message, category: nil)
       buffer = Readall.warning_buffer
-      buffer ? buffer << message : super
+      if buffer
+        buffer << message
+      else
+        super
+      end
     end
   end
   private_constant :WarningBuffer
@@ -136,7 +140,14 @@ module Readall
     return true unless validating_linux
 
     os_and_arch = "Linux"
-    os_and_arch += " on #{(arch == :intel) ? "Intel x86_64" : "ARM64"}" if arch
+    if arch
+      architecture = if arch == :intel
+        "Intel x86_64"
+      else
+        "ARM64"
+      end
+      os_and_arch += " on #{architecture}"
+    end
 
     success = T.let(true, T::Boolean)
     (files || tap.cask_files).each do |file|

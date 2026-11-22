@@ -76,10 +76,11 @@ module RuboCop
       ALLOWED_STEP_ARGUMENT_NODE_TYPES = [:array, :dstr, :hash, :int, :nil, :pair, :regexp, :regopt, :str,
                                           :sym].freeze
 
+      canonical_methods = (ALLOWED_STEP_METHODS - COMPATIBILITY_STEP_METHODS).map do |method|
+        "`#{method}`"
+      end.join(", ")
       resolved_step_block_msg = "Steps blocks may only contain install step DSL calls. Prefer canonical calls: " \
-                                "#{(ALLOWED_STEP_METHODS - COMPATIBILITY_STEP_METHODS).map do |method|
-                                  "`#{method}`"
-                                end.join(", ")}."
+                                "#{canonical_methods}."
       STEP_BLOCK_MSG = T.let(resolved_step_block_msg.freeze, String)
       BREW_RUBY_STEP_MSG = "Install steps must not use `brew ruby` because it enables developer mode."
       LEGACY_STEP_METHOD_MSG = "Use `%<replacement>s` instead of legacy install step `%<method>s`."
@@ -121,8 +122,8 @@ module RuboCop
 
       sig { params(allowed_methods: T::Array[Symbol]).returns(String) }
       def step_block_msg(allowed_methods)
-        "Steps blocks may only contain install step DSL calls. Prefer canonical calls: " \
-          "#{(allowed_methods - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")}."
+        canonical_methods = (allowed_methods - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")
+        "Steps blocks may only contain install step DSL calls. Prefer canonical calls: #{canonical_methods}."
       end
 
       sig {
@@ -244,10 +245,8 @@ module RuboCop
       def append_install_step_lines(corrector, block_node, step_lines)
         block_indent = block_node.source_range.column
         step_source = indented_install_step_lines(step_lines, block_indent + 2).join("\n")
-        corrector.insert_before(
-          block_node.loc.end,
-          "#{step_source.delete_prefix(" " * block_indent)}\n#{" " * block_indent}",
-        )
+        indentation = " " * block_indent
+        corrector.insert_before(block_node.loc.end, "#{step_source.delete_prefix(indentation)}\n#{indentation}")
       end
 
       sig { params(body_node: T.nilable(RuboCop::AST::Node)).returns(T::Array[RuboCop::AST::Node]) }
@@ -305,11 +304,12 @@ module RuboCop
 
       sig { params(step_lines: T::Array[String], indent: Integer).returns(T::Array[String]) }
       def indented_install_step_lines(step_lines, indent)
+        indentation = " " * indent
         step_lines.flat_map do |step_line|
           if step_line.include?("<<~")
-            ["#{" " * indent}#{step_line}"]
+            ["#{indentation}#{step_line}"]
           else
-            step_line.lines(chomp: true).map { |line| "#{" " * indent}#{line}" }
+            step_line.lines(chomp: true).map { |line| "#{indentation}#{line}" }
           end
         end
       end
@@ -433,8 +433,8 @@ module RuboCop
       def mkdir_step_line(path, default_base)
         return if path.nil? || relative_install_step_path?(path)
 
-        "mkdir_p #{install_step_path_source(path)}" \
-          "#{install_step_path_keywords(path, base: default_base, keyword: :base)}"
+        keywords = install_step_path_keywords(path, base: default_base, keyword: :base)
+        "mkdir_p #{install_step_path_source(path)}#{keywords}"
       end
 
       sig {
@@ -446,8 +446,8 @@ module RuboCop
       def touch_step_line(path, default_base)
         return if path.nil? || relative_install_step_path?(path)
 
-        "touch #{install_step_path_source(path)}#{install_step_path_keywords(path, base:    default_base,
-                                                                                   keyword: :base)}"
+        keywords = install_step_path_keywords(path, base: default_base, keyword: :base)
+        "touch #{install_step_path_source(path)}#{keywords}"
       end
 
       sig {
@@ -524,9 +524,9 @@ module RuboCop
         heredoc_end = content_node.loc.heredoc_end
         return "#{content_node.source}#{install_step_kwargs(kwargs)}" if heredoc_end.nil?
 
-        "#{content_node.loc.expression.source}#{install_step_kwargs(kwargs)}" \
-          "#{::Parser::Source::Range.new(content_node.loc.expression.source_buffer,
-                                         content_node.loc.expression.end_pos, heredoc_end.end_pos).source}"
+        heredoc_source = ::Parser::Source::Range.new(content_node.loc.expression.source_buffer,
+                                                     content_node.loc.expression.end_pos, heredoc_end.end_pos).source
+        "#{content_node.loc.expression.source}#{install_step_kwargs(kwargs)}#{heredoc_source}"
       end
 
       sig {
@@ -543,7 +543,11 @@ module RuboCop
         return unless (paths = permission_paths_source(send_node.arguments.fetch(0), default_base))
 
         path_source, base = paths
-        base_keyword = (base && base != default_base) ? ", base: :#{base}" : ""
+        base_keyword = if base && base != default_base
+          ", base: :#{base}"
+        else
+          ""
+        end
         "set_permissions #{path_source}, #{permissions_node.source}#{base_keyword}"
       end
 
@@ -600,7 +604,8 @@ module RuboCop
           bases.fetch(0)
         end
         source = if node.array_type?
-          "[#{paths.map { |path| install_step_path_source(path) }.join(", ")}]"
+          path_list = paths.map { |path| install_step_path_source(path) }.join(", ")
+          "[#{path_list}]"
         else
           install_step_path_source(paths.fetch(0))
         end
