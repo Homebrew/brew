@@ -1144,6 +1144,30 @@ RSpec.describe Homebrew::Cmd::Info do
     described_class.installed_dependent_names(["testball"])
   end
 
+  it "looks up the installed kegs once for both dependents lines" do
+    allow($stdout).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
+    stub_formula_loader formula
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect(Keg).to receive(:from_rack).once.and_call_original
+
+    info.info_formula(formula)
+  end
+
   it "uses formula dependencies without rereading the receipt when the list is missing" do
     rack = HOMEBREW_CELLAR/"dependent"
     keg_path = rack/"1.0"

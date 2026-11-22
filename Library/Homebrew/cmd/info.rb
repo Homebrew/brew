@@ -23,6 +23,10 @@ module Homebrew
   module Cmd
     class Info < AbstractCommand
       extend ::Utils::Output::Mixin
+      extend T::Generic
+      extend Cacheable
+
+      Cache = type_template { { fixed: T::Hash[Symbol, T::Array[Keg]] } }
 
       class NameSize < T::Struct
         const :name, String
@@ -160,12 +164,13 @@ module Homebrew
 
       sig { params(names: T::Array[String], build: T::Boolean).returns(T::Array[String]) }
       def self.installed_dependent_names(names, build: false)
-        Formula.racks.filter_map do |rack|
+        installed_kegs = cache[:installed_kegs] ||= Formula.racks.filter_map do |rack|
           keg = Keg.from_rack(rack)
-          next unless keg
-
-          tab_path = keg/AbstractTab::FILENAME
-          next unless tab_path.file?
+          keg if keg && (keg/AbstractTab::FILENAME).file?
+        rescue JSON::ParserError
+          nil
+        end
+        installed_kegs.filter_map do |keg|
           # Only kegs built from source need their build dependencies again.
           next if build && keg.tab.poured_from_bottle
 
