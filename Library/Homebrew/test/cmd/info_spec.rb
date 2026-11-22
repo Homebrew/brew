@@ -42,6 +42,20 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it_behaves_like "parseable arguments"
 
+  it "defers the cask implementation and missing formula lookup at command load" do
+    stdout, stderr, status = Open3.capture3(
+      *HOMEBREW_RUBY_EXEC_ARGS,
+      "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+      "-rglobal", "-rcmd/info",
+      "-e", <<~RUBY
+        deferred = %w[cask/cask.rb missing_formula.rb].map { |path| HOMEBREW_LIBRARY_PATH/path }
+        puts $LOADED_FEATURES & deferred.map(&:to_s)
+      RUBY
+    )
+
+    expect([stdout, stderr, status.success?]).to eq(["", "", true])
+  end
+
   describe "#formula_conflicts" do
     subject(:command) { described_class.new([]) }
 
@@ -1115,6 +1129,19 @@ RSpec.describe Homebrew::Cmd::Info do
     dependent_tab.write
 
     expect(described_class.installed_dependent_names(["testball"])).to eq(["valid-dependent"])
+  end
+
+  it "doesn't load the formulae of installed dependents whose receipts have a list" do
+    keg_path = HOMEBREW_CELLAR/"dependent/1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [{ "full_name" => "testball" }]
+    tab.write
+
+    expect(Formulary).not_to receive(:from_keg)
+
+    described_class.installed_dependent_names(["testball"])
   end
 
   it "uses formula dependencies without rereading the receipt when the list is missing" do

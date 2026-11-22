@@ -5,7 +5,6 @@ require "utils/browser"
 require "utils/info_display"
 
 require "abstract_command"
-require "missing_formula"
 require "caveats"
 require "options"
 require "formula"
@@ -13,7 +12,8 @@ require "formula_pin"
 require "keg"
 require "tab"
 require "json"
-require "cask/cask_loader"
+require "cask/cask_base"
+require "cask/caskroom"
 require "utils/spdx"
 require "utils/analytics"
 require "deprecate_disable"
@@ -169,19 +169,15 @@ module Homebrew
           # Only kegs built from source need their build dependencies again.
           next if build && keg.tab.poured_from_bottle
 
-          dependencies = begin
-            formula = keg.to_formula
-            build ? formula.deps.select(&:build?) : formula.runtime_dependencies(keg:)
-          rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
-            next if build
-
-            (keg.runtime_dependencies || []).filter_map do |dep|
-              full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-              Dependency.new(full_name) if full_name
-            end
+          dependency_names = if build
+            keg.to_formula.deps.select(&:build?).map(&:name)
+          elsif (tab_dependencies = keg.runtime_dependencies)
+            # Loading every installed formula is slow, so read the receipt's list.
+            tab_dependencies.filter_map { it["full_name"] }
+          else
+            keg.to_formula.runtime_dependencies(keg:).map(&:name)
           end
-          dependent = dependencies.any? { names.include?(Utils.name_from_full_name(it.name)) }
-          keg.name if dependent
+          keg.name if dependency_names.any? { names.include?(Utils.name_from_full_name(it)) }
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
                JSON::ParserError
           nil
@@ -215,6 +211,7 @@ module Homebrew
             # The formula/cask could not be found
             ofail obj.message
             # No formula with this name, try a missing formula lookup
+            require "missing_formula"
             if (reason = MissingFormula.reason(obj.name, show_info: true))
               $stderr.puts reason
             end
@@ -633,6 +630,7 @@ module Homebrew
             formulae = [] if args.cask?
             formulae ||= Formula.all.sort
             casks = [] if args.formula?
+            require "cask/cask"
             casks ||= Cask::Cask.all.sort_by(&:full_name)
             [formulae, casks]
           elsif args.installed?
