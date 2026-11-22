@@ -55,7 +55,11 @@ module Cask
             return name unless result.success?
 
             label = result.plist["Label"]
-            (name == label) ? name : "#{name} (#{label})"
+            if name == label
+              name
+            else
+              "#{name} (#{label})"
+            end
           }
 
           [

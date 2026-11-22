@@ -137,8 +137,9 @@ class LinkageChecker
     when "julia"
       file.start_with?("#{formula.prefix.realpath}/share/julia/compiled/")
     when "cyan"
+      prefix_pattern = formula.prefix.realpath.to_s
       file.match?(
-        %r{\A#{Regexp.escape(formula.prefix.realpath.to_s)}/libexec/lib/python\d+\.\d+/site-packages/cyan/extras/},
+        %r{\A#{Regexp.escape(prefix_pattern)}/libexec/lib/python\d+\.\d+/site-packages/cyan/extras/},
       )
     else
       false

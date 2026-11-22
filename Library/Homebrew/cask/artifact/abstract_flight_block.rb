@@ -67,7 +67,8 @@ module Cask
         namespace = name.to_s.sub(/::.*::.*$/, "")
         # The DSL class name is derived dynamically from the flight block's key.
         # rubocop:disable Sorbet/ConstantsFromStrings
-        const_get("#{namespace}::DSL::#{dsl_key.to_s.split("_").map(&:capitalize).join}")
+        class_name = dsl_key.to_s.split("_").map(&:capitalize).join
+        const_get("#{namespace}::DSL::#{class_name}")
         # rubocop:enable Sorbet/ConstantsFromStrings
       end
 

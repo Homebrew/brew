@@ -57,7 +57,8 @@ module Homebrew
           out += "PID: #{hash[:pid]}\n" unless hash[:pid].nil?
           return out unless verbose
 
-          out += "File: #{hash[:file]} #{pretty_bool(hash[:file].present?)}\n"
+          file_status = pretty_bool(hash[:file].present?)
+          out += "File: #{hash[:file]} #{file_status}\n"
           out += "Registered at login: #{pretty_bool(hash[:registered])}\n"
           out += "Command: #{hash[:command]}\n" unless hash[:command].nil?
           out += "Working directory: #{hash[:working_dir]}\n" unless hash[:working_dir].nil?

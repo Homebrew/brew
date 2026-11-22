@@ -29,21 +29,28 @@ RSpec.describe Homebrew::Assertions do
       parent, child = UNIXSocket.pair
       leader_pid = T.let(nil, T.nilable(Integer))
       Timeout.timeout(15) do
+        signal_handler = if leader == :ignore
+          ":IGNORE"
+        else
+          ":DEFAULT"
+        end
+        move_group = leader == :move_group
+        exit_leader = leader == :exit
         formula_assertions.with_test_process(
           RbConfig.ruby, "-e", <<~RUBY, in: child, out: child, signal: "-TERM", pgroup: true
-            Signal.trap(:TERM, #{(leader == :ignore) ? ":IGNORE" : ":DEFAULT"})
+            Signal.trap(:TERM, #{signal_handler})
             fork do
               Signal.trap(:TERM, :IGNORE)
               puts Process.pid
               $stdout.flush
               $stdin.read
             end
-            if #{leader == :move_group}
+            if #{move_group}
               Process.setpgid(0, Process.getpgid(Process.ppid))
               puts Process.pid
               $stdout.flush
             end
-            $stdin.read unless #{leader == :exit}
+            $stdin.read unless #{exit_leader}
           RUBY
         ) do |pid|
           leader_pid = pid

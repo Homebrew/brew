@@ -67,7 +67,11 @@ module Homebrew
             # Only fully-qualified names map to a tap, so unqualified names cannot be trusted.
             next [] unless Utils.full_name?(full_name)
 
-            type = (entry.type == :brew) ? :formula : :cask
+            type = if entry.type == :brew
+              :formula
+            else
+              :cask
+            end
             tap_name = Utils.tap_from_full_name(full_name)
             canonical_tap_name = Dsl.sanitize_tap_name(tap_name) if tap_name
             tap_remote = tap_remotes[canonical_tap_name] if canonical_tap_name

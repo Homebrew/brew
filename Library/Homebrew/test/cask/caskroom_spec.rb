@@ -116,7 +116,7 @@ RSpec.describe Cask::Caskroom do
     end
 
     test_each([false, true]) do |raises|
-      it "uses a safe fallback when the effective group lookup #{raises ? "raises" : "returns nil"}" do
+      it "uses a safe fallback for an unsuccessful group lookup (raises: #{raises})" do
         ENV["HOMEBREW_NO_SUDO"] = "1"
         allow(Etc).to receive(:getgrgid).with(Process.egid) { raise ArgumentError if raises }
 

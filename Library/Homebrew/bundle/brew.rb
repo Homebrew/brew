@@ -464,7 +464,8 @@ module Homebrew
               end
               next if names.empty?
 
-              warning += "  brew install#{" --as-dependency" unless on_request} #{names.join(" ")}\n"
+              dependency_flag = on_request ? "" : " --as-dependency"
+              warning += "  brew install#{dependency_flag} #{names.join(" ")}\n"
             end
             opoo warning
           end

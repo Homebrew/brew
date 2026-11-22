@@ -204,7 +204,8 @@ module Homebrew
 
           if !file && verbose
             ohai "Generated service file for #{service.formula.name}:"
-            puts "   #{service.dest.read.gsub("\n", "\n   ")}"
+            unit_contents = service.dest.read.gsub("\n", "\n   ")
+            puts "   #{unit_contents}"
             puts
           end
 
@@ -234,9 +235,10 @@ module Homebrew
           if !loaded && !running
             remove_service_files(service) unless keep
             if service.service_file_present?
+              sudo = System.root? ? "" : "sudo "
               odie <<~EOS
                 Service `#{service.name}` is started as `#{service.owner}`. Try:
-                  #{"sudo " unless System.root?}#{bin} stop #{service.name}
+                  #{sudo}#{bin} stop #{service.name}
               EOS
             elsif System.launchctl? && (stopped_name = service.service_names.find do |name|
               SystemCommand.quiet_system(System.launchctl, "bootout", "#{System.domain_target}/#{name}")
@@ -270,7 +272,12 @@ module Homebrew
                 systemctl_stop_results << result
                 next if keep || !result
 
-                disabled_units << ((unit_name == service_name) ? "#{service_name}.service" : unit_name)
+                disabled_unit = if unit_name == service_name
+                  "#{service_name}.service"
+                else
+                  unit_name
+                end
+                disabled_units << disabled_unit
               end
             end
           elsif System.launchctl?

@@ -1085,7 +1085,11 @@ RSpec.describe Cask::Upgrade, :cask do
       allow(compatible_installer).to receive_messages(check_requirements: nil, enqueue_downloads: nil,
                                                       enqueue_dependency_downloads: nil)
       allow(Cask::Installer).to receive(:new) do |cask, **|
-        (cask.token == "local-caffeine") ? incompatible_installer : compatible_installer
+        if cask.token == "local-caffeine"
+          incompatible_installer
+        else
+          compatible_installer
+        end
       end
       allow(described_class).to receive(:upgrade_cask) do |_, new_cask, **|
         upgraded_tokens << new_cask.token

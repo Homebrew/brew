@@ -54,7 +54,8 @@ module Cask
 
       quarantine_status = !status(file).empty?
 
-      odebug "#{file} is #{quarantine_status ? "quarantined" : "not quarantined"}"
+      status = quarantine_status ? "quarantined" : "not quarantined"
+      odebug "#{file} is #{status}"
 
       quarantine_status
     end

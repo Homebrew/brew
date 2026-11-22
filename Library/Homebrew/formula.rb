@@ -333,7 +333,11 @@ class Formula # rubocop:disable Metrics/ClassLength
     head_spec = self.class.head
     @head = T.let(spec_eval(head_spec, :head), T.nilable(SoftwareSpec))
 
-    requested_spec = (spec.to_sym == :head) ? head || stable : stable || head
+    requested_spec = if spec.to_sym == :head
+      head || stable
+    else
+      stable || head
+    end
     raise FormulaSpecificationError, "#{full_name}: formula requires at least a URL" unless requested_spec
 
     @active_spec = T.let(requested_spec, SoftwareSpec)
@@ -435,7 +439,11 @@ class Formula # rubocop:disable Metrics/ClassLength
       Utils::BrewCommand.run! "reinstall", "--formula", full_name
     end
 
-    executable ? opt_bin/executable : self
+    if executable
+      opt_bin/executable
+    else
+      self
+    end
   end
 
   sig { returns(T::Boolean) }
@@ -799,8 +807,9 @@ class Formula # rubocop:disable Metrics/ClassLength
       "linked"
     end
 
-    "#{Utils::Text.to_sentence(reason_formulae.map(&:full_name))} " \
-      "#{reason_formulae.one? ? "is" : "are"} already #{status}"
+    dependencies = Utils::Text.to_sentence(reason_formulae.map(&:full_name))
+    verb = reason_formulae.one? ? "is" : "are"
+    "#{dependencies} #{verb} already #{status}"
   end
 
   sig { returns(T::Array[String]) }
@@ -961,8 +970,8 @@ class Formula # rubocop:disable Metrics/ClassLength
     matches = deps(name).uniq(&:name)
     return matches.fetch(0) if matches.size == 1
 
-    raise "`#{full_name}` must declare exactly one dependency matching #{name.inspect}; " \
-          "found #{matches.map(&:name).join(", ").presence || "none"}."
+    matching_names = matches.map(&:name).join(", ").presence || "none"
+    raise "`#{full_name}` must declare exactly one dependency matching #{name.inspect}; found #{matching_names}."
   end
 
   # The stable path to the executable provided by this formula's direct Python 3 dependency.
@@ -1535,7 +1544,11 @@ class Formula # rubocop:disable Metrics/ClassLength
   sig { returns(T::Array[String]) }
   def logged_build_options
     name, *flags = build_options_log.read.split
-    (name == full_name) ? flags : []
+    if name == full_name
+      flags
+    else
+      []
+    end
   rescue Errno::ENOENT
     []
   end
@@ -1901,9 +1914,10 @@ class Formula # rubocop:disable Metrics/ClassLength
 
     to_check = path.relative_path_from(HOMEBREW_PREFIX).to_s
     return true if self.class.link_overwrite_paths.any? do |p|
-      p.to_s == to_check ||
-      to_check.start_with?("#{p.to_s.chomp("/")}/") ||
-      /^#{Regexp.escape(p.to_s).gsub('\*', ".*?")}$/.match?(to_check)
+      next true if p.to_s == to_check || to_check.start_with?("#{p.to_s.chomp("/")}/")
+
+      pattern = Regexp.escape(p.to_s).gsub('\*', ".*?")
+      /^#{pattern}$/.match?(to_check)
     end
 
     implied_link_overwrite?(keg_name, link_overwrite_formulae)
@@ -2286,7 +2300,10 @@ class Formula # rubocop:disable Metrics/ClassLength
   }
   def std_cargo_args(root: prefix, path: ".", features: nil)
     args = ["--jobs", ENV.make_jobs.to_s, "--locked", "--root=#{root}", "--path=#{path}"]
-    args += ["--features=#{Array(features).join(",")}"] if features
+    if features
+      feature_list = Array(features).join(",")
+      args += ["--features=#{feature_list}"]
+    end
     args << "--offline" if fetch_defined?
     args
   end
@@ -2382,9 +2399,18 @@ class Formula # rubocop:disable Metrics/ClassLength
     ldflags = ["-s", "-w"].concat(Array(ldflags)) unless ENV.debug_symbols?
 
     args = ["-trimpath", "-o=#{output}"]
-    args << "-tags=#{Array(tags).join(",")}" if tags
-    args << "-ldflags=#{Array(ldflags).join(" ")}" if ldflags
-    args << "-gcflags=#{Array(gcflags).join(" ")}" if gcflags
+    if tags
+      tag_list = Array(tags).join(",")
+      args << "-tags=#{tag_list}"
+    end
+    if ldflags
+      linker_flags = Array(ldflags).join(" ")
+      args << "-ldflags=#{linker_flags}"
+    end
+    if gcflags
+      compiler_flags = Array(gcflags).join(" ")
+      args << "-gcflags=#{compiler_flags}"
+    end
     args
   end
 
@@ -3841,7 +3867,7 @@ class Formula # rubocop:disable Metrics/ClassLength
     pretty_args.each_index do |i|
       pretty_args[i] = "import setuptools..." if pretty_args[i].to_s.start_with? "import setuptools"
     end
-    ohai "#{cmd} #{pretty_args * " "}".strip
+    ohai "#{cmd} #{pretty_args.join(" ")}".strip
 
     @exec_count ||= T.let(0, T.nilable(Integer))
     @exec_count += 1
@@ -4234,7 +4260,9 @@ class Formula # rubocop:disable Metrics/ClassLength
     # @api public
     sig { params(val: T.nilable(String)).returns(T.nilable(String)) }
     def desc(val = nil)
-      val.nil? ? @desc : @desc = T.let(val, T.nilable(String))
+      return @desc if val.nil?
+
+      @desc = T.let(val, T.nilable(String))
     end
 
     # The SPDX ID of the open-source license that the formula uses.
@@ -4373,7 +4401,11 @@ class Formula # rubocop:disable Metrics/ClassLength
       raise ArgumentError, "Unknown phase: #{phase}" unless SUPPORTED_NETWORK_ACCESS_PHASES.include?(phase)
 
       env_var = Homebrew::EnvConfig.public_send(:"formula_#{phase}_network")
-      env_var.nil? ? network_access_allowed[phase] : env_var == "allow"
+      if env_var.nil?
+        network_access_allowed[phase]
+      else
+        env_var == "allow"
+      end
     end
 
     sig { returns(T::Boolean) }
@@ -4457,7 +4489,9 @@ class Formula # rubocop:disable Metrics/ClassLength
     # @api public
     sig { params(val: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def revision(val = nil)
-      val.nil? ? @revision : @revision = T.let(val, T.nilable(Integer))
+      return @revision if val.nil?
+
+      @revision = T.let(val, T.nilable(Integer))
     end
 
     # Used for creating new Homebrew version schemes. For example, if we want
@@ -4477,7 +4511,9 @@ class Formula # rubocop:disable Metrics/ClassLength
     # @api public
     sig { params(val: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def version_scheme(val = nil)
-      val.nil? ? @version_scheme : @version_scheme = T.let(val, T.nilable(Integer))
+      return @version_scheme if val.nil?
+
+      @version_scheme = T.let(val, T.nilable(Integer))
     end
 
     # Used to indicate API/ABI compatibility for dependencies. If a formula has
@@ -4495,7 +4531,9 @@ class Formula # rubocop:disable Metrics/ClassLength
     # @api public
     sig { params(val: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def compatibility_version(val = nil)
-      val.nil? ? @compatibility_version : @compatibility_version = T.let(val, T.nilable(Integer))
+      return @compatibility_version if val.nil?
+
+      @compatibility_version = T.let(val, T.nilable(Integer))
     end
 
     sig { returns(T::Array[Symbol]) }

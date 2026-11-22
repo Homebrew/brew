@@ -477,8 +477,8 @@ module Cask
 
           if warn && [:rename, :migration].include?(type) &&
              !(type == :migration && migrated_tap.core_tap?)
-            opoo "Cask #{token} was renamed to " \
-                 "#{migrated_tap.core_cask_tap? ? migrated_token : "#{migrated_tap}/#{migrated_token}"}."
+            new_name = migrated_tap.core_cask_tap? ? migrated_token : "#{migrated_tap}/#{migrated_token}"
+            opoo "Cask #{token} was renamed to #{new_name}."
           end
 
           if (core_cask_loader = loader_from_token_tap_type(token_tap_type))&.path&.exist?

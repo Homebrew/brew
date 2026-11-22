@@ -172,7 +172,8 @@ module Homebrew
             end
             removed += 1
           end
-          puts "Removed #{Utils.pluralize("Go executable", removed, include_count: true)}"
+          executable_count = Utils.pluralize("Go executable", removed, include_count: true)
+          puts "Removed #{executable_count}"
         end
       end
     end

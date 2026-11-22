@@ -48,13 +48,15 @@ RSpec.describe BottleTransition do
     allow(Utils).to receive(:safe_popen_read)
       .with("git", "-C", CoreTap.instance.path, "rev-parse", "--verify", "origin/HEAD^{commit}")
       .and_return("#{base_revision}\n")
+    tap_path = current.tap_path.relative_path_from(CoreTap.instance.path)
     allow(Utils).to receive(:safe_popen_read)
       .with("git", "-C", CoreTap.instance.path, "ls-tree", "--name-only", "-z", base_revision,
             "--", current.tap_path.relative_path_from(CoreTap.instance.path))
-      .and_return("#{current.tap_path.relative_path_from(CoreTap.instance.path)}\0")
+      .and_return("#{tap_path}\0")
+    tap_path = current.tap_path.relative_path_from(CoreTap.instance.path)
     allow(Utils).to receive(:safe_popen_read)
       .with("git", "-C", CoreTap.instance.path, "show",
-            "#{base_revision}:#{current.tap_path.relative_path_from(CoreTap.instance.path)}")
+            "#{base_revision}:#{tap_path}")
       .and_return(base_contents)
   end
 
@@ -63,9 +65,10 @@ RSpec.describe BottleTransition do
   end
 
   it "does not enrol a formula with only older macOS bottles" do
+    tap_path = current.tap_path.relative_path_from(CoreTap.instance.path)
     allow(Utils).to receive(:safe_popen_read)
       .with("git", "-C", CoreTap.instance.path, "show",
-            "#{base_revision}:#{current.tap_path.relative_path_from(CoreTap.instance.path)}")
+            "#{base_revision}:#{tap_path}")
       .and_return(base_contents.sub("arm64_golden_gate", "arm64_tahoe"))
 
     expect(transition.required?(current)).to be false
@@ -83,9 +86,10 @@ RSpec.describe BottleTransition do
 
   context "when the base has a universal bottle" do
     it "does not enrol universal bottles in transition CI" do
+      tap_path = current.tap_path.relative_path_from(CoreTap.instance.path)
       allow(Utils).to receive(:safe_popen_read)
         .with("git", "-C", CoreTap.instance.path, "show",
-              "#{base_revision}:#{current.tap_path.relative_path_from(CoreTap.instance.path)}")
+              "#{base_revision}:#{tap_path}")
         .and_return(base_contents.sub("arm64_golden_gate", "all"))
 
       expect(transition.required?(current)).to be false
@@ -204,9 +208,10 @@ RSpec.describe BottleTransition do
   end
 
   it "fails closed when the base formula cannot be loaded" do
+    tap_path = current.tap_path.relative_path_from(CoreTap.instance.path)
     allow(Utils).to receive(:safe_popen_read)
       .with("git", "-C", CoreTap.instance.path, "show",
-            "#{base_revision}:#{current.tap_path.relative_path_from(CoreTap.instance.path)}")
+            "#{base_revision}:#{tap_path}")
       .and_return("class TransitionTest < Formula\ninvalid ruby\n")
 
     expect { transition.required?(current) }.to raise_error(FormulaUnreadableError)

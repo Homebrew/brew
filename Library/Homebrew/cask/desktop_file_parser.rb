@@ -73,7 +73,8 @@ module Cask
           next word unless word.match?(EXEC_RESERVED_CHARACTERS)
 
           # Surround with quotes and precede `"`, `` ` ``, `$` and `\` with `\`.
-          "\"#{word.gsub(/["`$\\]/) { |character| "\\#{character}" }}\""
+          quoted_word = word.gsub(/["`$\\]/) { |character| "\\#{character}" }
+          "\"#{quoted_word}\""
         end.join(" ")
       end
     end

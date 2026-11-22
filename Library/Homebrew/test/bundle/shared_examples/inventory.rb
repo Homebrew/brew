@@ -134,10 +134,10 @@ RSpec.shared_examples "a failed inventory dump" do
   end
 
   test_each(["", :inventory_output]) do |failed_output|
-    context "with #{(failed_output == "") ? "empty" : "partial"} failed output" do
+    context "with failed output #{failed_output.inspect}" do
       before do
         described_class.reset!
-        write_inventory(output: (failed_output == "") ? "" : inventory_output, status: 2)
+        write_inventory(output: failed_output.empty? ? "" : inventory_output, status: 2)
       end
 
       it "preserves an existing Brewfile with force enabled" do

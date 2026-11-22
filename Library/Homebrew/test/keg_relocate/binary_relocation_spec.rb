@@ -8,7 +8,10 @@ RSpec.describe Keg do
 
   let(:dir) { HOMEBREW_CELLAR/"foo/1.0.0" }
   let(:newdir) { HOMEBREW_CELLAR/"foo" }
-  let(:padded_prefix) { "#{newdir}#{"/" * (dir.to_s.bytesize - newdir.to_s.bytesize)}" }
+  let(:padded_prefix) do
+    padding = "/" * (dir.to_s.bytesize - newdir.to_s.bytesize)
+    "#{newdir}#{padding}"
+  end
   let(:binary_file) { dir/"file.bin" }
 
   before do
@@ -195,7 +198,8 @@ RSpec.describe Keg do
 
       keg.relocate_build_prefix(keg, dir, newdir)
 
-      expect(File.read("#{File.binread(binary_file, module_path.bytesize, 1)}/strict.pm")).to eq "1;\n"
+      module_dir = File.binread(binary_file, module_path.bytesize, 1)
+      expect(File.read("#{module_dir}/strict.pm")).to eq "1;\n"
     end
 
     specify "replaces an equal-length prefix without padding" do
@@ -337,7 +341,8 @@ RSpec.describe Keg do
     end
 
     specify "leaves prefix strings inside long length-prefixed text untouched" do
-      json = "{\"prefix\": \"#{dir}\", \"padding\": \"#{"x" * 16 * 1024}\"}"
+      padding = "x" * 16 * 1024
+      json = "{\"prefix\": \"#{dir}\", \"padding\": \"#{padding}\"}"
       binary_file.atomic_write "\x00#{json}\x00"
 
       keg.relocate_build_prefix(keg, dir, newdir)

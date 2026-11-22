@@ -74,7 +74,11 @@ module DependsOn
       end
 
       if previous.any? && (stanza == ":macos" || previous.include?(":macos"))
-        versioned = (stanza == ":macos") ? previous.fetch(0) : stanza
+        versioned = if stanza == ":macos"
+          previous.fetch(0)
+        else
+          stanza
+        end
         Utils::Output.odisabled "`depends_on :macos` with `depends_on #{versioned}`",
                                 "`depends_on :macos` with `depends_on #{versioned}` inside an `on_macos` block"
       end

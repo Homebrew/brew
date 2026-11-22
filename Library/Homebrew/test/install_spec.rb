@@ -250,7 +250,8 @@ RSpec.describe Homebrew::Install do
     end
 
     [nil, "1.0", "2.0"].each do |installed_version|
-      it "only lists dependencies with #{installed_version || "no"} version installed" do
+      version_description = installed_version || "no"
+      it "only lists dependencies with #{version_description} version installed" do
         T.bind(self, RSpec::Core::ExampleGroup)
 
         requested = formula("requested") do
@@ -339,7 +340,8 @@ RSpec.describe Homebrew::Install do
     end
 
     [false, true].each do |optlinked|
-      it "uses the #{optlinked ? "opt-linked" : "newest"} installed version in the upgrade summary" do
+      link_description = optlinked ? "opt-linked" : "newest"
+      it "uses the #{link_description} installed version in the upgrade summary" do
         T.bind(self, RSpec::Core::ExampleGroup)
 
         formula = formula("multiple") do
@@ -355,11 +357,12 @@ RSpec.describe Homebrew::Install do
         end
         Keg.new(formula.rack/"1.9").optlink if optlinked
 
+        expected_version = optlinked ? "1.9" : "1.10"
         expect do
           described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
         end.to output(<<~EOS).to_stdout
           ==> Would upgrade 1 formula:
-          multiple #{optlinked ? "1.9" : "1.10"} -> 2.0
+          multiple #{expected_version} -> 2.0
           ==> 1 homebrew/core formula that would build from source
           multiple
         EOS
