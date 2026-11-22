@@ -91,7 +91,7 @@ RSpec.describe Utils::ShellCompletion do
 
     it "calls safe_popen_read with commands and shell parameter" do
       expect(Utils).to receive(:safe_popen_read).with(
-        {}, "/usr/bin/foo", "completions", "bash", err: :err
+        {}, args: ["/usr/bin/foo", "completions", "bash"], err: :err
       ).and_return("completion output")
 
       result = described_class.generate_completion_output(
@@ -103,7 +103,7 @@ RSpec.describe Utils::ShellCompletion do
 
     it "flattens array shell parameters" do
       expect(Utils).to receive(:safe_popen_read).with(
-        {}, "/usr/bin/foo", "completion", "zsh", err: :err
+        {}, args: ["/usr/bin/foo", "completion", "zsh"], err: :err
       ).and_return("output")
 
       described_class.generate_completion_output(
@@ -113,7 +113,7 @@ RSpec.describe Utils::ShellCompletion do
 
     it "handles nil shell parameter" do
       expect(Utils).to receive(:safe_popen_read).with(
-        {}, "/usr/bin/foo", err: :err
+        {}, args: ["/usr/bin/foo"], err: :err
       ).and_return("output")
 
       described_class.generate_completion_output(["/usr/bin/foo"], nil, {})
@@ -121,7 +121,7 @@ RSpec.describe Utils::ShellCompletion do
 
     it "suppresses stderr when requested" do
       expect(Utils).to receive(:safe_popen_read).with(
-        {}, "/usr/bin/foo"
+        {}, args: ["/usr/bin/foo"]
       ).and_return("output")
 
       described_class.generate_completion_output(["/usr/bin/foo"], nil, {}, print_stderr: false)
@@ -130,7 +130,7 @@ RSpec.describe Utils::ShellCompletion do
     it "prints stderr when HOMEBREW_STDERR is set" do
       ENV["HOMEBREW_STDERR"] = "1"
       expect(Utils).to receive(:safe_popen_read).with(
-        {}, "/usr/bin/foo", err: :err
+        {}, args: ["/usr/bin/foo"], err: :err
       ).and_return("output")
 
       described_class.generate_completion_output(["/usr/bin/foo"], nil, {}, print_stderr: false)

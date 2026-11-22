@@ -35,7 +35,7 @@ RSpec.describe Homebrew::DevCmd::Cat do
     end
 
     it "uses a system bat when configured" do
-      expect(SystemCommand).to receive(:safe_system).with(Pathname.new("/usr/bin/bat"), formula_file)
+      expect(SystemCommand).to receive(:safe_system).with(Pathname.new("/usr/bin/bat"), args: [formula_file])
 
       cat.run
     end

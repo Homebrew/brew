@@ -195,6 +195,6 @@ class GitRepository
 
     command = [Utils::Git.git, *args]
     command.unshift(Utils::Git.no_global_config_env) if no_global_config
-    Utils.popen_read(*command, safe:, chdir: pathname, err:).chomp.presence
+    Utils.popen_read(args: command, safe:, chdir: pathname, err:).chomp.presence
   end
 end

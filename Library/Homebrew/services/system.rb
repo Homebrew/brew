@@ -170,7 +170,7 @@ module Homebrew
           )
           [result.stdout.chomp, result.success?]
         else
-          output = Utils.popen_read(*cmd).chomp
+          output = Utils.popen_read(args: cmd).chomp
           [output, ($CHILD_STATUS.present? && $CHILD_STATUS.success?) || false]
         end
       end

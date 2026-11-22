@@ -49,7 +49,7 @@ RSpec.describe Homebrew::DevCmd::Create do
     before do
       # Like the real `Utils.popen_read`, return the output as binary.
       allow(Utils).to receive(:popen_read)
-        .with(HOMEBREW_BREW_FILE, "generate-zap", "--name", app.basename(".app").to_s, err: :err)
+        .with(args: [HOMEBREW_BREW_FILE, "generate-zap", "--name", app.basename(".app").to_s], err: :err)
         .and_return(generate_zap_output.b)
     end
 
@@ -57,7 +57,7 @@ RSpec.describe Homebrew::DevCmd::Create do
 
     it "shows errors from `brew generate-zap`, e.g. a missing Full Disk Access permission" do
       expect(Utils).to receive(:popen_read)
-        .with(HOMEBREW_BREW_FILE, "generate-zap", "--name", "Test", err: :err)
+        .with(args: [HOMEBREW_BREW_FILE, "generate-zap", "--name", "Test"], err: :err)
         .and_return(generate_zap_output.b)
 
       generated_zap

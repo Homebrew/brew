@@ -111,11 +111,11 @@ module Homebrew
             ohai "git checkout --quiet -"
             ohai "create pull request with GitHub API (base branch: #{remote_branch})"
           else
-            SystemCommand.safe_system "git", "add", *changed_files
+            SystemCommand.safe_system "git", "add", args: changed_files
             Utils::Git.set_name_email!
             SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose",
                                       "--message=#{commit_message}",
-                                      "--", *changed_files
+                                      "--", args: changed_files
           end
         end
       end

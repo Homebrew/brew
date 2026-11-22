@@ -16,6 +16,10 @@ RSpec.describe SystemCommand do
       expect { described_class.safe_system("true", nil) }.to raise_error(ArgumentError)
     end
 
+    it "raises for a nil argument in `args:`" do
+      expect { described_class.safe_system("true", args: [nil]) }.to raise_error(ArgumentError)
+    end
+
     it "exits with 127 when the command cannot be run" do
       expect { described_class.safe_system("brew-missing-command") }
         .to raise_error(ErrorDuringExecution, /exited with 127\./)
@@ -57,6 +61,13 @@ RSpec.describe SystemCommand do
       end
     end
 
+    it "appends `args:` to the positional arguments" do
+      with_context(verbose: true) do
+        expect { described_class.safe_system("true", "--version", args: ["--help"]) }
+          .to output("true --version --help\n").to_stdout
+      end
+    end
+
     it "redacts secrets when verbose" do
       ENV["HOMEBREW_TEST_TOKEN"] = "hunter2"
 
@@ -76,8 +87,18 @@ RSpec.describe SystemCommand do
       expect(described_class.quiet_system(nil)).to be false
     end
 
+    it "returns false for a nil argument in `args:`" do
+      expect(described_class.quiet_system("true", args: [nil])).to be false
+    end
+
     it "sets the child status" do
       described_class.quiet_system("sh", "-c", "exit 3")
+
+      expect($CHILD_STATUS.exitstatus).to eq(3)
+    end
+
+    it "appends `args:` to the positional arguments" do
+      described_class.quiet_system("sh", "-c", args: ["exit 3"])
 
       expect($CHILD_STATUS.exitstatus).to eq(3)
     end
@@ -95,8 +116,8 @@ RSpec.describe SystemCommand do
     subject(:helpers) { Class.new { include SystemCommand::Helpers }.new }
 
     it "provides positional system helpers" do
-      expect(SystemCommand).to receive(:safe_system).with("true")
-      expect(SystemCommand).to receive(:quiet_system).with("true").and_return(true)
+      expect(SystemCommand).to receive(:safe_system).with("true", args: [])
+      expect(SystemCommand).to receive(:quiet_system).with("true", args: []).and_return(true)
 
       helpers.safe_system("true")
       expect(helpers.quiet_system("true")).to be true

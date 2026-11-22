@@ -78,8 +78,9 @@ module Homebrew
           SystemCommand.safe_system(
             RUBY_PATH, "-I", (Pathname(Gem::Specification.find_by_name("vernier").full_gem_path)/"lib").to_s,
             "-r", "vernier/autorun",
-            "-r", (HOMEBREW_LIBRARY_PATH/"prof/vernier_fork_guard").to_s, brew_rb, *args.named,
-            env: {
+            "-r", (HOMEBREW_LIBRARY_PATH/"prof/vernier_fork_guard").to_s, brew_rb,
+            args: args.named,
+            env:  {
               "HOMEBREW_SPAWN_SYSTEM"       => "1",
               "VERNIER_ALLOCATION_INTERVAL" => "500",
               "VERNIER_OUTPUT"              => output_filename,
@@ -91,7 +92,7 @@ module Homebrew
         else
           output_filename = "prof/call_stack.html"
           SystemCommand.safe_system "ruby-prof", "--printer=call_stack", "--file=#{output_filename}", brew_rb, "--",
-                                    *args.named
+                                    args: args.named
           # Match the stackprof behaviour above: generating the file is useful
           # in non-interactive runs but launching a browser is not.
           Utils::Browser.open output_filename if $stdout.tty?

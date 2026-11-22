@@ -143,7 +143,7 @@ module Hardware
       sig { params(keys: String).returns(String) }
       def sysctl_n(*keys)
         (@properties ||= T.let({}, T.nilable(T::Hash[T::Array[String], String]))).fetch(keys) do
-          @properties[keys] = Utils.popen_read("/usr/sbin/sysctl", "-n", *keys)
+          @properties[keys] = Utils.popen_read("/usr/sbin/sysctl", "-n", args: keys)
         end
       end
     end

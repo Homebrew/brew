@@ -742,7 +742,7 @@ RSpec.describe "Utils::Curl" do
       ENV["HOMEBREW_CURL_VERBOSE"] = "1"
 
       allow(SystemCommand).to receive(:quiet_system)
-        .with(curl_executable, *curl_args("--tlsv1.3", "--head", "https://brew.sh/"))
+        .with(curl_executable, args: curl_args("--tlsv1.3", "--head", "https://brew.sh/"))
         .and_return(true)
 
       expect(curl_supports_tls13?).to be(true)
