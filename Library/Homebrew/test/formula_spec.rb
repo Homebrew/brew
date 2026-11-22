@@ -2100,6 +2100,32 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#installed_runtime_dependency_names" do
+    let(:f) do
+      formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+    end
+
+    it "reads the names from the install receipt without their taps" do
+      tab = instance_double(Tab, runtime_dependencies: [{ "full_name" => "homebrew/core/bar" }, {}])
+      allow(f).to receive(:any_installed_keg).and_return(instance_double(Keg, tab:))
+
+      expect(f.installed_runtime_dependency_names).to eq(["bar"])
+    end
+
+    it "falls back to the installed runtime dependencies for receipts without a list" do
+      dependency = formula("bar") do
+        T.bind(self, T.class_of(Formula))
+        url "bar-1.0"
+      end
+      allow(f).to receive_messages(any_installed_keg: nil, installed_runtime_formula_dependencies: [dependency])
+
+      expect(f.installed_runtime_dependency_names).to eq(["bar"])
+    end
+  end
+
   describe "#missing_dependencies" do
     let(:f) do
       formula("foo") do
