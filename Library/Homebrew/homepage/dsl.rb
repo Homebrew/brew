@@ -7,6 +7,10 @@ require "date"
 module Homepage
   # The homepage URL and the date a human last checked that URL.
   module DSL
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
+
     sig { returns(T.nilable(Date)) }
     attr_reader :homepage_browsed
 
@@ -22,7 +26,7 @@ module Homepage
     sig { params(url: T.nilable(String), browsed: T.nilable(String)).returns(T.nilable(String)) }
     def homepage(url = nil, browsed: nil)
       if url.nil?
-        Kernel.raise ArgumentError, "`browsed` requires a homepage URL" if browsed
+        raise ArgumentError, "`browsed` requires a homepage URL" if browsed
 
         return @homepage
       end

@@ -132,6 +132,24 @@ RSpec.describe Formulary do
       expect(formula_class.stable.url).to eq("https://brew.sh/ignorable-error-1.0.tar.gz")
     end
 
+    it "continues evaluation after shared DSL validation errors with ignore_errors" do
+      formula_class = described_class.load_formula(
+        "invalid-autobump-reason",
+        mktmpdir/"invalid-autobump-reason.rb",
+        <<~RUBY,
+          class InvalidAutobumpReason < Formula
+            no_autobump! because: :removed_reason
+            url "https://brew.sh/invalid-autobump-reason-1.0.tar.gz"
+          end
+        RUBY
+        "InvalidAutobumpReasonNamespace",
+        flags:         [],
+        ignore_errors: true,
+      )
+
+      expect(formula_class.stable.url).to eq("https://brew.sh/invalid-autobump-reason-1.0.tar.gz")
+    end
+
     it "raises FormulaUnreadableError for errors it cannot resume despite ignore_errors" do
       expect do
         described_class.load_formula(

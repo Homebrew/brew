@@ -8,6 +8,10 @@ require "utils/output"
 module DependsOn
   # Track platform support and validate OS requirements for the active architecture.
   module DSL
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
+
     sig { returns(T::Boolean) }
     def requires_macos? = @required_os == :macos
 
@@ -40,14 +44,14 @@ module DependsOn
       return if os_scoped
 
       if @required_os && @required_os != os
-        Kernel.raise ArgumentError, "`depends_on :linux` cannot be combined with `depends_on macos:`"
+        raise ArgumentError, "`depends_on :linux` cannot be combined with `depends_on macos:`"
       end
 
       unless set_in_block
         if requirement.is_a?(MacOSRequirement)
           record_top_level_macos(requirement)
         elsif depends_on_linux_set_top_level?
-          Kernel.raise ArgumentError, "Only a single 'depends_on linux' is allowed."
+          raise ArgumentError, "Only a single 'depends_on linux' is allowed."
         else
           @linux_set_top_level = T.let(true, T.nilable(TrueClass))
         end
@@ -66,8 +70,9 @@ module DependsOn
       end
       previous = @top_level_macos || []
       if previous.include?(stanza)
-        Kernel.raise ArgumentError, "`depends_on #{stanza}` cannot be combined with another macOS `depends_on`"
+        raise ArgumentError, "`depends_on #{stanza}` cannot be combined with another macOS `depends_on`"
       end
+
       if previous.any? && (stanza == ":macos" || previous.include?(":macos"))
         versioned = (stanza == ":macos") ? previous.fetch(0) : stanza
         Utils::Output.odisabled "`depends_on :macos` with `depends_on #{versioned}`",
