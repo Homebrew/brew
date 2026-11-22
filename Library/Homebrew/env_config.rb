@@ -1009,6 +1009,8 @@ module Homebrew
     sig { returns(T::Array[String]) }
     def cask_opts
       Shellwords.shellsplit(ENV.fetch("HOMEBREW_CASK_OPTS", ""))
+    rescue ArgumentError => e
+      odie "HOMEBREW_CASK_OPTS is not valid shell syntax: #{e.message}"
     end
 
     sig { returns(T::Boolean) }
