@@ -169,12 +169,13 @@ module Homebrew
           # Only kegs built from source need their build dependencies again.
           next if build && keg.tab.poured_from_bottle
 
-          # Loading every installed formula is slow, so read the receipt's list.
-          dependency_names = if !build && (tab_dependencies = keg.runtime_dependencies)
+          dependency_names = if build
+            keg.to_formula.deps.select(&:build?).map(&:name)
+          elsif (tab_dependencies = keg.runtime_dependencies)
+            # Loading every installed formula is slow, so read the receipt's list.
             tab_dependencies.filter_map { it["full_name"] }
           else
-            formula = keg.to_formula
-            (build ? formula.deps.select(&:build?) : formula.runtime_dependencies(keg:)).map(&:name)
+            keg.to_formula.runtime_dependencies(keg:).map(&:name)
           end
           keg.name if dependency_names.any? { names.include?(Utils.name_from_full_name(it)) }
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
