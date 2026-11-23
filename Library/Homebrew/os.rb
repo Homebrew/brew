@@ -68,19 +68,19 @@ module OS
   LINUX_PREFERRED_GCC_COMPILER_FORMULA = T.let("gcc@#{LINUX_GCC_CI_VERSION}".freeze, String)
   LINUX_PREFERRED_GCC_RUNTIME_FORMULA = "gcc"
 
-  # The third-party configuration detected at startup, if any.
+  # Detect the third-party configuration once, when support guidance is needed.
   sig { returns(T.nilable(ThirdPartyHomebrew)) }
   def self.third_party_homebrew
-    @third_party_homebrew
+    return @third_party_homebrew if defined?(@third_party_homebrew)
+    return if !mac? && !linux?
+
+    @third_party_homebrew = T.let(ThirdPartyHomebrew.detect(macos: mac?), T.nilable(ThirdPartyHomebrew))
   end
 
   sig { returns(T::Boolean) }
   def self.third_party_homebrew?
     !third_party_homebrew.nil?
   end
-
-  @third_party_homebrew = T.let(nil, T.nilable(ThirdPartyHomebrew))
-  @third_party_homebrew = ThirdPartyHomebrew.detect if mac? || linux?
 
   if OS.mac?
     require "os/mac"
@@ -95,14 +95,14 @@ module OS
     end.freeze
   end
 
-  issues_url = if (provider = third_party_homebrew)
-    provider.issues_url
-  elsif OS.linux? || (OS.mac? && Hardware::CPU.arm? &&
-                      !OS::Mac.version.prerelease? && !OS::Mac.version.outdated_release? &&
-                      ARGV.none? { |arg| arg.start_with?("--cc=") })
+  default_issues_url = if OS.linux? || (OS.mac? && Hardware::CPU.arm? &&
+                                       !OS::Mac.version.prerelease? && !OS::Mac.version.outdated_release? &&
+                                       ARGV.none? { |arg| arg.start_with?("--cc=") })
     "https://docs.brew.sh/Troubleshooting"
   end
-  ISSUES_URL = T.let(issues_url.freeze, T.nilable(String))
+  DEFAULT_ISSUES_URL = T.let(default_issues_url.freeze, T.nilable(String))
+  private_constant :DEFAULT_ISSUES_URL
+  autoload :ISSUES_URL, "os/issues_url"
 
   sig { returns(T::Boolean) }
   def self.not_tier_one_configuration?

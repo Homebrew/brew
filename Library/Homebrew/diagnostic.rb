@@ -248,6 +248,7 @@ module Homebrew
       def preinstall_checks
         %w[
           check_untrusted_taps
+          check_for_installed_homebrew_management_software
         ].freeze
       end
 
@@ -984,6 +985,17 @@ module Homebrew
         return unless (provider = OS.third_party_homebrew)
 
         Finding.new(provider.diagnostic, tier: provider.tier)
+      end
+
+      sig { returns(T.nilable(Finding)) }
+      def check_for_installed_homebrew_management_software
+        OS::ThirdPartyHomebrew::CONFIGURATIONS.each_value do |configuration|
+          file = configuration.presence_file
+          next if file.nil? || !File.file?(file) || configuration == OS.third_party_homebrew
+
+          return Finding.new("Found third-party Homebrew management software on this machine.")
+        end
+        nil
       end
 
       sig { returns(T.nilable(Finding)) }

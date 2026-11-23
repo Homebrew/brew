@@ -123,13 +123,11 @@ module SystemConfig
 
     sig { params(tap: Tap, out: T.any(File, StringIO, IO)).void }
     def dump_tap_config(tap, out = $stdout)
-      case tap
+      tap_name = case tap
       when CoreTap
-        tap_name = "Core tap"
-        json_file_name = "formula.jws.json"
+        "Core tap"
       when CoreCaskTap
-        tap_name = "Core cask tap"
-        json_file_name = "cask.jws.json"
+        "Core cask tap"
       else
         raise ArgumentError, "Unknown tap: #{tap}"
       end
@@ -148,7 +146,7 @@ module SystemConfig
         end
       end
 
-      json_file = Homebrew::API::HOMEBREW_CACHE_API/json_file_name
+      json_file = Homebrew::API::Internal.cached_packages_json_file_path
       if json_file.exist?
         modified_at = json_file.mtime.utc.strftime("%d %b %H:%M UTC")
         out.puts "#{tap_name} JSON: #{modified_at}"
@@ -161,6 +159,20 @@ module SystemConfig
     def core_tap_config(out = $stdout)
       dump_tap_config(CoreTap.instance, out)
       dump_tap_config(CoreCaskTap.instance, out)
+      return if Homebrew::EnvConfig.no_install_from_api?
+
+      threshold = OS.third_party_homebrew&.api_delay_hours
+      return unless threshold
+
+      delay_hours = Homebrew::API.cached_packages_delay_hours
+      return if delay_hours.nil? || delay_hours < threshold
+
+      out.puts <<~EOS
+        Package metadata was #{delay_hours} hours old at the last API refresh.
+        A proxy or mirror may be delaying updates. A cooldown this long can leave
+        your system exposed for #{delay_hours} more hours after Homebrew publishes a zero-day fix
+        for an installed package.
+      EOS
     end
 
     sig { params(out: T.any(File, StringIO, IO)).void }

@@ -21,6 +21,40 @@ RSpec.describe Homebrew::Cmd::Config do
       .and be_a_success
   end
 
+  it "reports a delayed package feed only when it was stale at refresh time" do
+    allow(Homebrew::EnvConfig).to receive(:no_install_from_api?).and_return(false)
+    allow(OS).to receive(:third_party_homebrew).and_return(OS::ThirdPartyHomebrew.new(api_delay_hours: 48))
+    allow(Homebrew::API).to receive(:cached_packages_delay_hours).and_return(nil, 47, 48)
+    allow(SystemConfig).to receive(:dump_tap_config)
+
+    messages = Array.new(3) do
+      out = StringIO.new
+      SystemConfig.core_tap_config(out)
+      out.string
+    end
+    expect(messages).to eq(["", "", <<~EOS])
+      Package metadata was 48 hours old at the last API refresh.
+      A proxy or mirror may be delaying updates. A cooldown this long can leave
+      your system exposed for 48 more hours after Homebrew publishes a zero-day fix
+      for an installed package.
+    EOS
+  end
+
+  it "reports the current packages cache refresh time for both core taps" do
+    cache = mktmpdir/"packages.jws.json"
+    cache.write("{}")
+    FileUtils.touch cache, mtime: Time.utc(2026, 11, 10, 12, 34)
+    allow(Homebrew::API::Internal).to receive(:cached_packages_json_file_path).and_return(cache)
+    out = StringIO.new
+
+    SystemConfig.core_tap_config(out)
+
+    expect(out.string.lines.grep(/tap JSON:/)).to eq([
+      "Core tap JSON: 10 Nov 12:34 UTC\n",
+      "Core cask tap JSON: 10 Nov 12:34 UTC\n",
+    ])
+  end
+
   it "disables HOMEBREW_CASK_OPTS_REQUIRE_SHA" do
     ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_CASK_OPTS_REQUIRE_SHA"
     ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"

@@ -102,16 +102,17 @@ Tier 3 configurations include:
 - Systems that build official packages from source despite available bottles
 - Homebrew installed outside the default prefix with a prefix or Cellar longer in bytes than the platform's defaults, or with build prefix relocation disabled
 - Homebrew installations managed by another package manager
-- Homebrew invoked through a third-party wrapper (deprecated)
+- Homebrew invoked through a provisioning tool or a third-party wrapper (wrappers are deprecated)
 - Installing formulae using `--HEAD`
 - Installing deprecated or disabled formulae
 - Intel x86_64 systems running macOS, regardless of prefix (the default is `/usr/local`, 10 bytes)
 
-Provisioning tools that simply run `brew` or `brew bundle` use the installation’s usual tier.
-Report problems caused by a wrapper or package manager, such as a blocked installation, to its maintainers.
+Report problems caused by a provisioning tool, wrapper or package manager to its maintainers.
 Homebrew's internal `brew` commands invoke Homebrew directly, not the wrapper.
 The legacy `HOMEBREW_FORCE_BREW_WRAPPER`, `HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE` and `HOMEBREW_NO_FORCE_BREW_WRAPPER` settings are ignored and produce deprecation warnings in Ruby commands.
 `brew doctor` warns if another `brew` executable takes precedence over the current installation in your `PATH`.
+It also checks `HOMEBREW_BREW_WRAPPER` and looks for known wrapper executables.
+A tool installed for read-only inventory can trigger a warning while the installation keeps its usual support tier.
 
 ## Unsupported
 
@@ -124,6 +125,10 @@ Unsupported configurations include:
 - macOS Catalina 10.15 and earlier
 - Multiple accounts independently modifying the same Homebrew installation
 - Invocations with different real and effective user IDs
+- Third-party software that intercepts Homebrew downloads.
+  `brew doctor` checks for its proxy certificate, which can remain after the software stops.
+  When the certificate is present, `brew config` reports package metadata that was at least 48 hours old at the last refresh.
+  If Homebrew publishes a zero-day fix for an installed package, a proxy or mirror with a 48-hour cooldown can leave your system exposed for two more days.
 - Beowulf clusters
 - Nokia 3210s
 - CPUs built inside of Minecraft

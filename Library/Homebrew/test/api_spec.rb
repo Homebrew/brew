@@ -445,6 +445,23 @@ RSpec.describe Homebrew::API do
       target.write envelope_json('{"foo":"bar"}')
     end
 
+    it "measures how old the signed packages were when the cache was refreshed" do
+      generated_at = 1_714_056_000
+      target.write envelope_json(JSON.generate(metadata: { generated_at: }))
+      FileUtils.touch target, mtime: Time.at(generated_at) + (48 * 3600)
+      allow(Homebrew::API::Internal).to receive(:cached_packages_json_file_path).and_return(target)
+
+      expect(described_class.cached_packages_delay_hours).to eq(48)
+    end
+
+    it "ignores package timestamps with an invalid signature" do
+      payload = JSON.generate(metadata: { generated_at: 1_714_056_000 })
+      target.write envelope_json(payload, signature: sign_payload("{}"))
+      allow(Homebrew::API::Internal).to receive(:cached_packages_json_file_path).and_return(target)
+
+      expect(described_class.cached_packages_delay_hours).to be_nil
+    end
+
     it "verifies the envelope and writes a payload cache" do
       expect(fetch_target).to eq("foo" => "bar")
       expect(payload_cache).to exist

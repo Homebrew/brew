@@ -388,6 +388,25 @@ module Homebrew
       false
     end
 
+    # Compare publication and refresh times on the same cached envelope, even when offline.
+    sig { returns(T.nilable(Integer)) }
+    def self.cached_packages_delay_hours
+      Internal.cached_packages_json_file_path.open("rb") do |file|
+        refreshed_at = file.stat.mtime.to_i
+        envelope = JSON.parse(file.read)
+        next unless envelope.is_a?(Hash)
+
+        verified, data = verify_and_parse_jws(envelope)
+        next if !verified || !data.is_a?(Hash)
+
+        metadata = data["metadata"]
+        generated_at = metadata["generated_at"] if metadata.is_a?(Hash)
+        (refreshed_at - generated_at) / 3600 if generated_at.is_a?(Integer)
+      end
+    rescue SystemCallError, JSON::ParserError, ArgumentError
+      nil
+    end
+
     sig {
       params(json_data: T::Hash[String, T.untyped])
         .returns([T::Boolean, T.any(String, T::Array[T.untyped], T::Hash[String, T.untyped])])
@@ -407,7 +426,12 @@ module Homebrew
     sig { params(json_data: T::Hash[String, T.untyped]).returns(T.nilable(T::Hash[String, T.untyped])) }
     private_class_method def self.homebrew_jws_signature(json_data)
       signatures = json_data["signatures"]
-      signatures&.find { |signature| signature.dig("header", "kid") == "homebrew-1" }
+      return unless signatures.is_a?(Array)
+
+      signatures.grep(Hash).find do |signature|
+        header = signature["header"]
+        header.is_a?(Hash) && header["kid"] == "homebrew-1"
+      end
     end
 
     # Returns a short error description or `nil` if the signature verifies.

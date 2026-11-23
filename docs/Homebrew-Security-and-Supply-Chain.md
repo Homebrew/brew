@@ -256,7 +256,10 @@ Across Homebrew's history far more users have been protected by shipping zero-da
 The deeper reason Homebrew does not need a general cooldown is that, unlike language package managers, it already separates publishing from distribution: an upstream release does not reach users until it has passed human review, CI and checksum verification, which is the very review window that language-ecosystem cooldowns are trying to recreate.
 
 Homebrew is also a rolling-release package manager, so there is a genuine balance to strike: delivering a coordinated zero-day fix immediately, as with the OpenSSL Heartbleed vulnerability, versus delaying updates to blunt supply-chain attacks.
-Given our trust model, risk profile and the breadth of ecosystems we support, we prefer to apply cooldowns when we bump an upstream package rather than imposing a second Homebrew-specific cooldown on end users as they upgrade; doing both would be a "double cooldown" that delays security fixes twice over for little extra benefit.
+Homebrew applies its cooldowns when adopting selected upstream releases.
+A proxy or mirror that holds back Homebrew's entire signed package index adds another waiting period after Homebrew has reviewed and published an update.
+With a 48-hour cooldown, `brew update` can successfully refresh an older index while `brew upgrade` still sees only the vulnerable version of a library.
+Applications that depend on that library can remain exposed for two more days after Homebrew publishes a zero-day fix.
 
 ### Prioritising security over backwards compatibility
 
