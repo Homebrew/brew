@@ -67,7 +67,7 @@ module RuboCop
             add_offense(method_node, message: "Remove the redundant nested `#{method_node.source}` block.")
           end
 
-          audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES, invert_cpu: true)
+          audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
           audit_macos_version_conditionals(cask_body, recommend_on_system: false, allowed_blocks: FLIGHT_STANZA_NAMES)
 
           sha256_nodes = Hash.new { |hash, key| hash[key] = {} }
