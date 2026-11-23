@@ -407,6 +407,16 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".cask_opts" do
+    it "dies naming the variable on an unbalanced quote" do
+      ENV["HOMEBREW_CASK_OPTS"] = '--appdir="/Applications'
+
+      expect { env_config.cask_opts }
+        .to raise_error(SystemExit)
+        .and output(/HOMEBREW_CASK_OPTS is not valid shell syntax/).to_stderr
+    end
+  end
+
   describe ".bundle_describe?" do
     it "returns true if unset" do
       with_env(HOMEBREW_BUNDLE_DESCRIBE: nil, HOMEBREW_BUNDLE_NO_DESCRIBE: nil) do
