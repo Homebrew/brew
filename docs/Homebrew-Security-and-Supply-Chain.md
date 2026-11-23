@@ -82,6 +82,7 @@ Homebrew refuses a redirect that would change an official tap identity or give a
 For any tap name change, Git's resolved origin URL must use HTTPS or SSH on GitHub.
 An untrusted tap can follow a redirect to a new untrusted location only if no existing tap, formula, cask or command trust entry matches the destination.
 For an allowed redirect, Homebrew retargets the local tap and invalidates trust entries for its old name rather than silently carrying trust across.
+When the redirect renames an installed tap, Homebrew also updates the install receipts of formulae and casks installed from the old name; this grants no trust, so upgrades from the renamed tap still need it to be trusted.
 If Homebrew refuses a third-party tap rename, untap the old name and tap the new location directly to fetch its contents.
 
 ### Not automatically deferring to upstream
