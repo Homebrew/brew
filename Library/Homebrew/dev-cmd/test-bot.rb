@@ -87,7 +87,7 @@ module Homebrew
                depends_on:  "--only-tap-syntax",
                description: "Only run the tap syntax checks needed on stable brew."
         switch "--only-formulae",
-               description: "Only run the formulae steps."
+               description: "Run the formulae steps and test changed casks in third-party tap pull requests."
         switch "--only-formulae-detect",
                description: "Only run the formulae detection steps."
         switch "--only-formulae-dependents",

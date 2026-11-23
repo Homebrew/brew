@@ -13,6 +13,9 @@ module Homebrew
       sig { returns(T::Array[String]) }
       attr_reader :testing_formulae, :added_formulae, :deleted_formulae
 
+      sig { returns(T.nilable([String, String])) }
+      attr_reader :changed_revisions
+
       sig {
         params(
           argument:  String,
@@ -31,6 +34,7 @@ module Homebrew
         @deleted_formulae = T.let([], T::Array[String])
         @formulae_to_fetch = T.let([], T::Array[String])
         @testing_formulae = T.let([], T::Array[String])
+        @changed_revisions = T.let(nil, T.nilable([String, String]))
       end
 
       sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
@@ -155,13 +159,14 @@ module Homebrew
         modified_formulae = []
 
         if diff_start_sha1 != diff_end_sha1 && (tap = self.tap.presence)
-          formula_path = tap.formula_dir.to_s
+          formula_path = tap.formula_dir
           @added_formulae +=
             diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "A")
           modified_formulae +=
             diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "M")
           @deleted_formulae +=
             diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "D")
+          @changed_revisions = [diff_start_sha1, diff_end_sha1]
         end
 
         # If a formula is both added and deleted: it's actually modified.
@@ -262,18 +267,14 @@ module Homebrew
         params(
           start_revision: String,
           end_revision:   String,
-          path:           String,
+          path:           Pathname,
           filter:         String,
         ).returns(T::Array[String])
       }
       def diff_formulae(start_revision, end_revision, path, filter)
         raise "A tap is required to call diff_formulae" unless @tap
 
-        Utils.safe_popen_read(
-          git, "-C", repository,
-          "diff-tree", "-r", "--name-only", "--diff-filter=#{filter}",
-          start_revision, end_revision, "--", path
-        ).lines(chomp: true).filter_map do |file|
+        changed_files(start_revision, end_revision, path, filter).filter_map do |file|
           next unless @tap.formula_file?(file)
 
           file = Pathname.new(file)

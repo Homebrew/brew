@@ -97,6 +97,15 @@ module Homebrew
         @repository = T.let(tap_path, Pathname)
       end
 
+      sig { params(start_revision: String, end_revision: String, path: Pathname, filter: String).returns(T::Array[String]) }
+      def changed_files(start_revision, end_revision, path, filter)
+        Utils.safe_popen_read(
+          git, "-C", repository,
+          "diff-tree", "-r", "--name-only", "-z", "--diff-filter=#{filter}",
+          start_revision, end_revision, "--", path
+        ).split("\0")
+      end
+
       sig { params(klass: Symbol, method: T.nilable(T.any(String, Symbol))).void }
       def test_header(klass, method: "run!")
         puts

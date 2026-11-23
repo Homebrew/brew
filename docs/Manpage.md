@@ -3994,7 +3994,8 @@ and Linux workers.
 
 `--only-formulae`
 
-: Only run the formulae steps.
+: Run the formulae steps and test changed casks in third-party tap pull
+  requests.
 
 `--only-formulae-detect`
 

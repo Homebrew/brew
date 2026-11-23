@@ -2037,7 +2037,7 @@ __fish_brew_complete_arg 'test-bot' -l local -d 'Ask Homebrew to write verbose l
 __fish_brew_complete_arg 'test-bot' -l only-bottles-fetch -d 'Only run the bottles fetch steps. This optional post-upload test checks that all the bottles were uploaded correctly. It is not run unless requested and only needs to be run on a single machine. The bottle commit to be tested must be on the tested branch'
 __fish_brew_complete_arg 'test-bot' -l only-cleanup-after -d 'Only run the post-cleanup step. Needs `--cleanup`, except in GitHub Actions'
 __fish_brew_complete_arg 'test-bot' -l only-cleanup-before -d 'Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions'
-__fish_brew_complete_arg 'test-bot' -l only-formulae -d 'Only run the formulae steps'
+__fish_brew_complete_arg 'test-bot' -l only-formulae -d 'Run the formulae steps and test changed casks in third-party tap pull requests'
 __fish_brew_complete_arg 'test-bot' -l only-formulae-dependents -d 'Only run the formulae dependents steps'
 __fish_brew_complete_arg 'test-bot' -l only-formulae-detect -d 'Only run the formulae detection steps'
 __fish_brew_complete_arg 'test-bot' -l only-json-tab -d 'Run `brew bottle --only-json-tab` to build new bottles that do not contain a tab'

@@ -5,6 +5,8 @@ require "test_bot/junit"
 require "test_bot/test"
 require "test_bot/test_cleanup"
 require "test_bot/test_formulae"
+require "test_bot/cask_detect"
+require "test_bot/casks"
 require "test_bot/cleanup_after"
 require "test_bot/cleanup_before"
 require "test_bot/formulae_detect"
@@ -23,6 +25,8 @@ module Homebrew
           tap_syntax:          T.nilable(TapSyntax),
           formulae_detect:     T.nilable(FormulaeDetect),
           formulae:            T.nilable(Formulae),
+          cask_detect:         T.nilable(CaskDetect),
+          casks:               T.nilable(Casks),
           formulae_dependents: T.nilable(FormulaeDependents),
           cleanup_before:      T.nilable(CleanupBefore),
           cleanup_after:       T.nilable(CleanupAfter),
@@ -190,6 +194,12 @@ module Homebrew
                                     output_paths:)
           end
 
+          if formulae_detect && args.only_formulae? && tap && !tap.official? &&
+             ENV["GITHUB_EVENT_NAME"] == "pull_request"
+            cask_detect = CaskDetect.new(tap:, git:)
+            casks = Casks.new(tap:, dry_run: args.dry_run?, fail_fast: args.fail_fast?, verbose: args.verbose?)
+          end
+
           if !args.skip_dependents? && (no_only_args || args.only_formulae? || args.only_formulae_dependents?)
             formulae_dependents = FormulaeDependents.new(tap:,
                                                          git:,
@@ -224,7 +234,7 @@ module Homebrew
                                              verbose:   args.verbose?)
           end
 
-          { setup:, tap_syntax:, formulae_detect:, formulae:, formulae_dependents:,
+          { setup:, tap_syntax:, formulae_detect:, formulae:, cask_detect:, casks:, formulae_dependents:,
             cleanup_before:, cleanup_after:, bottles_fetch: }
         end
 
@@ -265,6 +275,10 @@ module Homebrew
               output_path.read.chomp.split(",")
             else
               []
+            end
+
+            if (revisions = detect_test&.changed_revisions) && (cask_detect = tests[:cask_detect])
+              tests[:casks]&.run!(cask_detect.run!(*revisions))
             end
 
             if (dependents_test = tests[:formulae_dependents])

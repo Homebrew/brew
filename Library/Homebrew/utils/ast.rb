@@ -1074,11 +1074,18 @@ module Utils
 
       sig { returns(T::Boolean) }
       def depends_on_macos?
-        stanzas(:depends_on).any? do |stanza_node|
+        depends_on_os?(:macos, include_maximum: false)
+      end
+
+      sig { params(os: Symbol, top_level: T::Boolean, include_maximum: T::Boolean).returns(T::Boolean) }
+      def depends_on_os?(os, top_level: false, include_maximum: true)
+        dependencies = top_level ? top_level_stanzas(:depends_on) : stanzas(:depends_on)
+        dependencies.any? do |stanza_node|
           stanza_node.arguments.any? do |argument|
-            literal_value(argument) == :macos ||
-              (argument.hash_type? && T.cast(argument, RuboCop::AST::HashNode).pairs.any? do |pair|
-                literal_value(pair.key) == :macos
+            literal_value(argument) == os ||
+              (argument.is_a?(RuboCop::AST::HashNode) && argument.pairs.any? do |pair|
+                key = literal_value(pair.key)
+                key == os || (include_maximum && os == :macos && key == :maximum_macos)
               end)
           end
         end
@@ -1091,6 +1098,39 @@ module Utils
                                       .flat_map(&:pairs)
                                       .find { |pair| literal_value(pair.key) == :macos }
                                       &.value
+      end
+
+      # Only rule out an architecture when all dependency declarations are literal and unconditional.
+      sig { params(arch: Symbol).returns(T::Boolean) }
+      def excludes_arch?(arch)
+        dependencies = top_level_stanzas(:depends_on)
+        return false if dependencies != stanzas(:depends_on)
+
+        architectures = dependencies.flat_map do |stanza|
+          stanza.arguments.flat_map do |argument|
+            next [] if argument.sym_type?
+            return false unless argument.is_a?(RuboCop::AST::HashNode)
+            return false unless argument.child_nodes.all?(&:pair_type?)
+
+            argument.pairs.flat_map do |pair|
+              return false unless pair.key.sym_type?
+              next [] if literal_value(pair.key) != :arch
+
+              values = pair.value.array_type? ? pair.value.child_nodes : [pair.value]
+              values.map do |value|
+                literal = literal_value(value)
+                return false if !literal.is_a?(String) && !literal.is_a?(Symbol)
+
+                key = literal.to_s.downcase.delete_prefix(":").tr("-", "_").to_sym
+                requirement = Cask::DSL::DependsOn::VALID_ARCHES[key]
+                return false unless requirement
+
+                requirement.fetch(:type)
+              end
+            end
+          end
+        end
+        architectures.present? && architectures.exclude?(arch)
       end
 
       # Sets the minimum macOS version of the `depends_on macos:` stanza, adding

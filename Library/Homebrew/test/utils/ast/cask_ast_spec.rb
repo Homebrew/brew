@@ -321,6 +321,13 @@ RSpec.describe Utils::AST::CaskAST do
       RUBY
     end
 
+    it "inserts a minimum beside a maximum_macos requirement" do
+      cask_ast = cask_with("  depends_on maximum_macos: :sequoia\n")
+      cask_ast.update_depends_on_macos_minimum!(:ventura)
+
+      expect(cask_ast.process).to include("depends_on maximum_macos: :sequoia\n  depends_on macos: :ventura")
+    end
+
     it "returns false when the stanza states a maximum version" do
       cask_ast = cask_with("  depends_on macos: \"<= :ventura\"\n")
 
@@ -366,6 +373,18 @@ RSpec.describe Utils::AST::CaskAST do
       RUBY
 
       expect(cask_ast.depends_on_macos?).to be(true)
+    end
+
+    it "does not treat a scoped maximum as a macOS dependency for the audit prefilter" do
+      cask_ast = described_class.new <<~RUBY
+        cask "foo" do
+          on_macos do
+            depends_on maximum_macos: :sequoia
+          end
+        end
+      RUBY
+
+      expect(cask_ast.depends_on_macos?).to be(false)
     end
 
     it "returns false without a macOS dependency" do

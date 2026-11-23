@@ -812,14 +812,16 @@ module Cask
       end
     end
 
-    sig { params(bottle_tag: ::Utils::Bottles::Tag, installable: T::Boolean).returns(T::Boolean) }
-    def platform_supported?(bottle_tag, installable: true)
+    sig {
+      params(bottle_tag: ::Utils::Bottles::Tag, installable: T::Boolean, require_download: T::Boolean).returns(T::Boolean)
+    }
+    def platform_supported?(bottle_tag, installable: true, require_download: true)
       if bottle_tag.linux?
         return false unless supports_linux?
       else
         return false unless supports_macos?
       end
-      return false if version.blank? || sha256.blank? || url.blank?
+      return false if require_download && (version.blank? || sha256.blank? || url.blank?)
       return false if installable && !installable_artifact?
 
       arch_supported = depends_on.arch&.any? do |arch|
