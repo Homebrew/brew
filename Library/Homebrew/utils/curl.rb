@@ -4,6 +4,7 @@
 require "utils/output"
 
 require "open3"
+require "timeout"
 
 require "utils/timer"
 require "utils/curl/responses"
