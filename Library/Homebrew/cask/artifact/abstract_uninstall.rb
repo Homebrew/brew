@@ -676,6 +676,8 @@ module Cask
 
         ohai "Removing files:"
         each_resolved_path(:delete, paths) do |path, resolved_paths|
+          next if resolved_paths.empty?
+
           puts path
           command.run!(
             "/usr/bin/xargs",
