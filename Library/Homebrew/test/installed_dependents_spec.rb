@@ -401,6 +401,23 @@ RSpec.describe InstalledDependents do
 
       expect(described_class.find_some_installed_dependents([keg])&.last).to include("qux")
     end
+
+    specify "identify dependent casks when another cask depends on an unavailable formula" do
+      allow(Formulary).to receive(:loader_for).with("unavailable", any_args).and_call_original
+      setup_test_cask("quux", "1.0.0", "unavailable")
+      setup_test_cask("qux", "1.0.0", "foo")
+
+      expect(described_class.find_some_installed_dependents([keg])&.last).to eq(["qux"])
+    end
+
+    specify "identify dependent casks of an installed but unavailable tap formula" do
+      allow(Formulary).to receive(:loader_for).with("homebrew/core/foo", any_args)
+                                              .and_raise(FormulaUnavailableError.new("homebrew/core/foo"))
+      allow(keg).to receive(:to_formula).and_raise(FormulaUnavailableError.new("foo"))
+      setup_test_cask("qux", "1.0.0", "homebrew/core/foo")
+
+      expect(described_class.find_some_installed_dependents([keg])&.last).to eq(["qux"])
+    end
   end
 
   describe "::find_installed_build_dependents" do

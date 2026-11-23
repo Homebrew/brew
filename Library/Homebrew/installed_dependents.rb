@@ -89,8 +89,14 @@ module InstalledDependents
         end
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies
-        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula).filter_map do |f|
-          kegs_by_source[[f.name, f.tap]]&.max_by(&:scheme_and_version)
+        CaskDependent.new(dependent).runtime_dependencies.filter_map do |d|
+          source = begin
+            f = d.to_installed_formula
+            [f.name, f.tap]
+          rescue FormulaUnavailableError
+            [Utils.name_from_full_name(d.name), d.tap]
+          end
+          kegs_by_source[source]&.max_by(&:scheme_and_version)
         end
       end
 
