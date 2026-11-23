@@ -101,12 +101,13 @@ module Homebrew
 
       events = @mutex.synchronize { @events.sort_by { |event| event.fetch("start") } }
       output_path.dirname.mkpath
-      output_path.write("#{JSON.pretty_generate({
+      report = JSON.pretty_generate({
         "schema_version" => 1,
         "time_unit"      => "microseconds",
         "command"        => @command,
         "events"         => events,
-      })}\n")
+      })
+      output_path.write("#{report}\n")
     end
 
     sig { params(receiver: Object, args: T::Array[T.anything]).returns(T.nilable(String)) }

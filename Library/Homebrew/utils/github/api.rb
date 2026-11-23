@@ -11,11 +11,10 @@ module GitHub
   def self.pat_blurb(scopes = ALL_SCOPES)
     require "utils/formatter"
     require "utils/shell"
+    token_url = "https://github.com/settings/tokens/new?scopes=#{scopes.join(",")}&description=Homebrew"
     <<~EOS
       Create a GitHub personal access token:
-        #{Formatter.url(
-          "https://github.com/settings/tokens/new?scopes=#{scopes.join(",")}&description=Homebrew",
-        )}
+        #{Formatter.url(token_url)}
       #{Utils::Shell.set_variable_in_profile("HOMEBREW_GITHUB_API_TOKEN", "your_token_here")}
     EOS
   end

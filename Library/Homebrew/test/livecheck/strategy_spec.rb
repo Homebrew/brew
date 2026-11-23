@@ -88,12 +88,11 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       #{body.rstrip}
     EOS
 
-    redirect_headers = response_hash[:redirection][:headers]
+    redirect = response_hash[:redirection]
     response_text[:redirection_to_ok] = response_text[:ok].sub(
       "HTTP/1.1 #{response_hash.dig(:ok, :status_code)} #{response_hash.dig(:ok, :status_text)}\r",
-      "HTTP/1.1 #{response_hash.dig(:redirection,
-                                    :status_code)} #{response_hash.dig(:redirection, :status_text)}\r\n" \
-      "Location: #{redirect_headers["location"]}\r",
+      "HTTP/1.1 #{redirect[:status_code]} #{redirect[:status_text]}\r\n" \
+      "Location: #{redirect.dig(:headers, "location")}\r",
     )
 
     response_text

@@ -125,6 +125,9 @@ Homebrew/NoInstanceVariableAccessInTests:
   Exclude:
     - "Homebrew/test/support/fixtures/**/*"
 
+Homebrew/NoMultilineInterpolation:
+  Enabled: true
+
 Homebrew/NoSendInTests:
   Description: "Make the target method public and call it directly instead of using `send` in tests."
   Include:
