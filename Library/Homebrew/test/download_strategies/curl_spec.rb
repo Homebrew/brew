@@ -113,6 +113,21 @@ RSpec.describe CurlDownloadStrategy do
       expect { strategy.fetch(timeout: 1) }.to raise_error(Timeout::Error)
     end
 
+    it "reports an expired download deadline in a fresh process" do
+      output = Utils.popen_read(
+        *HOMEBREW_RUBY_EXEC_ARGS, "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+        "-rglobal", "-rdownload_strategy", "-e", <<~RUBY, err: :out
+          begin
+            CurlDownloadStrategy.new("#{url}", "#{name}", "#{version}").fetch(timeout: 0)
+          rescue Timeout::Error => e
+            puts e.message
+          end
+        RUBY
+      )
+
+      expect(output).to eq("Timed out downloading #{url}: Timeout::Error\n")
+    end
+
     it "clears the deadline after a failed fetch" do
       begin
         strategy.fetch(timeout: 1)
