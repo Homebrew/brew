@@ -8,6 +8,45 @@ RSpec.describe RuboCop::Cop::FormulaAudit::OnSystemConditionals do
   subject(:cop) { described_class.new }
 
   context "when auditing OS conditionals" do
+    it "reports a negated OS check inside livecheck without introducing an unsupported block" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          livecheck do
+            unless OS.linux?
+            ^^^^^^^^^^^^^^^^ FormulaAudit/OnSystemConditionals: Avoid the negated system check `unless OS.linux?`.
+              url :stable
+            end
+            strategy :page_match
+          end
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it "corrects a positive OS check at the end of a resource block" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          resource "example" do
+            if OS.mac?
+            ^^^^^^^^^^ FormulaAudit/OnSystemConditionals: Instead of `if OS.mac?`, use `on_macos do`.
+              url "https://example.com/example.tgz"
+            end
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          resource "example" do
+            on_macos do
+        url "https://example.com/example.tgz"
+        end
+          end
+        end
+      RUBY
+    end
+
     it "reports an offense when `OS.linux?` is used on Formula class" do
       expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
@@ -178,6 +217,31 @@ RSpec.describe RuboCop::Cop::FormulaAudit::OnSystemConditionals do
   end
 
   context "when auditing Hardware::CPU conditionals" do
+    it "reports the CPU arch call in an unless condition" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          unless Hardware::CPU.arch
+                 ^^^^^^^^^^^^^^^^^^ FormulaAudit/OnSystemConditionals: Instead of `Hardware::CPU.arch`, use `on_arm` and `on_intel` blocks.
+            url "foo.tgz"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense when `unless Hardware::CPU.arm?` is used on Formula class" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          desc "foo"
+          unless Hardware::CPU.arm?
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/OnSystemConditionals: Avoid the negated system check `unless Hardware::CPU.arm?`.
+            url 'https://brew.sh/intel-1.0.tgz'
+          end
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
     it "reports an offense when `Hardware::CPU.arm?` is used on Formula class" do
       expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
@@ -319,6 +383,20 @@ RSpec.describe RuboCop::Cop::FormulaAudit::OnSystemConditionals do
   end
 
   context "when auditing MacOS.version conditionals" do
+    it "reports an offense without a correction when `unless MacOS.version ==` is used on Formula class" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          desc "foo"
+          unless MacOS.version == :monterey
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/OnSystemConditionals: Avoid the negated system check `unless MacOS.version == :monterey`.
+            url 'https://brew.sh/linux-1.0.tgz'
+          end
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
     it "reports an offense when `MacOS.version ==` is used on Formula class" do
       expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula

@@ -1295,4 +1295,19 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       CASK
     end
   end
+
+  context "when auditing negated CPU conditionals" do
+    it "reports an offense when `unless Hardware::CPU.arm?` is used" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          unless Hardware::CPU.arm?
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid the negated system check `unless Hardware::CPU.arm?`.
+            url "https://example.com/foo-intel.zip"
+          end
+        end
+      CASK
+
+      expect_no_corrections
+    end
+  end
 end

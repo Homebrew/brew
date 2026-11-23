@@ -117,7 +117,8 @@ module RuboCop
         [:arch, :arm?, :intel?].each do |method|
           hardware_cpu_search(body_node, method:) do |method_node|
             # These should already be caught by `if_arch_node_search`
-            next if method_node.parent.source.start_with? "if #{method_node.source}"
+            parent = method_node.parent
+            next if method != :arch && parent.if_type? && parent.condition.equal?(method_node)
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
@@ -184,7 +185,8 @@ module RuboCop
 
           macos_version_comparison_search(body_node, os_version: macos_version_option) do |method_node|
             # These should already be caught by `if_macos_version_node_search`
-            next if method_node.parent.source.start_with? "if #{method_node.source}"
+            parent = method_node.parent
+            next if parent.if_type? && parent.condition.equal?(method_node)
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
@@ -228,10 +230,13 @@ module RuboCop
       def if_statement_problem(if_node, if_statement_string, on_system_method_string,
                                else_method: nil, else_node: nil, autocorrect: true)
         offending_node(if_node)
+        if if_node.unless?
+          problem "Avoid the negated system check `unless #{if_node.condition.source}`."
+          return
+        end
+
         problem "Instead of `#{if_statement_string}`, use `#{on_system_method_string} do`." do |corrector|
           next unless autocorrect
-          # TODO: could fix corrector to handle this but punting for now.
-          next if if_node.unless?
 
           if else_method.present? && else_node.present?
             corrector.replace(if_node.source_range,
