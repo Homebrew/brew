@@ -709,10 +709,7 @@ module GitHub
       "--header", "Accept: application/vnd.github.sha",
       *API.credentials_curl_args,
       "--output", File::NULL,
-      # This is a Curl format token, not a Ruby one.
-      # rubocop:disable Style/FormatStringToken
-      "--write-out", "%{http_code}",
-      # rubocop:enable Style/FormatStringToken
+      *Utils::Curl.curl_http_code_write_out_args,
       url_to("repos", user, repo, "commits", commit).to_s,
       secrets: [API.credentials].compact
     )

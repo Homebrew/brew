@@ -90,11 +90,9 @@ module Homebrew
       private_class_method def self.request(url, *extra_args)
         # curl_args supplies Homebrew's retry count and curl's transient-error
         # backoff. Bound each transfer and the retry window for long sweeps.
-        # This placeholder is interpreted by curl, not Ruby.
-        # rubocop:disable Style/FormatStringToken
-        result = Utils::Curl.curl_output("--fail", "--location", "--silent", "--write-out", "\n%{http_code}",
+        result = Utils::Curl.curl_output("--fail", "--location", "--silent",
+                                         *Utils::Curl.curl_http_code_write_out_args(prefix: "\n"),
                                          *extra_args, url, connect_timeout: 15, max_time: 60, retry_max_time: 120)
-        # rubocop:enable Style/FormatStringToken
         body, _, status = result.stdout.rpartition("\n")
         unless result.success?
           raise(

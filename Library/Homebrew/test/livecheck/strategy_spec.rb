@@ -380,6 +380,7 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
 
       expect(strategy).to receive(:curl_output).with(
+        "--no-fail",
         "--fail-with-body",
         "--include",
         "--location",
@@ -408,6 +409,8 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       )
 
       expect_any_instance_of(Utils::Curl).to receive(:curl_output).with(
+        "--no-fail",
+        "--fail-with-body",
         *Homebrew::Livecheck::Strategy::PAGE_CONTENT_CURL_ARGS,
         url,
         **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,

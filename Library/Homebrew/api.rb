@@ -71,14 +71,12 @@ module Homebrew
         EOS
       end
 
+      require "utils/curl"
       curl_args = [
         "--compressed",
         "--speed-limit", ENV.fetch("HOMEBREW_CURL_SPEED_LIMIT"),
         "--speed-time", ENV.fetch("HOMEBREW_CURL_SPEED_TIME"),
-        # This is a Curl format token, not a Ruby one.
-        # rubocop:disable Style/FormatStringToken
-        "--write-out", "%{http_code}"
-        # rubocop:enable Style/FormatStringToken
+        *Utils::Curl.curl_http_code_write_out_args
       ]
 
       insecure_download = DevelopmentTools.ca_file_substitution_required? ||

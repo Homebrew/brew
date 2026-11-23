@@ -146,10 +146,12 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
   def stub_npm_registry(release_dates)
     content = { "time" => release_dates.merge("created" => "2026-02-01T00:00:00.000Z") }.to_json
+    allow(Utils::Curl).to receive(:curl_supports_fail_with_body?).and_return(true)
     allow(Utils::Curl).to receive(:curl_output)
       .with(
-        "--compressed",
+        "--no-fail",
         "--fail-with-body",
+        "--compressed",
         "--location",
         "--max-redirs",
         "5",
@@ -934,10 +936,12 @@ RSpec.describe Homebrew::DevCmd::Bump do
       JSON
 
       allow(DateTime).to receive(:now).and_return(DateTime.parse("2026-04-04T12:00:00Z"))
+      allow(Utils::Curl).to receive(:curl_supports_fail_with_body?).and_return(true)
       allow(Utils::Curl).to receive(:curl_output)
         .with(
-          "--compressed",
+          "--no-fail",
           "--fail-with-body",
+          "--compressed",
           "--location",
           "--max-redirs",
           "5",
@@ -994,10 +998,12 @@ RSpec.describe Homebrew::DevCmd::Bump do
       JSON
 
       allow(DateTime).to receive(:now).and_return(DateTime.parse("2026-04-04T12:00:00Z"))
+      allow(Utils::Curl).to receive(:curl_supports_fail_with_body?).and_return(true)
       allow(Utils::Curl).to receive(:curl_output)
         .with(
-          "--compressed",
+          "--no-fail",
           "--fail-with-body",
+          "--compressed",
           "--location",
           "--max-redirs",
           "5",
