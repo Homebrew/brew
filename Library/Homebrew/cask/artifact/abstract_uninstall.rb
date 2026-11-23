@@ -672,10 +672,15 @@ module Cask
 
       sig { params(paths: T.any(Pathname, String), command: T.class_of(SystemCommand), _kwargs: T.anything).void }
       def uninstall_delete(*paths, command:, **_kwargs)
-        return if paths.empty?
-
-        ohai "Removing files:"
+        heading_printed = T.let(false, T::Boolean)
         each_resolved_path(:delete, paths) do |path, resolved_paths|
+          next if resolved_paths.empty?
+
+          unless heading_printed
+            ohai "Removing files:"
+            heading_printed = true
+          end
+
           puts path
           command.run!(
             "/usr/bin/xargs",

@@ -325,6 +325,23 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
     end
   end
 
+  context "when using :delete with paths that do not exist" do
+    let(:fake_system_command) { NeverSudoSystemCommand }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-delete")) }
+
+    before { ENV["HOME"] = TEST_TMPDIR }
+
+    it "does not run the delete command" do
+      expect(fake_system_command).not_to receive(:run!)
+
+      dispatch_stanza(command: fake_system_command)
+    end
+
+    it "does not print the removal heading" do
+      expect { dispatch_stanza(command: fake_system_command) }.not_to output(/Removing files:/).to_stdout
+    end
+  end
+
   test_each([:script, :early_script]) do |script_type|
     context "when using #{script_type.inspect}" do
       let(:fake_system_command) { NeverSudoSystemCommand }
