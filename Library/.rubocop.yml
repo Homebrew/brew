@@ -34,8 +34,7 @@ AllCops:
     - "Homebrew/vendor/**/*"
     - "Taps/*/*/vendor/**/*"
     - "**/.github/copilot-instructions.md" # This should be treated the same as the `docs/` files.
-  SuggestExtensions:
-    rubocop-minitest: false
+  SuggestExtensions: false
 
 Cask/Desc:
   Description: "Ensure that the desc stanza conforms to various content and style checks."
