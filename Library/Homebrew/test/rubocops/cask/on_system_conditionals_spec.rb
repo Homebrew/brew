@@ -1215,6 +1215,66 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
     end
   end
 
+  context "when auditing `Hardware::CPU` conditionals" do
+    it "preserves a heredoc at the end of a branch" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          unless Hardware::CPU.arm?
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `unless Hardware::CPU.arm?`, use `on_intel do`.
+            caveats <<~EOS
+              Install the Intel build.
+            EOS
+          end
+        end
+      CASK
+
+      expect_no_corrections
+    end
+
+    it "reports an offense when `unless Hardware::CPU.arm?` is used" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          unless Hardware::CPU.arm?
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `unless Hardware::CPU.arm?`, use `on_intel do`.
+            url "https://example.com/foo-intel.zip"
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_intel do
+        url "https://example.com/foo-intel.zip"
+        end
+        end
+      CASK
+    end
+
+    it "reports an offense when `unless Hardware::CPU.intel?` with an `else` branch is used" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          unless Hardware::CPU.intel?
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `unless Hardware::CPU.intel?`, use `on_arm do`.
+            url "https://example.com/foo-arm.zip"
+          else
+            url "https://example.com/foo-intel.zip"
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_arm do
+        url "https://example.com/foo-arm.zip"
+        end
+        on_intel do
+        url "https://example.com/foo-intel.zip"
+        end
+        end
+      CASK
+    end
+  end
+
   context "when auditing loose `Hardware::CPU` method calls" do
     it "reports an offense when `Hardware::CPU.arm?` is used" do
       expect_offense <<~CASK

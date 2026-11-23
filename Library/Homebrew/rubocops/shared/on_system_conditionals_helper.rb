@@ -94,10 +94,10 @@ module RuboCop
       sig {
         params(
           body_node: RuboCop::AST::Node, allowed_methods: T::Array[Symbol],
-          allowed_blocks: T::Array[Symbol]
+          allowed_blocks: T::Array[Symbol], invert_cpu: T::Boolean
         ).void
       }
-      def audit_arch_conditionals(body_node, allowed_methods: [], allowed_blocks: [])
+      def audit_arch_conditionals(body_node, allowed_methods: [], allowed_blocks: [], invert_cpu: false)
         return unless body_node.source.include?("Hardware")
 
         ARCH_OPTIONS.each do |arch_option|
@@ -106,18 +106,24 @@ module RuboCop
           else
             :on_arm
           end
-          if_arch_node_search(body_node, arch: :"#{arch_option}?") do |if_node, else_node|
+          if_arch_node_search(body_node, arch: :"#{arch_option}?") do |if_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
+            if if_node.unless? && !invert_cpu
+              offending_node(if_node)
+              problem "Avoid a negated CPU check for architecture-specific formula declarations."
+              next
+            end
+
             if_statement_problem(if_node, "if Hardware::CPU.#{arch_option}?", "on_#{arch_option}",
-                                 else_method:, else_node:)
+                                 else_method:)
           end
         end
 
         [:arch, :arm?, :intel?].each do |method|
           hardware_cpu_search(body_node, method:) do |method_node|
-            # These should already be caught by `if_arch_node_search`
-            next if method_node.parent.source.start_with? "if #{method_node.source}"
+            parent = method_node.parent
+            next if method != :arch && parent.if_type? && parent.condition.equal?(method_node)
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
@@ -141,11 +147,11 @@ module RuboCop
           else
             [:linux?, :on_macos]
           end
-          if_base_os_node_search(body_node, base_os: os_method) do |if_node, else_node|
+          if_base_os_node_search(body_node, base_os: os_method) do |if_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
             if_statement_problem(if_node, "if OS.#{os_method}", "on_#{base_os_option}",
-                                 else_method:, else_node:)
+                                 else_method:)
           end
         end
       end
@@ -166,6 +172,12 @@ module RuboCop
           if_macos_version_node_search(body_node, os_version: macos_version_option) do |if_node, operator, else_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
+            if if_node.unless?
+              offending_node(if_node)
+              problem "Avoid the negated macOS version check `unless #{if_node.condition.source}`."
+              next
+            end
+
             else_node = T.let(else_node, T.nilable(RuboCop::AST::Node))
             autocorrect = else_node.blank? && MACOS_VERSION_CONDITIONALS.key?(operator.to_s)
             on_system_method_string = if recommend_on_system && operator == :<
@@ -184,7 +196,8 @@ module RuboCop
 
           macos_version_comparison_search(body_node, os_version: macos_version_option) do |method_node|
             # These should already be caught by `if_macos_version_node_search`
-            next if method_node.parent.source.start_with? "if #{method_node.source}"
+            parent = method_node.parent
+            next if parent.if_type? && parent.condition.equal?(method_node)
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
@@ -221,25 +234,86 @@ module RuboCop
           if_statement_string:     String,
           on_system_method_string: String,
           else_method:             T.nilable(Symbol),
-          else_node:               T.nilable(RuboCop::AST::Node),
           autocorrect:             T::Boolean,
         ).void
       }
       def if_statement_problem(if_node, if_statement_string, on_system_method_string,
-                               else_method: nil, else_node: nil, autocorrect: true)
+                               else_method: nil, autocorrect: true)
+        if if_node.unless? && !else_method.nil?
+          if_statement_string = if_statement_string.sub(/\Aif /, "unless ")
+          on_system_method_string, else_method = else_method.to_s, on_system_method_string.to_sym
+        end
+
         offending_node(if_node)
         problem "Instead of `#{if_statement_string}`, use `#{on_system_method_string} do`." do |corrector|
           next unless autocorrect
-          # TODO: could fix corrector to handle this but punting for now.
-          next if if_node.unless?
 
-          if else_method.present? && else_node.present?
-            corrector.replace(if_node.source_range,
-                              "#{on_system_method_string} do\n#{if_node.body.source}\nend\n" \
-                              "#{else_method} do\n#{else_node.source}\nend")
-          else
-            corrector.replace(if_node.source_range, "#{on_system_method_string} do\n#{if_node.body.source}\nend")
+          body = if_node.body
+          next if body.nil?
+
+          # A formula class or cask declaration ignores the final stanza's value.
+          statement = T.let(if_node, RuboCop::AST::Node)
+          while statement.parent&.begin_type? && statement.equal?(statement.parent.children.last)
+            statement = statement.parent
           end
+          parent = statement.parent
+          unless parent&.begin_type?
+            next if !parent&.class_type? && !(parent&.block_type? && parent.method_name == :cask)
+            next unless parent.body.equal?(statement)
+          end
+
+          else_node = if_node.else_branch if else_method
+          branches = [body, else_node].compact
+          next if processed_source.comments.any? do |comment|
+            range = comment.loc.expression
+            if_node.source_range.contains?(range) && branches.none? { |branch| branch.source_range.contains?(range) }
+          end
+
+          next if branches.any? do |branch|
+            # Wrapping a branch can change control flow or the scope of a named capture.
+            next true if branch.each_node(:next, :break, :redo, :retry, :match_with_lvasgn).any?
+            # A heredoc terminator can fall outside the branch source range.
+            next true if branch.each_node(:str, :dstr, :xstr).any?(&:heredoc?)
+
+            next true if branch.each_node(:lvar).any? { |local| local.name.match?(/\A_[1-9]\z/) }
+
+            # Prism represents implicit it as an itblock local, parser as a bare send.
+            next true if branch.each_node(:send).any? { |call| call.source == "it" }
+            next true if if_node.each_ancestor(:any_block).first&.itblock_type? &&
+                         branch.each_node(:lvar).any? { |local| local.name == :it }
+
+            assignments = branch.each_node(:lvasgn, :match_var).map { |binding| binding.children.first }
+            next false if assignments.empty?
+            next true if if_node.unless? && if_node.each_ancestor.any?(&:loop_keyword?)
+
+            scope = branch.each_ancestor(:class, :module, :sclass, :def, :defs).first || processed_source.ast
+            scope.each_descendant(:lvar, :lvasgn, :send).any? do |reference|
+              if reference.send_type?
+                next false unless [:binding, :local_variables, :eval].include?(reference.method_name)
+              else
+                next false if reference.lvasgn_type? && !reference.parent.shorthand_asgn?
+                next false if assignments.exclude?(reference.name)
+                next false if branch.source_range.contains?(reference.source_range)
+              end
+
+              Enumerator.produce(reference, &:parent).none? do |child|
+                owner = child.parent
+                break true if owner.equal?(scope)
+
+                if owner.block_type?
+                  owner.body.equal?(child) && !reference.send_type? &&
+                  owner.argument_list.any? { |arg| arg.name == reference.name }
+                elsif [:class, :module, :sclass, :def, :defs].include?(owner.type)
+                  outer_children = VariableForce::Scope::OUTER_SCOPE_CHILD_INDICES[owner.type]
+                  !outer_children&.cover?(child.sibling_index)
+                end
+              end
+            end
+          end
+
+          replacement = "#{on_system_method_string} do\n#{body.source}\nend"
+          replacement << "\n#{else_method} do\n#{else_node.source}\nend" if else_node
+          corrector.replace(if_node.source_range, replacement)
         end
       end
 
@@ -279,11 +353,11 @@ module RuboCop
       PATTERN
 
       def_node_search :if_arch_node_search, <<~PATTERN
-        $(if (send (const (const nil? :Hardware) :CPU) %arch) _ $_)
+        $(if (send (const (const nil? :Hardware) :CPU) %arch) _ _)
       PATTERN
 
       def_node_search :if_base_os_node_search, <<~PATTERN
-        $(if (send (const nil? :OS) %base_os) _ $_)
+        $(if (send (const nil? :OS) %base_os) _ _)
       PATTERN
 
       def_node_search :if_macos_version_node_search, <<~PATTERN
