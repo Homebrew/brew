@@ -336,6 +336,10 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
 
       dispatch_stanza(command: fake_system_command)
     end
+
+    it "does not print the removal heading" do
+      expect { dispatch_stanza(command: fake_system_command) }.not_to output(/Removing files:/).to_stdout
+    end
   end
 
   test_each([:script, :early_script]) do |script_type|
