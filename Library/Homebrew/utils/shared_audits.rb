@@ -3,6 +3,7 @@
 
 require "livecheck/livecheck"
 require "system_command"
+require "timeout"
 require "utils/curl"
 require "utils/github/api"
 

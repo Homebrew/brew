@@ -1,6 +1,8 @@
 # typed: strong
 # frozen_string_literal: true
 
+require "timeout"
+
 module Utils
   module Timer
     sig { params(time: T.nilable(Time)).returns(T.nilable(T.any(Float, Integer))) }

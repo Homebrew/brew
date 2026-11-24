@@ -6,6 +6,7 @@ require "source_location"
 require "stringio"
 require "system_command"
 require "tap"
+require "timeout"
 require "utils/output"
 
 module Homebrew
