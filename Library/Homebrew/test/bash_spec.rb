@@ -212,6 +212,48 @@ RSpec.describe "Bash" do
     end
   end
 
+  describe "URL environment variables" do
+    before { ENV["HOMEBREW_LIBRARY"] = HOMEBREW_LIBRARY_PATH.parent.to_s }
+
+    def run_brew_sh(variable, value)
+      ENV[variable] = value
+      Open3.capture3(
+        "/bin/bash", "-c", <<~BASH, "bash", "info"
+          source() {
+            case "$1" in
+              */utils/ruby.sh) echo 'Ruby fallback'; exit 0 ;;
+              *) builtin source "$@" ;;
+            esac
+          }
+          source "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$1"
+        BASH
+      )
+    end
+
+    test_each(%w[
+      HOMEBREW_API_DOMAIN
+      HOMEBREW_ARTIFACT_DOMAIN
+      HOMEBREW_BOTTLE_DOMAIN
+      HOMEBREW_PIP_INDEX_URL
+    ]) do |variable|
+      it "rejects `#{variable}` values that curl would parse as options" do
+        stdout, stderr, status = run_brew_sh(variable, "-K/tmp/config")
+
+        expect(stdout).to eq("")
+        expect(stderr).to include("#{variable} must not start with '-': '-K/tmp/config'.")
+        expect(status.success?).to be(false)
+      end
+
+      it "accepts `#{variable}` URLs that do not start with `-`" do
+        ["https://mirror.example.com/bottles", "file:///tmp/mirror", "mirror.example.com/bottles"].each do |value|
+          _, stderr, = run_brew_sh(variable, value)
+
+          expect(stderr).not_to include("must not start with")
+        end
+      end
+    end
+  end
+
   describe "setup-locale" do
     it "uses the macOS locale charmap rather than the locale name", :needs_macos do
       setup_locale = [
