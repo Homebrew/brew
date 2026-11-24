@@ -285,6 +285,16 @@ RSpec.describe "Executable selection", type: :system do
       end
     end
 
+    it "reports Git's error for a malformed configuration", tool: "git" do
+      system_tool.write <<~SH
+        #!/bin/bash
+        echo 'fatal: bad config line 1 in file /example/.gitconfig' >&2
+        exit 128
+      SH
+
+      expect(check_tool(tool).stderr).to include("fatal: bad config line 1 in file /example/.gitconfig")
+    end
+
     context "with system curl", tool: "curl" do
       it "records system curl suitability across cache hits with and without FORCE" do
         write_tool(brewed_tool, tool, "9.0.0")
