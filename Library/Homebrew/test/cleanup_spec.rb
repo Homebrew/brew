@@ -182,7 +182,7 @@ RSpec.describe Homebrew::Cleanup do
       allow(Cask::Caskroom).to receive(:casks).and_return([cask])
 
       expect(cleanup).to receive(:cleanup_cask)
-        .with(cask, ds_store: false, cleanup_legacy_downloads: false, cleanup_unreferenced: false)
+        .with(cask, ds_store: false, cleanup_unreferenced: false)
 
       cleanup.clean!(periodic: true)
     end
@@ -849,16 +849,6 @@ RSpec.describe Homebrew::Cleanup do
         expect(download).not_to exist
       end
 
-      it "removes legacy URL-basename downloads if they are not for the latest version" do
-        download = Cask::Cache.path/"transmission-2.61.dmg--7.8.9.dmg"
-
-        FileUtils.touch download
-
-        cleanup.cleanup_cask(cask)
-
-        expect(download).not_to exist
-      end
-
       it "does not remove downloads for the latest version" do
         download = Cask::Cache.path/"#{cask.token}--#{cask.version}"
 
@@ -869,16 +859,44 @@ RSpec.describe Homebrew::Cleanup do
         expect(download).to exist
       end
 
-      it "removes legacy URL-basename downloads when the token-named download exists" do
-        legacy_download = Cask::Cache.path/"transmission-2.61.dmg--#{cask.version}.dmg"
-        download = Cask::Cache.path/"#{cask.token}--#{cask.version}.dmg"
+      context "when its URL basename is another cask's token" do
+        let(:other_cask) do
+          Cask::Cask.new("other-cask") do
+            version "1.0"
+            url "https://example.com/local-transmission"
+          end
+        end
+        let(:download) { Cask::Cache.path/"#{cask.token}--#{cask.version}.dmg" }
 
-        FileUtils.touch legacy_download
-        FileUtils.touch download
+        before { FileUtils.touch download }
 
-        cleanup.cleanup_cask(cask)
+        it "does not remove the other cask's download" do
+          cleanup.cleanup_cask(other_cask)
 
-        expect([legacy_download.exist?, download.exist?]).to eq([false, true])
+          expect(download).to exist
+        end
+
+        it "does not remove the download when the token is in several taps" do
+          ambiguity = Cask::TapCaskAmbiguityError.new(cask.token, [])
+          allow(Cask::CaskLoader).to receive(:load_from_name).and_call_original
+          allow(Cask::CaskLoader).to receive(:load_from_name).with(cask.token, warn: false).and_raise(ambiguity)
+
+          cleanup.cleanup_cask(other_cask)
+          cleanup.cleanup_cask(cask)
+
+          expect(download).to exist
+        end
+
+        it "warns and does not remove the download when the token is in an untrusted tap" do
+          allow(Cask::CaskLoader).to receive(:load_from_name).and_call_original
+          allow(Cask::CaskLoader).to receive(:load_from_name).with(cask.token, warn: false)
+                                                             .and_raise(Homebrew::UntrustedTapError, "untrusted tap")
+
+          cleanup.cleanup_cask(other_cask)
+
+          expect { cleanup.cleanup_cask(cask) }.to output("Warning: untrusted tap\n").to_stderr
+          expect(download).to exist
+        end
       end
 
       it "does not remove downloads when the latest version ends with a comma" do
@@ -939,22 +957,6 @@ RSpec.describe Homebrew::Cleanup do
         cleanup.cleanup_cask(cask)
 
         expect(download).not_to exist
-      end
-
-      it "removes broken legacy URL-basename downloads" do
-        version = Cask::DSL::Version.new(:latest)
-        cask = instance_double(Cask::Cask,
-                               token:         "latest-cask",
-                               version:,
-                               url:           "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip",
-                               caskroom_path: Cask::Caskroom.path/"latest-cask")
-        download = Cask::Cache.path/"caffeine.zip--#{version}.zip"
-
-        FileUtils.ln_s Cask::Cache.path/"missing.zip", download
-
-        cleanup.cleanup_cask(cask)
-
-        expect(download).not_to be_a_symlink
       end
     end
   end
@@ -1057,9 +1059,17 @@ RSpec.describe Homebrew::Cleanup do
         end
       end
 
-      it "preserves downloads for unavailable casks" do
+      it "preserves downloads for unavailable casks even when another cask's URL ends in their token" do
+        cask = Cask::Cask.new("other-cask") do
+          version "2.0"
+          url "https://example.com/removed-cask"
+        end
+        allow(Cask::Caskroom).to receive(:casks).and_return([cask])
         download = Cask::Cache.path/"removed-cask--1.0.zip"
-        FileUtils.touch download
+        payload = HOMEBREW_CACHE/"downloads/removed-cask.zip"
+        payload.dirname.mkpath
+        FileUtils.touch payload
+        download.make_symlink(payload)
 
         cleanup.cleanup_cache
 
@@ -1067,17 +1077,15 @@ RSpec.describe Homebrew::Cleanup do
       end
     end
 
-    it "removes legacy cask downloads during full cache cleanup", :cask do
-      cask = Cask::CaskLoader.load("local-transmission")
-      download = Cask::Cache.path/"transmission-2.61.dmg--7.8.9.dmg"
-
+    it "prunes old and broken legacy cask downloads during full cache cleanup", :cask do
       Cask::Cache.path.mkpath
-      FileUtils.touch download
-      allow(Cask::Caskroom).to receive(:casks).and_return([cask])
+      FileUtils.touch Cask::Cache.path/"transmission-2.61.dmg--7.8.9.dmg"
+      (Cask::Cache.path/"caffeine.zip--latest.zip").make_symlink(Cask::Cache.path/"missing.zip")
+      allow(DateTime).to receive(:now).and_return(DateTime.now + cleanup.days + 1)
 
       cleanup.cleanup_cache
 
-      expect(download).not_to exist
+      expect(Cask::Cache.path.children).to be_empty
     end
 
     it "cleans up incomplete downloads" do
