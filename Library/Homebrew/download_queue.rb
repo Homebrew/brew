@@ -136,20 +136,18 @@ module Homebrew
     # version whose bottle has not been published yet, where dependency
     # resolution just falls back to a full install. Known-bad cached files
     # from checksum mismatches are always removed, tolerated or not, so
-    # they can never be reused or staged.
+    # they can never be reused or staged. With `verbose:`, print
+    # the paths of successful downloads once progress reporting has finished.
     sig {
       params(only: T.nilable(T::Class[Downloadable]), heading: T.nilable(String),
-             allow_failures: T::Boolean).void
+             allow_failures: T::Boolean, verbose: T::Boolean).void
     }
-    def fetch(only: nil, heading: nil, allow_failures: false)
+    def fetch(only: nil, heading: nil, allow_failures: false, verbose: false)
       @failed_downloads = []
       @deferred_failure_messages = []
       context_before_fetch = Context.current
-      fetchable_downloads = if only
-        downloads.select { |downloadable, _| downloadable.is_a?(only) }
-      else
-        downloads
-      end
+      fetchable_downloads = downloads
+      fetchable_downloads = downloads.select { |downloadable, _| downloadable.is_a?(only) } if only
       return if fetchable_downloads.empty?
 
       print_heading(heading) if heading
@@ -323,6 +321,10 @@ module Homebrew
       # aborts the fetch above.
       Context.current = context_before_fetch if context_before_fetch
 
+      locations = if verbose && fetchable_downloads
+        fetchable_downloads.each_value.filter_map { |future| future.value if future.fulfilled? }.uniq
+      end
+
       if only
         # Keep unfetched downloads (and their location dedup entries) queued
         # for the next fetch.
@@ -335,6 +337,8 @@ module Homebrew
         @staged_downloads_by_location.clear
         @symlink_targets.clear
       end
+
+      ohai "Download locations", *locations if locations.present?
     end
 
     # The downloadables that failed in the last `fetch`, so callers can retry

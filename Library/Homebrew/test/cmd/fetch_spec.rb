@@ -194,7 +194,12 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     setup_test_formula "testball1"
     setup_test_formula "testball2"
 
-    expect { brew "fetch", "testball1", "testball2", "local-caffeine" }.to be_a_success
+    expect do
+      brew "fetch", "--verbose", "testball1", "testball2", "local-caffeine"
+    end.to output(include(Formula["testball1"].cached_download.to_s,
+                          Formula["testball2"].cached_download.to_s,
+                          Cask::Download.new(Cask::CaskLoader.load("local-caffeine")).cached_download.to_s)).to_stdout
+      .and be_a_success
 
     expect(HOMEBREW_CACHE/"testball1--0.1.tbz").to be_a_symlink
     expect(HOMEBREW_CACHE/"testball1--0.1.tbz").to exist

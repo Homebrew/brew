@@ -476,6 +476,16 @@ RSpec.describe Homebrew::DownloadQueue do
     download_queue.fetch
   end
 
+  it "reports the final location of a successful download once" do
+    fetched_download = HOMEBREW_CACHE/"downloads/fetched-testball--0.1.tar.gz"
+    future = Concurrent::Promises.fulfilled_future(fetched_download)
+    download_queue.downloads[downloadable] = future
+    download_queue.downloads[instance_double(Bottle, download_queue_message: "Bottle alias")] = future
+
+    expect { download_queue.fetch(verbose: true) }.to output("==> Download locations\n#{fetched_download}\n")
+      .to_stdout
+  end
+
   it "interrupts queued staging when the fetch is interrupted", timeout: 5 do
     allow(retryable_download).to receive(:fetch).and_return(cached_download)
     allow(downloadable).to receive(:stage_from_download_queue?).and_return(true)

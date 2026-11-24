@@ -1251,8 +1251,7 @@ binaries for *`cask`*s. For files, also print SHA-256 checksums.
 
 `-v`, `--verbose`
 
-: Do a verbose VCS checkout, if the URL represents a VCS. This is useful for
-  seeing if an existing VCS cache has been updated.
+: Print download locations and show VCS checkout details.
 
 `--retry`
 
