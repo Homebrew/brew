@@ -1457,20 +1457,15 @@ RSpec.describe Formulary do
             ).to_stderr
           end
 
-          # FIXME
-          # context "when there is an infinite tap migration loop" do
-          #   before do
-          #     (new_tap.path/"tap_migrations.json").write({
-          #       token => old_tap.name,
-          #     }.to_json)
-          #   end
-          #
-          #   it "stops recursing" do
-          #     expect do
-          #       klass.loader_for("#{new_tap}/#{token}")
-          #     end.not_to output.to_stderr
-          #   end
-          # end
+          it "stops recursing when there is an infinite tap migration loop" do
+            (new_tap.path/"tap_migrations.json").write({
+              token => old_tap.name,
+            }.to_json)
+
+            expect do
+              described_class.loader_for("#{new_tap}/#{token}")
+            end.not_to output.to_stderr
+          end
         end
 
         context "to a cask in a third-party tap" do
