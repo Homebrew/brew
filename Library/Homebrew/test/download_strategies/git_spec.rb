@@ -55,6 +55,27 @@ RSpec.describe GitDownloadStrategy do
 
       expect { strategy.fetch }.to raise_error("Git installation failed")
     end
+
+    it "updates the remote-tracking branch when fetching a new sparse checkout revision" do
+      upstream = mktmpdir
+      url = "file://#{upstream}"
+      upstream.cd do
+        setup_git_repo
+        SystemCommand.run!("git", args: ["config", "uploadpack.allowFilter", "true"])
+      end
+      described_class.new(url, name, version, branch: "master", only_path: "src").fetch
+
+      revision = upstream.cd do
+        FileUtils.touch "LICENSE"
+        git_commit_all
+        Utils.popen_read("git", "rev-parse", "HEAD").chomp
+      end
+      update = described_class.new(url, name, version, revision:, only_path: "src")
+      update.fetch
+
+      expect(Utils.popen_read("git", "-C", update.cached_location, "rev-parse", "origin/master").chomp)
+        .to eq(revision)
+    end
   end
 
   describe "#command_sandbox" do
@@ -542,12 +563,15 @@ RSpec.describe GitDownloadStrategy do
   end
 
   describe "#ref?" do
-    it "terminates options before the ref" do
-      expect(strategy).to receive(:silent_command)
+    it "disables lazy fetching and terminates options before the ref" do
+      expect(strategy).to receive(:system_command)
         .with(
           "git",
-          args: ["--git-dir", cached_location/".git", "rev-parse", "-q", "--verify", "--end-of-options",
-                 "master^{commit}"],
+          hash_including(
+            args: ["--git-dir", cached_location/".git", "rev-parse", "-q", "--verify", "--end-of-options",
+                   "master^{commit}"],
+            env:  hash_including("GIT_NO_LAZY_FETCH" => "1", "GIT_ALLOW_PROTOCOL" => ""),
+          ),
         )
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
