@@ -64,10 +64,13 @@ class GitDownloadStrategy < VCSDownloadStrategy
 
   sig { returns(T::Boolean) }
   def ref?
-    silent_command("git",
-                   args: ["--git-dir", git_dir, "rev-parse", "-q", "--verify", "--end-of-options",
-                          "#{@ref}^{commit}"])
-      .success?
+    # Git before 2.45 ignores GIT_NO_LAZY_FETCH, so deny transports during the cache check too.
+    system_command(
+      "git",
+      args:         ["--git-dir", git_dir, "rev-parse", "-q", "--verify", "--end-of-options", "#{@ref}^{commit}"],
+      env:          env.merge("GIT_NO_LAZY_FETCH" => "1", "GIT_ALLOW_PROTOCOL" => ""),
+      print_stderr: false,
+    ).success?
   end
 
   sig { returns(T::Array[String]) }
