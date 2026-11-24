@@ -22,10 +22,19 @@ class Reporter
     }
   end
 
+  REVISION_REGEX = /\A\h{40}(\h{24})?\z/
+
   class ReporterRevisionUnsetError < RuntimeError
     sig { params(var_name: String).void }
     def initialize(var_name)
       super "#{var_name} is unset!"
+    end
+  end
+
+  class ReporterRevisionInvalidError < RuntimeError
+    sig { params(var_name: String).void }
+    def initialize(var_name)
+      super "#{var_name} is not a Git revision!"
     end
   end
 
@@ -45,10 +54,12 @@ class Reporter
       initial_revision_var = "HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"
       @initial_revision = T.let(ENV[initial_revision_var].to_s, String)
       raise ReporterRevisionUnsetError, initial_revision_var if @initial_revision.empty?
+      raise ReporterRevisionInvalidError, initial_revision_var unless @initial_revision.match?(REVISION_REGEX)
 
       current_revision_var = "HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"
       @current_revision = T.let(ENV[current_revision_var].to_s, String)
       raise ReporterRevisionUnsetError, current_revision_var if @current_revision.empty?
+      raise ReporterRevisionInvalidError, current_revision_var unless @current_revision.match?(REVISION_REGEX)
     end
 
     @report = T.let(nil, T.nilable(Report))
@@ -445,7 +456,7 @@ class Reporter
     else
       Utils.popen_read(
         "git", "-C", tap.path, "diff-tree", "-r", "--name-status", "--diff-filter=AMDR",
-        "-M85%", initial_revision, current_revision
+        "-M85%", "--end-of-options", initial_revision, current_revision
       )
     end
   end

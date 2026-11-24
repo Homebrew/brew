@@ -103,7 +103,7 @@ module Homebrew
               denied_redirects << e.message
               # update.sh may already have merged redirected content, so roll back every denied tap.
               before_revision = ENV.fetch("HOMEBREW_UPDATE_BEFORE#{old_repository_var_suffix}", nil)
-              next if before_revision.blank? || !tap.installed?
+              next if !before_revision&.match?(Reporter::REVISION_REGEX) || !tap.installed?
 
               begin
                 git_args = ["-C", tap.path.to_s]
@@ -209,9 +209,9 @@ module Homebrew
 
         new_tag = nil
 
-        initial_revision = ENV["HOMEBREW_UPDATE_BEFORE"].to_s
-        current_revision = ENV["HOMEBREW_UPDATE_AFTER"].to_s
-        odie "update-report should not be called directly!" if initial_revision.empty? || current_revision.empty?
+        revisions = [ENV["HOMEBREW_UPDATE_BEFORE"].to_s, ENV["HOMEBREW_UPDATE_AFTER"].to_s]
+        odie "update-report should not be called directly!" unless revisions.all?(Reporter::REVISION_REGEX)
+        initial_revision, current_revision = revisions
 
         updated = initial_revision != current_revision
         if updated
@@ -360,7 +360,7 @@ module Homebrew
         # for code-only updates this run has already recompiled most of
         # what the next command needs.
         if !args.auto_update? && initial_revision != current_revision &&
-           !SystemCommand.quiet_system("git", "-C", HOMEBREW_REPOSITORY.to_s, "diff", "--quiet",
+           !SystemCommand.quiet_system("git", "-C", HOMEBREW_REPOSITORY.to_s, "diff", "--quiet", "--end-of-options",
                                        initial_revision, current_revision, "--", "Library/Homebrew/vendor")
           Homebrew::Bootsnap.prewarm!
         end
