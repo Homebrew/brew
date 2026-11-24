@@ -1019,10 +1019,10 @@ module Formulary
   end
 
   sig {
-    params(tapped_name: String, warn: T::Boolean)
+    params(tapped_name: String, warn: T::Boolean, migrated_from: T::Array[String])
       .returns(T.nilable([String, Tap, T.nilable(Symbol), T.nilable(String)]))
   }
-  def self.tap_formula_name_type(tapped_name, warn:)
+  def self.tap_formula_name_type(tapped_name, warn:, migrated_from: [])
     return unless (tap_with_name = Tap.with_formula_name(tapped_name))
 
     tap, name = tap_with_name
@@ -1058,8 +1058,13 @@ module Formulary
       new_tapped_name = "#{new_tap}/#{new_name}"
 
       if tapped_name != new_tapped_name
+        return if migrated_from.include?(new_tapped_name)
+
         old_name = tap.core_tap? ? name : tapped_name
-        return unless (name_tap_type = tap_formula_name_type(new_tapped_name, warn: false))
+        name_tap_type = tap_formula_name_type(
+          new_tapped_name, warn: false, migrated_from: [*migrated_from, tapped_name]
+        )
+        return unless name_tap_type
 
         name, tap, = name_tap_type
 
