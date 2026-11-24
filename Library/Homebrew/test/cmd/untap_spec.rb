@@ -81,6 +81,23 @@ RSpec.describe Homebrew::Cmd::Untap do
       end
     end
 
+    context "with a cask token installed from another tap", :cask do
+      test_each([nil, "--force"]) do |flag|
+        it "untaps and keeps the installed cask (flag: #{flag.inspect})" do
+          cask = Cask::CaskLoader.load("local-caffeine")
+          InstallHelper.stub_cask_installation(cask)
+          tap.cask_dir.mkpath
+          (tap.cask_dir/"local-caffeine.rb").write 'raise "Untrusted cask must not be evaluated"'
+
+          expect(tap).to receive(:uninstall).with(manual: true)
+
+          described_class.new([flag, tap.name].compact).run
+
+          expect(cask).to be_installed
+        end
+      end
+    end
+
     test_each([true, false]) do |current_name_installed|
       it "force-uninstalls former-name kegs (current name installed: #{current_name_installed})" do
         (tap.path/"formula_renames.json").write <<~JSON

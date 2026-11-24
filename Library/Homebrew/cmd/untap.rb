@@ -133,7 +133,11 @@ module Homebrew
       def installed_casks_for(tap:)
         require "cask/cask_loader"
         tap.cask_tokens.filter_map do |cask_token|
-          next unless installed_cask_tokens.include?(Utils.name_from_full_name(cask_token))
+          token = Utils.name_from_full_name(cask_token)
+          next unless installed_cask_tokens.include?(token)
+
+          installed_tap = Cask::CaskLoader.load_installed_tab(token).tap
+          next if installed_tap && installed_tap != tap
 
           cask = begin
             Cask::CaskLoader.load(cask_token)
