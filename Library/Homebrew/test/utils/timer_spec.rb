@@ -30,5 +30,20 @@ RSpec.describe Utils::Timer do
     it "returns 0 when there is no time remaining" do
       expect { described_class.remaining!(Time.now - 10) }.to raise_error(Timeout::Error)
     end
+
+    it "raises Timeout::Error in a fresh process" do
+      output = Utils.popen_read(
+        *HOMEBREW_RUBY_EXEC_ARGS, "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+        "-rstandalone/sorbet", "-rutils/timer", "-e", <<~RUBY, err: :out
+          begin
+            Utils::Timer.remaining!(Time.now - 10)
+          rescue Timeout::Error => e
+            puts e.class
+          end
+        RUBY
+      )
+
+      expect(output).to eq("Timeout::Error\n")
+    end
   end
 end

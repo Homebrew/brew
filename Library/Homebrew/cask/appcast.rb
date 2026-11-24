@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "system_command"
+require "timeout"
 require "utils/curl"
 require "yaml"
 

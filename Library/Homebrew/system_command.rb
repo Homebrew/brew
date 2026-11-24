@@ -4,6 +4,7 @@
 require "English"
 require "shellwords"
 require "stringio"
+require "timeout"
 
 require "context"
 require "readline_nonblock"

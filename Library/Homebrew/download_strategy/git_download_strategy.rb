@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "timeout"
 require "utils/timer"
 
 # Strategy for downloading a Git repository.
