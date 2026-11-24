@@ -612,6 +612,9 @@ module Homebrew
 
         legacy_download_name = Utils.safe_filename(File.basename(url.to_s))
         next if legacy_download_name.blank? || legacy_download_name == cask.token
+        # Downloads named after another cask's token are that cask's, e.g. `claude-code`'s URL
+        # ends in `claude`. The stale-file sweep cleans them up.
+        next if cask_token?(legacy_download_name)
 
         cask_cache_paths.each do |path|
           next unless path.basename.to_s.start_with?("#{legacy_download_name}--")
@@ -622,6 +625,14 @@ module Homebrew
           cleanup_path(path) { path.unlink }
         end
       end
+    end
+
+    sig { params(name: String).returns(T::Boolean) }
+    def cask_token?(name)
+      Cask::CaskLoader.load_from_name(name, warn: false)
+      true
+    rescue Cask::CaskError
+      false
     end
 
     sig { params(keg: Keg).void }

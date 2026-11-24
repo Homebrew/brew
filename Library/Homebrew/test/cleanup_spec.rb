@@ -881,6 +881,22 @@ RSpec.describe Homebrew::Cleanup do
         expect([legacy_download.exist?, download.exist?]).to eq([false, true])
       end
 
+      it "does not remove another cask's download named like its URL basename" do
+        other_cask = instance_double(Cask::Cask,
+                                     token:             "url-basename-is-a-token",
+                                     version:           Cask::DSL::Version.new("1.0"),
+                                     installed_version: Cask::DSL::Version.new("1.0"),
+                                     url:               "https://example.com/download/#{cask.token}",
+                                     caskroom_path:     Cask::Caskroom.path/"url-basename-is-a-token")
+        download = Cask::Cache.path/"#{cask.token}--#{cask.version}.dmg"
+
+        FileUtils.touch download
+
+        cleanup.cleanup_cask(other_cask)
+
+        expect(download).to exist
+      end
+
       it "does not remove downloads when the latest version ends with a comma" do
         version = Cask::DSL::Version.new("7.2,2023.3,")
         cask = instance_double(Cask::Cask,
