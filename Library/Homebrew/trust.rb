@@ -105,12 +105,10 @@ module Homebrew
     sig { params(names: T::Array[String], type: T.nilable(Symbol)).void }
     def self.trust_fully_qualified_items!(names, type: nil)
       names.each do |name|
-        next unless ::Utils.full_name?(name)
+        next unless (tap_with_name = Tap.with_formula_name(name))
 
-        tap_name = name.split("/").first(2).join("/")
-        item_name = ::Utils.name_from_full_name(name)
-        tap = Tap.fetch(tap_name)
-        next if tap.official?
+        tap, item_name = tap_with_name
+        next if tap.implicitly_trusted?
 
         formula_name = if type == :cask
           item_name
@@ -129,7 +127,7 @@ module Homebrew
           []
         end
         types.each do |item_type|
-          if item_type == :formula && formula_name != item_name.downcase &&
+          if item_type == :formula && formula_name != item_name &&
              trusted?(:formula, "#{tap.name}/#{formula_name}")
             next
           end
@@ -234,7 +232,6 @@ module Homebrew
 
       full_name = "#{tap.name}/#{::Utils.name_from_full_name(token)}"
       return if trusted?(:cask, full_name)
-      return if explicitly_allowed?(:cask, full_name, tap)
 
       raise_untrusted!(:cask, full_name, tap)
     end
@@ -455,23 +452,27 @@ module Homebrew
     end
     private_class_method :trusted_file?
 
+    # Install commands read a formula's options before they can record item trust.
+    sig {
+      type_parameters(:U).params(name:  String,
+                                 block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U))
+    }
+    def self.with_formula_options(name, &block)
+      previous = Thread.current[:homebrew_formula_options_name]
+      Thread.current[:homebrew_formula_options_name] = name.downcase
+      yield
+    ensure
+      Thread.current[:homebrew_formula_options_name] = previous
+    end
+
     sig { params(type: Symbol, full_name: String, tap: Tap).returns(T::Boolean) }
     def self.explicitly_allowed?(type, full_name, tap)
-      return false if type == :command
+      return false if type != :formula
       return false unless %w[install reinstall upgrade].include?(Homebrew.running_command)
+      return false if Thread.current[:homebrew_formula_options_name] != full_name.downcase
 
-      downcased_args = ARGV.map(&:downcase)
-      downcased_full_name = full_name.downcase
-      tap_name = tap.name.downcase
-      if downcased_args.include?(downcased_full_name)
-        return true if type != :formula
-
-        name = ::Utils.name_from_full_name(downcased_full_name)
-        return true if tap_formula_name(tap, name) == name
-      end
-
-      downcased_args.include?("--tap=#{tap_name}") ||
-        downcased_args.each_cons(2).any? { |option, value| option == "--tap" && value == tap_name }
+      name = ::Utils.name_from_full_name(full_name).downcase
+      tap.formula_files_by_name.key?(name) && tap_formula_name(tap, name) == name
     end
     private_class_method :explicitly_allowed?
 

@@ -458,6 +458,13 @@ RSpec.describe Homebrew::CLI::Parser do
       parser.parse(["foo"])
     end
 
+    it "skips formula options when an abbreviated switch selects casks" do
+      parser.switch "--cask", "--casks"
+      expect(Formulary).not_to receive(:factory)
+
+      parser.parse(["--cas", "thirdparty/foo/bar"])
+    end
+
     it "reads API cache files once for multiple formulae" do
       (api_cache/"formula_names.txt").write("foo\n")
       (api_cache/"formula_aliases.txt").write("bar|foo\n")

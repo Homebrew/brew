@@ -379,6 +379,8 @@ module Homebrew
           else
             require "cask/cask_loader"
 
+            return formula_or_kegs if formula_or_kegs && prefer_formula_to_tapped_cask?(name)
+
             want_keg_like_cask = [:latest_kegs, :default_kegs, :kegs].include?(method)
 
             cask = begin
@@ -418,9 +420,7 @@ module Homebrew
             rescue Homebrew::UntrustedTapError
               raise unless want_keg_like_cask
 
-              raise unless (untrusted_installed_cask = load_untrusted_installed_cask(name, config:))
-
-              untrusted_installed_cask
+              load_untrusted_installed_cask(name, config:) || raise
             rescue Cask::CaskUnreadableError, Cask::CaskInvalidError => e
               # If we're trying to get a keg-like Cask, do our best to handle it
               # not being readable and return something that can be used.
@@ -596,7 +596,7 @@ module Homebrew
       sig {
         params(
           ref: String, loaded_type: String,
-          package: T.nilable(T.any(T::Array[T.any(Formula, Keg)], Cask::Cask, Formula, Keg))
+          package: T.nilable(T.any(T::Array[T.any(Formula, Keg)], Cask::Cask, Formula, Keg, String))
         ).returns(String)
       }
       def package_conflicts_message(ref, loaded_type, package)
@@ -608,18 +608,35 @@ module Homebrew
             message += "use #{Utils.fully_qualified_name(package)} or "
           end
           message += "specify the `--formula` flag. To silence this message, use the `--cask` flag."
-        when Cask::Cask
+        when Cask::Cask, String
           message += " For the cask, "
-          if package.tap
-            message += "use #{Utils.fully_qualified_name(package)} or "
-          end
+          package = Utils.fully_qualified_name(package) if package.is_a?(Cask::Cask) && package.tap
+          message += "use #{package} or " if package.is_a?(String) && package != ref
           message += "specify the `--cask` flag. To silence this message, use the `--formula` flag."
         end
         message.freeze
       end
 
+      sig { params(ref: String).returns(T::Boolean) }
+      def prefer_formula_to_tapped_cask?(ref)
+        return false unless Tap.with_cask_token(ref)
+
+        require "cask/cask_loader"
+
+        loader = Cask::CaskLoader.loader_for(ref, warn: false)
+        return false unless loader.is_a?(Cask::CaskLoader::FromTapLoader)
+        return false if loader.tap.core_cask_tap? && loader.tap.implicitly_trusted?
+
+        if !Context.current.quiet? && loader.path.file?
+          opoo package_conflicts_message(ref, "formula", "#{loader.tap}/#{loader.token}")
+        end
+        true
+      end
+
       sig { params(ref: String, loaded_type: String).void }
       def warn_if_cask_conflicts(ref, loaded_type)
+        return if prefer_formula_to_tapped_cask?(ref)
+
         unless defined?(Cask::CaskLoader)
           api_cask = !Homebrew::EnvConfig.no_install_from_api? &&
                      (Homebrew::API.cask_token?(ref) || Homebrew::API.cask_renames.key?(ref) ||

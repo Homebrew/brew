@@ -459,14 +459,13 @@ module Homebrew
       def parse(argv = ARGV.freeze, ignore_invalid_options: false, formula: nil)
         raise "Arguments were already parsed!" if @args_parsed
 
-        # If we accept formula options, but the command isn't scoped only
-        # to casks, parse once allowing invalid options so we can get the
-        # remaining list containing formula names.
-        if @formula_options && !argv.intersect?(["--casks", "--cask"])
+        # Parse the built-in options first to find the formulae supplying additional options.
+        if @formula_options
           remaining, non_options = parse_remaining(argv, ignore_invalid_options: true)
-
           argv = [*remaining, "--", *non_options]
+        end
 
+        if @formula_options && !option_passed?("cask")
           option_formulae = formula ? [formula] : formulae(argv)
           option_formulae.each do |f|
             next if f.options.empty?
@@ -1144,7 +1143,7 @@ module Homebrew
             if @formula_options_bottles && HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(arg)
               Formulary.from_bottle(arg, spec, flags:)
             else
-              Formulary.factory(arg, spec, flags:)
+              Homebrew::Trust.with_formula_options(arg) { Formulary.factory(arg, spec, flags:) }
             end
           rescue FormulaUnavailableError, FormulaSpecificationError
             nil

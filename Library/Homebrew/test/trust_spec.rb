@@ -265,20 +265,25 @@ RSpec.describe Homebrew::Trust, :trust_store do
 
   it "trusts fully-qualified formulae and casks" do
     tap = Tap.fetch("qualified", "foo")
+    allow(Homebrew).to receive(:running_command).and_return("install")
+    stub_const("ARGV", ["qualified/foo/bar", "qualified/foo/BAZ"])
     tap.formula_dir.mkpath
     tap.cask_dir.mkpath
     (tap.formula_dir/"bar.rb").write("class Bar < Formula; end\n")
     (tap.cask_dir/"baz.rb").write("cask 'baz'\n")
+    FileUtils.touch tap.cask_dir/"bar.rb"
 
     without_partial_double_verification do
       expect($stderr).to receive(:ohai).with("Trusted formula qualified/foo/bar").ordered
       expect($stderr).to receive(:ohai).with("Trusted cask qualified/foo/baz").ordered
 
-      described_class.trust_fully_qualified_items!(["qualified/foo/bar", "qualified/foo/baz"])
+      described_class.trust_fully_qualified_items!(ARGV)
     end
 
     expect(described_class.trusted?(:formula, "qualified/foo/bar")).to be(true)
     expect(described_class.trusted?(:cask, "qualified/foo/baz")).to be(true)
+    expect { described_class.require_trusted_cask!("bar", tap.cask_dir/"bar.rb") }
+      .to raise_error(Homebrew::UntrustedTapError)
   ensure
     described_class.clear!(:formula)
     described_class.clear!(:cask)
@@ -286,13 +291,17 @@ RSpec.describe Homebrew::Trust, :trust_store do
   end
 
   it "does not trust missing fully-qualified formulae or casks" do
-    Tap.fetch("thirdparty", "foo")
+    tap = Tap.fetch("thirdparty", "foo")
+    allow(Homebrew).to receive(:running_command).and_return("install")
 
     described_class.trust_fully_qualified_items!(["thirdparty/foo/bar"], type: :formula)
     described_class.trust_fully_qualified_items!(["thirdparty/foo/baz"], type: :cask)
 
     expect(described_class.trusted?(:formula, "thirdparty/foo/bar")).to be(false)
     expect(described_class.trusted?(:cask, "thirdparty/foo/baz")).to be(false)
+    described_class.with_formula_options("thirdparty/foo/bar") do
+      expect(described_class.trusted_formula_file?(tap.formula_dir/"bar.rb")).to be(false)
+    end
   ensure
     described_class.clear!(:formula)
     described_class.clear!(:cask)
@@ -405,10 +414,11 @@ RSpec.describe Homebrew::Trust, :trust_store do
 
     it "does not authorise the shadowed formula file" do
       (tap.formula_dir/"#{name}.rb").write("raise 'must not load the shadowed formula'\n")
-      ARGV.replace([full_name])
 
-      expect { described_class.require_trusted_formula!(name, tap.formula_dir/"#{name}.rb") }
-        .to raise_error(Homebrew::UntrustedTapError)
+      described_class.with_formula_options(full_name) do
+        expect { described_class.require_trusted_formula!(name, tap.formula_dir/"#{name}.rb") }
+          .to raise_error(Homebrew::UntrustedTapError)
+      end
     end
 
     it "requires the canonical name for a custom remote" do
@@ -843,17 +853,21 @@ RSpec.describe Homebrew::Trust, :trust_store do
   shared_examples "explicit formula installation" do |command|
     T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
 
-    it "allows explicitly named formula files for #{command}" do
-      old_argv = ARGV.dup
+    it "loads options for an explicitly named formula during #{command}" do
       tap = Tap.fetch("thirdparty", "foo")
       formula_path = tap.formula_dir/"default-trust.rb"
       formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        class DefaultTrust < Formula
+          url "https://brew.sh/default-trust-1.0.tar.gz"
+          option "with-extra", "Include extra files"
+        end
+      RUBY
       allow(Homebrew).to receive(:running_command).and_return(command)
 
-      ARGV.replace(["thirdparty/foo/default-trust"])
-      expect(described_class.trusted_formula_file?(formula_path)).to be(true)
+      parser = Homebrew::CLI::Parser.new(Homebrew::Cmd::Brew) { formula_options }
+      expect(parser.parse(["#{tap.name}/default-trust", "--with-extra"]).flags_only).to include("--with-extra")
     ensure
-      ARGV.replace(old_argv) if old_argv
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
   end
@@ -861,6 +875,23 @@ RSpec.describe Homebrew::Trust, :trust_store do
   it_behaves_like "explicit formula installation", "install"
   it_behaves_like "explicit formula installation", "reinstall"
   it_behaves_like "explicit formula installation", "upgrade"
+
+  it "requires separate formula trust when a qualified cask is selected" do
+    tap = Tap.fetch("homebrew", "tools")
+    name = "#{tap.name}/bar"
+    allow(Homebrew).to receive(:running_command).and_return("install")
+    stub_const("ARGV", ["--cask", name])
+    allow(tap).to receive_messages(
+      remote:             "https://example.com/tools.git",
+      cask_files_by_name: { "bar" => tap.cask_dir/"bar.rb" },
+    )
+    without_partial_double_verification { allow($stderr).to receive(:ohai) }
+    described_class.trust_fully_qualified_items!([name], type: :cask)
+
+    expect(described_class.trusted_entries(:cask)).to contain_exactly("https://example.com/tools.git/bar")
+    expect { described_class.require_trusted_formula!("bar", tap.formula_dir/"bar.rb") }
+      .to raise_error(Homebrew::UntrustedTapError)
+  end
 
   shared_examples "untrusted tap arguments" do |arguments|
     T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
