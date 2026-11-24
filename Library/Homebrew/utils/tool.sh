@@ -18,7 +18,7 @@ install_tool() {
   then
     rm -f "${HOMEBREW_CACHE}/tool-selection/${tool}" 2>/dev/null || true
   fi
-  "setup_${tool}"
+  report_probe_errors=1 "setup_${tool}"
   [[ -n "${HOMEBREW_SELECTED_TOOL}" ]] && return 0
 
   odie "Unable to automatically install a working ${tool/git/Git}.
@@ -87,11 +87,18 @@ select_tool() {
     version_number=0
     # Never probe our own shim or trust version output from a failed command.
     if [[ -f "${candidate}" && -x "${candidate}" &&
-       ! "${candidate}" -ef "${HOMEBREW_LIBRARY}/Homebrew/shims/shared/${tool}" ]] &&
-       output="$("${candidate}" --version 2>/dev/null)" && [[ "${output}" =~ ${version_regex} ]]
+       ! "${candidate}" -ef "${HOMEBREW_LIBRARY}/Homebrew/shims/shared/${tool}" ]]
     then
-      version="${BASH_REMATCH[2]}"
-      version_number="$(numeric "${version}")"
+      if output="$("${candidate}" --version 2>/dev/null)" && [[ "${output}" =~ ${version_regex} ]]
+      then
+        version="${BASH_REMATCH[2]}"
+        version_number="$(numeric "${version}")"
+      elif [[ -n "${report_probe_errors}" ]]
+      then
+        # Keep stderr separate from the version we parse on stdout.
+        output="$("${candidate}" --version 2>&1 >/dev/null)" || true
+        version+="${output:+ (${output})}"
+      fi
     fi
     printf -v HOMEBREW_TOOL_DIAGNOSTICS '%s\n%24s: %s\n%24s: %s' "${HOMEBREW_TOOL_DIAGNOSTICS}" \
       "Your ${label} version" "${version}" "Your ${label} executable" "${candidate}"
