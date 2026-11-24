@@ -788,16 +788,16 @@ Deny network access from inside the sandbox\.
 Download a bottle (if available) or source packages for \fIformula\fPe and binaries for \fIcask\fPs\. For files, also print SHA\-256 checksums\.
 .TP
 \fB\-\-os\fP
-Download for the given operating system\. (Pass \fBall\fP to download for all operating systems\.)
+Download for \fBmacos\fP, \fBlinux\fP, a macOS release name (e\.g\. \fBtahoe\fP) or \fBall\fP operating systems\.
 .TP
 \fB\-\-arch\fP
-Download for the given CPU architecture\. (Pass \fBall\fP to download for all architectures\.)
+Download for the given CPU architecture\. Use \fBarm\fP for ARM64, \fBintel\fP for x86\-64 or \fBall\fP for both\.
 .TP
 \fB\-\-all\-platforms\fP
 Download for every supported operating system and architecture, plus each language for \fIcask\fPs, fetching each distinct URL once\.
 .TP
 \fB\-\-bottle\-tag\fP
-Download a bottle for given tag\.
+Download a bottle for the given tag (e\.g\. \fBarm64_tahoe\fP)\.
 .TP
 \fB\-\-HEAD\fP
 Fetch HEAD version instead of stable version\.

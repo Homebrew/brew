@@ -1224,13 +1224,13 @@ binaries for *`cask`*s. For files, also print SHA-256 checksums.
 
 `--os`
 
-: Download for the given operating system. (Pass `all` to download for all
-  operating systems.)
+: Download for `macos`, `linux`, a macOS release name (e.g. `tahoe`) or `all`
+  operating systems.
 
 `--arch`
 
-: Download for the given CPU architecture. (Pass `all` to download for all
-  architectures.)
+: Download for the given CPU architecture. Use `arm` for ARM64, `intel` for
+  x86-64 or `all` for both.
 
 `--all-platforms`
 
@@ -1239,7 +1239,7 @@ binaries for *`cask`*s. For files, also print SHA-256 checksums.
 
 `--bottle-tag`
 
-: Download a bottle for given tag.
+: Download a bottle for the given tag (e.g. `arm64_tahoe`).
 
 `--HEAD`
 
