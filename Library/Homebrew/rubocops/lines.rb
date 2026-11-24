@@ -251,15 +251,15 @@ module RuboCop
       class JpegCheck < FormulaCop
         extend AutoCorrector
 
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          return if (body_node = formula_nodes.body_node).nil?
+        sig { override.params(_formula_nodes: FormulaNodes).void }
+        def audit_formula(_formula_nodes)
           return if formula_tap != "homebrew-core"
 
-          find_method_with_args(body_node, :depends_on, "jpeg") do |method|
+          audit_depends_on("jpeg") do |method|
+            correction = method.source.sub("jpeg", "jpeg-turbo")
             problem "Formulae in homebrew/core should use `depends_on \"jpeg-turbo\"` " \
-                    "instead of `#{method.source}`." do |corrector|
-              corrector.replace(method.source_range, "depends_on \"jpeg-turbo\"")
+                    "instead of `depends_on \"jpeg\"`." do |corrector|
+              corrector.replace(method.source_range, correction)
             end
           end
         end
@@ -269,17 +269,15 @@ module RuboCop
       class MpiCheck < FormulaCop
         extend AutoCorrector
 
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          return if (body_node = formula_nodes.body_node).nil?
-
-          # Enforce use of OpenMPI for MPI dependency in core
+        sig { override.params(_formula_nodes: FormulaNodes).void }
+        def audit_formula(_formula_nodes)
           return if formula_tap != "homebrew-core"
 
-          find_method_with_args(body_node, :depends_on, "mpich") do |method|
+          audit_depends_on("mpich") do |method|
+            correction = method.source.sub("mpich", "open-mpi")
             problem "Formulae in homebrew/core should use `depends_on \"open-mpi\"` " \
-                    "instead of `#{method.source}`." do |corrector|
-              corrector.replace(method.source_range, "depends_on \"open-mpi\"")
+                    "instead of `depends_on \"mpich\"`." do |corrector|
+              corrector.replace(method.source_range, correction)
             end
           end
         end
@@ -289,17 +287,15 @@ module RuboCop
       class QuicTLSCheck < FormulaCop
         extend AutoCorrector
 
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          return if (body_node = formula_nodes.body_node).nil?
-
-          # Enforce use of OpenSSL for TLS dependency in core
+        sig { override.params(_formula_nodes: FormulaNodes).void }
+        def audit_formula(_formula_nodes)
           return if formula_tap != "homebrew-core"
 
-          find_method_with_args(body_node, :depends_on, "quictls") do |method|
+          audit_depends_on("quictls") do |method|
+            correction = method.source.sub("quictls", "openssl@4")
             problem "Formulae in homebrew/core should use `depends_on \"openssl@4\"` " \
-                    "instead of `#{method.source}`." do |corrector|
-              corrector.replace(method.source_range, "depends_on \"openssl@4\"")
+                    "instead of `depends_on \"quictls\"`." do |corrector|
+              corrector.replace(method.source_range, correction)
             end
           end
         end

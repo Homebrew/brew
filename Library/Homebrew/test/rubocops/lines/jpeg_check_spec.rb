@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::JpegCheck do
+  sig { returns(RuboCop::Cop::FormulaAudit::JpegCheck) }
   subject(:cop) { described_class.new }
 
   context "when auditing jpeg dependencies in homebrew/core" do
@@ -13,6 +14,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::JpegCheck do
           desc "foo"
           url "https://brew.sh/foo-1.0.tgz"
 
+          depends_on "jpeg" => :build
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/JpegCheck: Formulae in homebrew/core should use `depends_on "jpeg-turbo"` instead of `depends_on "jpeg"`.
           depends_on "jpeg"
           ^^^^^^^^^^^^^^^^^ FormulaAudit/JpegCheck: Formulae in homebrew/core should use `depends_on "jpeg-turbo"` instead of `depends_on "jpeg"`.
         end
@@ -23,6 +26,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::JpegCheck do
           desc "foo"
           url "https://brew.sh/foo-1.0.tgz"
 
+          depends_on "jpeg-turbo" => :build
           depends_on "jpeg-turbo"
         end
       RUBY
