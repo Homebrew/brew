@@ -39,8 +39,7 @@ module Homebrew
         switch "-f", "--force",
                description: "Remove a previously cached version and re-fetch."
         switch "-v", "--verbose",
-               description: "Do a verbose VCS checkout, if the URL represents a VCS. This is useful for " \
-                            "seeing if an existing VCS cache has been updated."
+               description: "Print download locations and show VCS checkout details."
         switch "--retry",
                description: "Retry if downloading fails or re-download if the checksum of a previously cached " \
                             "version no longer matches. Tries at most #{FETCH_MAX_TRIES} times with " \
@@ -85,7 +84,7 @@ module Homebrew
         os_arch_combinations = args.os_arch_combinations
 
         if enqueue_api_formula_bottles? || enqueue_api_cask_downloads?
-          download_queue.fetch
+          download_queue.fetch(verbose: args.verbose?)
           return
         end
 
@@ -190,7 +189,7 @@ module Homebrew
           end
         end
 
-        download_queue.fetch
+        download_queue.fetch(verbose: args.verbose?)
 
         fetch_hook_formulae.each { |formula| run_fetch_hook(formula) }
       ensure

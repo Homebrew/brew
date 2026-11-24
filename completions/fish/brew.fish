@@ -1123,7 +1123,7 @@ __fish_brew_complete_arg 'fetch' -l os -d 'Download for `macos`, `linux`, a macO
 __fish_brew_complete_arg 'fetch' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'fetch' -l retry -d 'Retry if downloading fails or re-download if the checksum of a previously cached version no longer matches. Tries at most 5 times with exponential backoff'
 __fish_brew_complete_arg 'fetch' -l test -d 'Also download test resources and their patches for each formula'
-__fish_brew_complete_arg 'fetch' -l verbose -d 'Do a verbose VCS checkout, if the URL represents a VCS. This is useful for seeing if an existing VCS cache has been updated'
+__fish_brew_complete_arg 'fetch' -l verbose -d 'Print download locations and show VCS checkout details'
 __fish_brew_complete_arg 'fetch; and not __fish_seen_argument -l cask -l casks' -a '(__fish_brew_suggest_formulae_all)'
 __fish_brew_complete_arg 'fetch; and not __fish_seen_argument -l formula -l formulae' -a '(__fish_brew_suggest_casks_all)'
 

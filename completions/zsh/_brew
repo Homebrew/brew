@@ -1477,7 +1477,7 @@ _brew_fetch() {
     '--quiet[Make some output more quiet]' \
     '--retry[Retry if downloading fails or re-download if the checksum of a previously cached version no longer matches. Tries at most 5 times with exponential backoff]' \
     '(--cask)--test[Also download test resources and their patches for each formula]' \
-    '--verbose[Do a verbose VCS checkout, if the URL represents a VCS. This is useful for seeing if an existing VCS cache has been updated]' \
+    '--verbose[Print download locations and show VCS checkout details]' \
     - formula \
     '(--cask)--formula[Treat all named arguments as formulae]' \
     '*:formula:__brew_formulae' \
