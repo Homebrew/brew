@@ -810,6 +810,7 @@ module Homebrew
           greedy_latest:       args.greedy_latest?,
           greedy_auto_updates: args.greedy_auto_updates?,
           summary_pinned:      final_upgrade_summary.pinned_casks,
+          refresh_installed:   true,
         )
         return true if outdated_casks.empty?
 

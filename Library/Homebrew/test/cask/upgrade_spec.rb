@@ -193,6 +193,8 @@ RSpec.describe Cask::Upgrade, :cask do
         end
 
         described_class.upgrade_casks!(dry_run: true, args:)
+
+        expect(auto_updates.installed_version).to eq "2.57"
       end
 
       it "records final cask upgrade summary details" do
@@ -421,6 +423,105 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(version_latest.installed_version).to eq "latest"
         expect(version_latest.outdated_download_sha?).to be(true)
       end
+    end
+  end
+
+  context "when an `auto_updates` app has updated itself" do
+    let(:outdated_auto_updates) { Cask::CaskLoader.from_path(cask_path("outdated/auto-updates")) }
+
+    def outdated_casks(refresh_installed: true)
+      described_class.outdated_casks([], args:, force: false, quiet: true, refresh_installed:)
+    end
+
+    def expect_installed_version(version)
+      expect(auto_updates.installed_version).to eq version
+      expect(Cask::Tab.for_cask(auto_updates).source["version"]).to eq version
+      expect(auto_updates.caskroom_path/version).to be_a_directory
+    end
+
+    it "updates the installed caskfile when the app matches the tap version" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+
+      expect(outdated_casks).to be_empty
+      expect_installed_version "2.61"
+      expect(outdated_auto_updates.metadata_versioned_path).not_to exist
+      expect(outdated_auto_updates.staged_path).not_to exist
+    end
+
+    it "keeps the installed caskfile when the app is older than the tap version" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.57", bundle_version: "2057")
+
+      expect(outdated_casks.map(&:token)).to include("auto-updates")
+      expect_installed_version "2.57"
+    end
+
+    it "keeps the installed caskfile when the app is older and auto-update upgrades are disabled" do
+      allow(Homebrew::EnvConfig).to receive(:upgrade_auto_updates_casks?).and_return(false)
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.59", bundle_version: "2059")
+
+      expect(outdated_casks).to be_empty
+      expect_installed_version "2.57"
+    end
+
+    it "keeps the installed caskfile when not asked to update it" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+
+      expect(outdated_casks(refresh_installed: false)).to be_empty
+      expect_installed_version "2.57"
+    end
+
+    it "keeps the installed caskfile and warns when it cannot be read" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+      allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_raise(JSON::ParserError)
+
+      expect { expect(outdated_casks).to be_empty }
+        .to output(/Could not update the installed caskfile of auto-updates/).to_stderr
+      expect_installed_version "2.57"
+    end
+
+    it "keeps the installed caskfile and its staged path when the receipt cannot be written" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+      receipt = auto_updates.metadata_main_container_path/AbstractTab::FILENAME
+      allow_any_instance_of(Pathname).to receive(:atomic_write).and_wrap_original do |method, *args|
+        raise Errno::ENOSPC if method.receiver == receipt
+
+        method.call(*args)
+      end
+
+      expect { expect(outdated_casks).to be_empty }
+        .to output(/Could not update the installed caskfile of auto-updates/).to_stderr
+      expect_installed_version "2.57"
+      expect(auto_updates.caskroom_path/"2.61").not_to exist
+    end
+
+    it "keeps the installed caskfile when the cask has uninstall flight blocks" do
+      InstallHelper.stub_cask_installation(outdated_auto_updates)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+      allow(auto_updates).to receive(:uninstall_flight_blocks?).and_return(true)
+
+      Cask::Installer.new(auto_updates).refresh_installed_caskfile
+      expect_installed_version "2.57"
+    end
+
+    it "keeps the installed caskfile when the installed artifacts differ" do
+      InstallHelper.stub_cask_installation(Cask::CaskLoader::FromContentLoader.new(<<~RUBY).load(config: nil))
+        cask "auto-updates" do
+          version "2.57"
+          url "file://#{TEST_FIXTURE_DIR}/cask/MyFancyApp.zip"
+          auto_updates true
+          app "MyFancyApp/MyFancyApp.app", target: "MyOldFancyApp.app"
+        end
+      RUBY
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+
+      expect(outdated_casks).to be_empty
+      expect_installed_version "2.57"
     end
   end
 

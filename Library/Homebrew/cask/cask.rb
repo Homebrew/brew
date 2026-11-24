@@ -424,6 +424,18 @@ module Cask
       bundle_version&.version
     end
 
+    # Whether an `auto_updates` app has updated itself to exactly this cask's version.
+    sig { returns(T::Boolean) }
+    def auto_updates_bundle_current?
+      return false if !auto_updates || version.nil? || version.latest? || !installed_app_info_plist
+
+      short_version, build = version.csv
+      bundle_short_version == (short_version.to_s.presence || version.to_s) &&
+        (build.nil? || bundle_long_version == build.to_s)
+    rescue ErrorDuringExecution
+      false
+    end
+
     sig { returns(Tab) }
     def tab
       Tab.for_cask(self)
