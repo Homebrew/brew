@@ -108,10 +108,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        raise UsageError, "`brew deps --os=all` is not supported." if args.os == "all"
-        raise UsageError, "`brew deps --arch=all` is not supported." if args.arch == "all"
-
-        os, arch = args.os_arch_combinations.fetch(0)
+        os, arch = args.os_arch_combinations(allow_all: false).fetch(0)
         Formulary.enable_factory_cache!
 
         SimulateSystem.with(os:, arch:) do

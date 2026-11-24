@@ -128,29 +128,38 @@ module Homebrew
         end
       end
 
-      sig { returns(T::Array[[Symbol, Symbol]]) }
-      def os_arch_combinations
+      sig { params(allow_all: T::Boolean).returns(T::Array[[Symbol, Symbol]]) }
+      def os_arch_combinations(allow_all: true)
         # `--all-platforms` is equivalent to `--os=all --arch=all`.
         all_platforms = @table[:all_platforms?]
 
         os_sym = all_platforms ? :all : @table[:os]&.to_sym
-        oses = case os_sym
-        when nil
+        oses = if os_sym.nil?
           [SimulateSystem.current_os]
-        when :all
+        elsif os_sym == :all && allow_all
           OnSystem::ALL_OS_OPTIONS
-        else
+        elsif os_sym == :macos || OnSystem::ALL_OS_OPTIONS.include?(os_sym)
           [os_sym]
+        else
+          os_choices = OnSystem::BASE_OS_OPTIONS.dup
+          os_choices << :all if allow_all
+          raise UsageError, "`--os` does not accept #{os_sym.to_s.inspect}.\n" \
+                            "Use #{os_choices.join(", ")} or one of the following macOS versions.\n  " \
+                            "#{MacOSVersion::SYMBOLS.keys.join(", ")}"
         end
 
         arch_sym = all_platforms ? :all : @table[:arch]&.to_sym
-        arches = case arch_sym
-        when nil
+        arches = if arch_sym.nil?
           [SimulateSystem.current_arch]
-        when :all
+        elsif arch_sym == :all && allow_all
           OnSystem::ARCH_OPTIONS
-        else
+        elsif OnSystem::ARCH_OPTIONS.include?(arch_sym)
           [arch_sym]
+        else
+          arch_choices = OnSystem::ARCH_OPTIONS.sort
+          arch_choices << :all if allow_all
+          raise UsageError, "`--arch` does not accept #{arch_sym.to_s.inspect}.\n" \
+                            "Use #{Utils::Text.to_sentence(arch_choices, conjunction: "or")}."
         end
 
         oses.product(arches)

@@ -22,6 +22,27 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
 
   it_behaves_like "parseable arguments"
 
+  test_each(%w[arm64 x86_64 :arm]) do |arch|
+    it "lists the valid --arch values when given #{arch}" do
+      expect { described_class.new(["--arch", arch, "foo"]).run }
+        .to raise_error(UsageError, /`--arch` does not accept "#{arch}"\.\nUse arm, intel or all\./)
+    end
+  end
+
+  it "lists the valid --os values when given an unknown OS" do
+    expect { described_class.new(["--os", "darwin", "foo"]).run }
+      .to raise_error(UsageError, /`--os`.*"darwin".*macos, linux, all.*tahoe/m)
+  end
+
+  it "explains why the API might not list a bottle for the requested platform" do
+    cmd = described_class.new(%w[--arch arm --os tahoe foo])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).and_return([foo])
+    allow(foo).to receive_messages(loaded_from_api?: true, loaded_from_internal_api?: true)
+    allow(Formulary).to receive(:factory).and_return(foo)
+
+    expect { cmd.run }.to output(/foo.*arm64_tahoe.*API.*host platform/m).to_stderr
+  end
+
   describe "--test" do
     let(:cmd) { described_class.new(["--test", "foo"]) }
     let(:download_queue) { instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil) }

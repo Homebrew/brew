@@ -1464,8 +1464,8 @@ _brew_fetch() {
   _arguments \
     '(--cask)--HEAD[Fetch HEAD version instead of stable version]' \
     '(--os --arch --bottle-tag)--all-platforms[Download for every supported operating system and architecture, plus each language for casks, fetching each distinct URL once]' \
-    '(--bottle-tag --all-platforms)--arch[Download for the given CPU architecture. (Pass `all` to download for all architectures.)]' \
-    '(--build-from-source --build-bottle --force-bottle --cask --os --arch --all-platforms)--bottle-tag[Download a bottle for given tag]' \
+    '(--bottle-tag --all-platforms)--arch[Download for the given CPU architecture. Use `arm` for ARM64, `intel` for x86-64 or `all` for both]' \
+    '(--build-from-source --build-bottle --force-bottle --cask --os --arch --all-platforms)--bottle-tag[Download a bottle for the given tag (e.g. `arm64_tahoe`)]' \
     '(--build-from-source --force-bottle --bottle-tag --cask)--build-bottle[Download source packages (for eventual bottling) rather than a bottle]' \
     '(--build-bottle --force-bottle --bottle-tag)--build-from-source[Download source packages rather than a bottle]' \
     '--debug[Display any debugging information]' \
@@ -1473,7 +1473,7 @@ _brew_fetch() {
     '--force[Remove a previously cached version and re-fetch]' \
     '(--build-from-source --build-bottle --bottle-tag --cask)--force-bottle[Download a bottle if it exists for the current or newest version of macOS, even if it would not be used during installation]' \
     '--help[Show this message]' \
-    '(--bottle-tag --all-platforms)--os[Download for the given operating system. (Pass `all` to download for all operating systems.)]' \
+    '(--bottle-tag --all-platforms)--os[Download for `macos`, `linux`, a macOS release name (e.g. `tahoe`) or `all` operating systems]' \
     '--quiet[Make some output more quiet]' \
     '--retry[Retry if downloading fails or re-download if the checksum of a previously cached version no longer matches. Tries at most 5 times with exponential backoff]' \
     '(--cask)--test[Also download test resources and their patches for each formula]' \
