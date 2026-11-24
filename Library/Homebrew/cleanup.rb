@@ -105,28 +105,6 @@ module Homebrew
         false
       end
 
-      sig { params(pathname: Pathname, cask: Cask::Cask, name: String).returns(T::Boolean) }
-      def cask_cache_file_current?(pathname, cask, name)
-        # Casks that only define a version inside OS-specific blocks have none on other systems.
-        return false unless (version = cask.version)
-
-        pathname.basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(version)}(?:\.|\z)/)
-      end
-
-      sig { params(pathname: Pathname, cask: Cask::Cask, name: String, scrub: T::Boolean).returns(T::Boolean) }
-      def stale_cask_download?(pathname, cask, name, scrub:)
-        return true unless pathname.exist?
-        return true unless cask_cache_file_current?(pathname, cask, name)
-        return true if scrub && cask.installed_version != cask.version
-
-        if cask.version.latest?
-          cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
-          return pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
-        end
-
-        false
-      end
-
       private
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
@@ -251,18 +229,25 @@ module Homebrew
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_cask?(pathname, scrub)
-        basename = pathname.basename
-        return false unless (name = basename.to_s[/\A(.*?)--/, 1])
+        basename = pathname.basename.to_s
+        return false unless (name = basename[/\A(.*?)--/, 1])
 
         cask = begin
           Cask::CaskLoader.load_from_name(name, warn: false)
         rescue Cask::CaskError
           nil
         end
-
         return false if cask.blank?
+        return true unless pathname.exist?
 
-        stale_cask_download?(pathname, cask, name, scrub:)
+        # Casks that only define a version inside OS-specific blocks have none on other systems.
+        return true unless (version = cask.version)
+        return true unless basename.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(version)}(?:\.|\z)/)
+        return true if scrub && cask.installed_version != version
+        return false unless version.latest?
+
+        cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
+        pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
       end
     end
 
@@ -470,7 +455,7 @@ module Homebrew
 
         if periodic
           Cask::Caskroom.casks.sort_by(&:full_name).each do |cask|
-            cleanup_cask(cask, ds_store: false, cleanup_legacy_downloads: false, cleanup_unreferenced: false)
+            cleanup_cask(cask, ds_store: false, cleanup_unreferenced: false)
           end
         end
 
@@ -580,68 +565,11 @@ module Homebrew
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
     end
 
-    sig {
-      params(
-        cask:                     Cask::Cask,
-        ds_store:                 T::Boolean,
-        cleanup_legacy_downloads: T::Boolean,
-        cleanup_unreferenced:     T::Boolean,
-      ).void
-    }
-    def cleanup_cask(cask, ds_store: true, cleanup_legacy_downloads: true, cleanup_unreferenced: true)
-      cleanup_cache_entries(Pathname.glob(cache/"Cask/#{cask.token}--*"), type: :cask, cleanup_unreferenced: false)
-      cleanup_legacy_cask_downloads([cask]) if cleanup_legacy_downloads
-      cleanup_unreferenced_downloads if cleanup_unreferenced
-
+    sig { params(cask: Cask::Cask, ds_store: T::Boolean, cleanup_unreferenced: T::Boolean).void }
+    def cleanup_cask(cask, ds_store: true, cleanup_unreferenced: true)
+      cleanup_cache_entries(Pathname.glob(cache/"Cask/#{cask.token}--*"), type: :cask, cleanup_unreferenced:)
       rm_ds_store([cask.caskroom_path]) if ds_store
       cleanup_lockfiles(CaskLock.new(cask.token).path)
-    end
-
-    # Added 2026-07-05 for legacy cask cache symlinks named after URL basenames.
-    # Remove after 2026-11-02, once the 120-day fallback stale-file sweep has
-    # had time to prune stale files created before cask downloads were token-named.
-    sig { params(casks: T::Array[Cask::Cask]).void }
-    def cleanup_legacy_cask_downloads(casks)
-      cask_cache = cache/"Cask"
-      return unless cask_cache.directory?
-
-      cask_cache_paths = cask_cache.children.select { |path| path.file? || path.symlink? }
-
-      casks.each do |cask|
-        next unless (url = cask.url)
-
-        legacy_download_name = Utils.safe_filename(File.basename(url.to_s))
-        next if legacy_download_name.blank? || legacy_download_name == cask.token
-
-        legacy_paths = cask_cache_paths.select { |path| path.basename.to_s.start_with?("#{legacy_download_name}--") }
-        next if legacy_paths.empty?
-        # Downloads named after another cask's token are that cask's, e.g. `claude-code`'s URL
-        # ends in `claude`. The stale-file sweep cleans them up.
-        next if cask_token?(legacy_download_name)
-
-        legacy_paths.each do |path|
-          next if !self.class.stale_cask_download?(path, cask, legacy_download_name, scrub: scrub?) &&
-                  (!self.class.cask_cache_file_current?(path, cask, legacy_download_name) ||
-                   !(cask_cache/Utils.safe_filename("#{cask.token}--#{cask.version}#{path.extname}")).exist?)
-
-          cleanup_path(path) { path.unlink }
-        end
-      end
-    end
-
-    # Whether `name` may be a cask's token. A token in several taps or in an untrusted tap counts,
-    # so its downloads are kept.
-    sig { params(name: String).returns(T::Boolean) }
-    def cask_token?(name)
-      Cask::CaskLoader.load_from_name(name, warn: false)
-      true
-    rescue Cask::TapCaskAmbiguityError
-      true
-    rescue Homebrew::UntrustedTapError => e
-      opoo e.message if @warned_untrusted.add?(e.message)
-      true
-    rescue Cask::CaskError
-      false
     end
 
     sig { params(keg: Keg).void }
@@ -772,7 +700,6 @@ module Homebrew
              cleanup_unreferenced: T::Boolean).void
     }
     def cleanup_cache(entries = nil, cleanup_unreferenced: true)
-      full_cache_cleanup = entries.nil?
       entries ||= cache_files
 
       entries.each do |entry|
@@ -808,7 +735,6 @@ module Homebrew
         cleanup_path(path) { path.unlink } if self.class.stale?(entry, scrub: scrub?, warned: @warned_untrusted)
       end
 
-      cleanup_legacy_cask_downloads(Cask::Caskroom.casks) if full_cache_cleanup
       cleanup_unreferenced_downloads if cleanup_unreferenced
     end
 
