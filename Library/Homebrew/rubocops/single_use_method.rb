@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "digest"
+
 module RuboCop
   module Cop
     module Homebrew
@@ -8,7 +10,8 @@ module RuboCop
       #
       # Formula classes are self-contained, so only references in the same file are counted.
       # Elsewhere, only non-public methods are checked and the project index must contain no other
-      # definition of or reference to the method name, including a symbol or symbol hash key.
+      # definition of or reference to the method name, including a symbol or symbol hash key. Indexed
+      # files with identical contents, e.g. a symlink or copy of a tap, count once.
       #
       # Any other mention of the method name in the file, e.g. a symbol passed to `send` or the
       # name inside a string, counts as a reference.
@@ -243,14 +246,20 @@ module RuboCop
                                      .grep(Rubydex::Method)
                                      .map { |method| method.unqualified_name.delete_suffix("()") }
                                      .tally
-          references = project_index.method_references.map { |reference| reference.name.delete_suffix("()") }.tally
-          # The index has no symbols, e.g. specs stubbing `receive(:name)`, so find them in the source.
-          symbols = project_index.documents.flat_map do |document|
+          references = []
+          symbols = Set.new
+          seen_contents = Set.new
+          project_index.documents.each do |document|
             path = URI::RFC2396_PARSER.unescape(document.uri.delete_prefix("file://"))
-            next [] unless File.file?(path)
+            source = File.read(path).scrub if File.file?(path)
+            # A symlink or copy of a file, e.g. an installed tap, is indexed again and would double its references.
+            next if source && !seen_contents.add?(Digest::SHA256.hexdigest(source))
 
-            File.read(path).scrub.scan(SYMBOL_PATTERN)
-          end.flatten.compact.to_set
+            references.concat(document.method_references.map { |reference| reference.name.delete_suffix("()") })
+            # The index has no symbols, e.g. specs stubbing `receive(:name)`, so find them in the source.
+            symbols.merge(source.scan(SYMBOL_PATTERN).flatten.compact) if source
+          end
+          references = references.tally
           self.class.cached_index_name_counts = [project_index, definitions, references, symbols]
           [definitions, references, symbols]
         end

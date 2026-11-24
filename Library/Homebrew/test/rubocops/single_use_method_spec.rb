@@ -610,6 +610,80 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
       RUBY
     end
 
+    it "reports a private method when the project index holds a copy of the same file" do
+      cop.project_index = index(source, source)
+
+      expect_offense(<<~RUBY)
+        class Foo
+          def run
+            puts message
+          end
+
+          private
+
+          def message
+          ^^^^^^^^^^^ Inline `message` into its only caller.
+            "Hello"
+          end
+        end
+      RUBY
+    end
+
+    it "reports a private method when the project index holds a symlink to the same file" do
+      directory = mktmpdir
+      (directory/"real").mkpath
+      (directory/"real/foo.rb").write(source)
+      (directory/"link").make_symlink(directory/"real")
+      graph = Rubydex::Graph.new
+      graph.index_all([(directory/"real/foo.rb").to_s, (directory/"link/foo.rb").to_s])
+      cop.project_index = graph.resolve
+
+      expect_offense(<<~RUBY)
+        class Foo
+          def run
+            puts message
+          end
+
+          private
+
+          def message
+          ^^^^^^^^^^^ Inline `message` into its only caller.
+            "Hello"
+          end
+        end
+      RUBY
+    end
+
+    it "does not report a private method called from another file when the project index holds a copy" do
+      cop.project_index = index(source, source, <<~RUBY)
+        class Bar
+          def run
+            message
+          end
+        end
+      RUBY
+
+      expect_no_offenses(source)
+    end
+
+    it "does not report a private method called from an indexed file that was deleted" do
+      directory = mktmpdir
+      (directory/"foo.rb").write(source)
+      (directory/"caller.rb").write(<<~RUBY)
+        class Bar
+          def run
+            message
+          end
+        end
+      RUBY
+      graph = Rubydex::Graph.new
+      graph.index_all([(directory/"foo.rb").to_s, (directory/"caller.rb").to_s])
+      (directory/"caller.rb").delete
+      cop.project_index = graph.resolve
+
+      expect_no_offenses(source)
+    end
+
     it "does not report a private method called from another file" do
       cop.project_index = index(source, <<~RUBY)
         class Bar
