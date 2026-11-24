@@ -612,12 +612,14 @@ module Homebrew
 
         legacy_download_name = Utils.safe_filename(File.basename(url.to_s))
         next if legacy_download_name.blank? || legacy_download_name == cask.token
+
+        legacy_paths = cask_cache_paths.select { |path| path.basename.to_s.start_with?("#{legacy_download_name}--") }
+        next if legacy_paths.empty?
         # Downloads named after another cask's token are that cask's, e.g. `claude-code`'s URL
         # ends in `claude`. The stale-file sweep cleans them up.
         next if cask_token?(legacy_download_name)
 
-        cask_cache_paths.each do |path|
-          next unless path.basename.to_s.start_with?("#{legacy_download_name}--")
+        legacy_paths.each do |path|
           next if !self.class.stale_cask_download?(path, cask, legacy_download_name, scrub: scrub?) &&
                   (!self.class.cask_cache_file_current?(path, cask, legacy_download_name) ||
                    !(cask_cache/Utils.safe_filename("#{cask.token}--#{cask.version}#{path.extname}")).exist?)
@@ -627,9 +629,16 @@ module Homebrew
       end
     end
 
+    # Whether `name` may be a cask's token. A token in several taps or in an untrusted tap counts,
+    # so its downloads are kept.
     sig { params(name: String).returns(T::Boolean) }
     def cask_token?(name)
       Cask::CaskLoader.load_from_name(name, warn: false)
+      true
+    rescue Cask::TapCaskAmbiguityError
+      true
+    rescue Homebrew::UntrustedTapError => e
+      opoo e.message if @warned_untrusted.add?(e.message)
       true
     rescue Cask::CaskError
       false
