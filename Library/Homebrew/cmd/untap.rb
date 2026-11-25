@@ -86,7 +86,9 @@ module Homebrew
             Cask::Uninstall.check_dependent_casks(*installed_tap_casks, named_args:)
             next if Homebrew.failed?
 
-            Uninstall.uninstall_kegs(kegs_by_rack, casks: installed_tap_casks, force: args.force?, named_args:)
+            Formulary.with_context(tolerate_formula_load_errors: true) do
+              Uninstall.uninstall_kegs(kegs_by_rack, casks: installed_tap_casks, force: args.force?, named_args:)
+            end
             next if Homebrew.failed?
 
             begin
@@ -114,16 +116,11 @@ module Homebrew
           possible_names = [name, *tap.formula_reverse_renames.fetch(name, [])]
           next unless possible_names.any? { |possible_name| installed_formulae_names.include?(possible_name) }
 
-          kegs = begin
-            Formulary.factory(formula_name).installed_kegs
-          rescue Homebrew::UntrustedTapError
-            Utils::Path.formula_installed_prefixes(possible_names).map { |path| Keg.new(path) }
-          rescue FormulaUnavailableError, FormulaSpecificationError
-            # Don't blow up because of a single unavailable or invalid formula.
-            next
+          possible_names.concat(tap.alias_reverse_table.fetch(formula_name, []),
+                                Tap.tap_migration_oldnames(tap, name))
+          kegs = Utils::Path.formula_installed_prefixes(possible_names).filter_map do |path|
+            Keg.new(path) if Tab.for_keg(path).tap == tap
           end
-
-          kegs.select! { |keg| keg.tab.tap == tap }
           [formula_name, kegs] if kegs.present?
         end.to_h
       end
@@ -141,6 +138,12 @@ module Homebrew
 
           cask = begin
             Cask::CaskLoader.load(cask_token)
+          rescue Homebrew::UntrustedTapError
+            next unless (installed_version = Cask::Caskroom.cask_installed_version(token))
+            raise if installed_tap != tap
+
+            # The uninstaller reads the recorded artifacts after confirmation.
+            Cask::Cask.new(token, tap:) { version installed_version }
           rescue Cask::CaskUnavailableError, MethodDeprecatedError
             # Don't blow up because of a single unavailable cask or a deprecated method.
             next

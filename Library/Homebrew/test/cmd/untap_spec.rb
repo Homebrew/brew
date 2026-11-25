@@ -40,14 +40,14 @@ RSpec.describe Homebrew::Cmd::Untap do
       .and raise_error(SystemExit)
   end
 
-  context "with an untrusted tap", :trust_store do
+  context "with a third-party tap", :trust_store do
     let(:tap) { Tap.fetch("thirdparty", "foo") }
     let(:keg_path) { HOMEBREW_CELLAR/"testball/1.0" }
 
     before do
       tap.formula_dir.mkpath
       (tap.formula_dir/"testball.rb").write <<~RUBY
-        raise "Untrusted formula must not be evaluated"
+        raise "Tap formula failed to load"
       RUBY
 
       keg_path.mkpath
@@ -60,14 +60,18 @@ RSpec.describe Homebrew::Cmd::Untap do
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
-    test_each([nil, "--force"]) do |flag|
-      it "untaps with colliding formula names (flag: #{flag.inspect})" do
+    test_each([nil, "--force"].product([true, false])) do |flag, trusted|
+      it "untaps and keeps a same-named keg from another tap (flag: #{flag.inspect}, trusted: #{trusted})" do
+        Homebrew::Trust.trust!(:tap, tap) if trusted
         expect(tap).to receive(:uninstall).with(manual: true)
 
         described_class.new([flag, tap.name].compact).run
+
+        expect(keg_path).to exist
       end
 
-      it "uninstalls kegs from the untrusted tap (flag: #{flag.inspect})" do
+      it "uninstalls kegs whose formula fails to load (flag: #{flag.inspect}, trusted: #{trusted})" do
+        Homebrew::Trust.trust!(:tap, tap) if trusted
         (keg_path/AbstractTab::FILENAME).write <<~JSON
           {"source":{"tap":"#{tap.name}"}}
         JSON
@@ -81,9 +85,35 @@ RSpec.describe Homebrew::Cmd::Untap do
       end
     end
 
-    context "with a cask token installed from another tap", :cask do
+    context "with an installed cask", :cask do
+      test_each(%w[json rb]) do |extension|
+        it "uninstalls the cask after its tap is untrusted (installed .#{extension})" do
+          cask_file = tap.cask_dir/"local-caffeine.rb"
+          cask_file.dirname.mkpath
+          FileUtils.cp cask_path("local-caffeine"), cask_file
+          Homebrew::Trust.trust!(:tap, tap)
+          cask = Cask::CaskLoader.load("#{tap}/local-caffeine")
+          Cask::Installer.new(cask).install
+          Homebrew::Trust.untrust!(:tap, tap.name)
+
+          cask_file.write 'raise "Untrusted tap cask was evaluated"'
+          if extension == "rb"
+            installed_caskfile = cask.installed_caskfile || raise("Expected installed cask metadata")
+            (installed_caskfile.dirname/"local-caffeine.rb").write 'raise "Untrusted installed cask was evaluated"'
+            installed_caskfile.unlink
+          end
+          expect(Homebrew::Ask).to receive(:confirm?).with(action: "changes").and_return(true)
+
+          described_class.new([tap.name]).run
+
+          expect(tap).not_to be_installed
+          expect(cask).not_to be_installed
+          expect(Pathname(cask.config.appdir)/"Caffeine.app").not_to exist
+        end
+      end
+
       test_each([nil, "--force"]) do |flag|
-        it "untaps and keeps the installed cask (flag: #{flag.inspect})" do
+        it "untaps and keeps a same-named cask from another tap (flag: #{flag.inspect})" do
           cask = Cask::CaskLoader.load("local-caffeine")
           InstallHelper.stub_cask_installation(cask)
           tap.cask_dir.mkpath
@@ -119,6 +149,41 @@ RSpec.describe Homebrew::Cmd::Untap do
       end
     end
 
+    test_each([[:runtime, "by"], [:build, "to build"]]) do |type, required|
+      it "keeps a broken #{type} dependency of another installed formula" do
+        Homebrew::Trust.trust!(:tap, tap)
+        (tap.formula_dir/"testball.rb").atomic_write "exit 1"
+        (CoreTap.instance.formula_dir/"testball.rb").write <<~RUBY
+          class Testball < Formula
+            url "https://brew.sh/testball-1.0.tar.gz"
+          end
+        RUBY
+        keg = Keg.new(keg_path)
+        keg.tab.tap = tap
+        keg.tab.write
+        keg.optlink
+
+        dependent_prefix = HOMEBREW_CELLAR/"dependent/1.0"
+        (dependent_prefix/".brew").mkpath
+        (dependent_prefix/".brew/dependent.rb").write <<~RUBY
+          class Dependent < Formula
+            url "https://brew.sh/dependent-1.0.tar.gz"
+            depends_on "#{tap}/testball" => :build
+          end
+        RUBY
+        runtime_dependencies = []
+        runtime_dependencies << { full_name: "#{tap}/testball" } if type == :runtime
+        (dependent_prefix/AbstractTab::FILENAME).write JSON.generate(homebrew_version:     HOMEBREW_VERSION,
+                                                                     runtime_dependencies:)
+
+        expect { described_class.new(["--force", tap.name]).run }
+          .to output(/Refusing to uninstall.*testball.*required #{required} dependent/m).to_stderr
+        expect(keg_path).to exist
+      ensure
+        Homebrew.failed = false
+      end
+    end
+
     it "does not untap while an untrusted installation remains" do
       (keg_path/AbstractTab::FILENAME).write <<~JSON
         {"source":{"tap":"#{tap.name}"}}
@@ -130,6 +195,22 @@ RSpec.describe Homebrew::Cmd::Untap do
         .to output(%r{Failed to fully uninstall formulae from thirdparty/foo}).to_stderr
     ensure
       Homebrew.failed = false
+    end
+
+    test_each([nil, "--force"]) do |flag|
+      it "requires force to remove a pinned keg whose formula cannot load (flag: #{flag.inspect})" do
+        Homebrew::Trust.trust!(:tap, tap)
+        (keg_path/AbstractTab::FILENAME).atomic_write JSON.generate(source: { tap: tap.name })
+        pin = HOMEBREW_PINNED_KEGS/"testball"
+        pin.make_relative_symlink(keg_path)
+        allow(Homebrew::Ask).to receive(:confirm?).and_return(true)
+
+        described_class.new([flag, tap.name].compact).run
+
+        expect([keg_path.exist?, pin.symlink?, tap.installed?]).to all(eq(flag.nil?))
+      ensure
+        Homebrew.failed = false
+      end
     end
   end
 
@@ -292,7 +373,7 @@ RSpec.describe Homebrew::Cmd::Untap do
           .to eq([currently_installed_formula.full_name])
       end
 
-      it "ignores formulae with invalid specs" do
+      it "includes installed formulae with invalid specs" do
         path = Formulary.find_formula_in_tap("invalid-spec", subject)
         path.dirname.mkpath
         path.write <<~RUBY
@@ -312,7 +393,7 @@ RSpec.describe Homebrew::Cmd::Untap do
         subject.clear_cache
 
         expect(described_class.new(%w[arg1]).installed_formulae_for(tap: subject).keys)
-          .to eq([currently_installed_formula.full_name])
+          .to contain_exactly(currently_installed_formula.full_name, subject.formula_file_to_name(path))
       end
     end
 
