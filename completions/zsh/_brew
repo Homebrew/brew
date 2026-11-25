@@ -641,7 +641,7 @@ _brew_bump() {
     '--start-with[Letter or word that the list of package results should alphabetically follow]' \
     '(--installed --no-autobump)--tap[Check formulae and casks within the given tap, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]' \
-    '(--no-pull-requests --open-pr)--write-pr-to[With `--formula`, write one JSON file per proposed pull request in directory for later publication]' \
+    '(--no-pull-requests --open-pr)--write-pr-to[With `--formula` or `--cask`, write one JSON file per proposed pull request in directory for later publication]' \
     - formula \
     '(--cask)--formula[Check only formulae]' \
     '*:formula:__brew_formulae' \
@@ -655,7 +655,7 @@ _brew_bump_cask_pr() {
   _arguments \
     '--commit[When passed with `--write-only`, generate a new commit after writing changes to the cask file]' \
     '--debug[Display any debugging information]' \
-    '(--write)--dry-run[Print what would be done rather than doing it]' \
+    '(--write-pr-to --write)--dry-run[Print what would be done rather than doing it]' \
     '--fork-org[Use the specified GitHub organisation for forking]' \
     '--help[Show this message]' \
     '--message[Prepend message to the default pull request message]' \
@@ -672,7 +672,8 @@ _brew_bump_cask_pr() {
     '(--version)--version-intel[Specify the new cask version for macOS on Intel]' \
     '(--version)--version-linux-arm[Specify the new cask version for Linux on ARM]' \
     '(--version)--version-linux-intel[Specify the new cask version for Linux on Intel]' \
-    '--write-only[Make the expected file modifications without taking any Git actions]' \
+    '(--write-pr-to)--write-only[Make the expected file modifications without taking any Git actions]' \
+    '(--dry-run --write-only)--write-pr-to[Write the proposed cask changes and pull request details as JSON in directory for publication in a separate step]' \
     - cask \
     '*:cask:__brew_casks'
 }

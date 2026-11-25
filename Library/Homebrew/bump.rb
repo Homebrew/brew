@@ -143,27 +143,29 @@ module Homebrew
       SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose", "--message=#{message}", "--", args: paths
     end
 
-    # Formulae selected in a manual autobump run, including core aliases.
-    sig { returns(T::Array[String]) }
-    private_class_method def self.requested_formulae
+    # Formulae or casks selected in a manual autobump run, including core aliases.
+    sig { params(casks: T::Boolean).returns(T::Array[String]) }
+    private_class_method def self.requested_packages(casks:)
       require "shellwords"
 
-      input = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH"))).dig("inputs", "formulae").to_s
+      type, tap = casks ? %w[casks cask] : %w[formulae core]
+      input = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH"))).dig("inputs", type).to_s
       Shellwords.split(input).map do |arg|
-        name = arg.sub(%r{\Ahomebrew/core/}i, "")
-        raise ArgumentError, "Expected a core formula name." unless name.match?(/\A[a-z0-9][a-z0-9+._@-]*\z/)
+        name = arg.sub(%r{\Ahomebrew/#{tap}/}i, "")
+        raise ArgumentError, "Expected a homebrew/#{tap} name." unless name.match?(/\A[a-z0-9][a-z0-9+._@-]*\z/)
 
         name
       end
     end
 
-    # Collect completed bumps even when another formula failed.
-    sig { params(file: String).void }
-    def self.prepare_prs(file)
-      names = requested_formulae
-      selection = names.empty? ? ["--auto", "--tap=Homebrew/core"] : ["--", *names]
+    # Collect completed bumps even when another formula or cask failed.
+    sig { params(file: String, casks: T::Boolean).void }
+    def self.prepare_prs(file, casks: false)
+      names = requested_packages(casks:)
+      type, tap, *options = casks ? %w[casks Homebrew/cask] : %w[formulae Homebrew/core --bump-synced]
+      selection = names.empty? ? ["--auto", "--tap=#{tap}"] : ["--", *names]
       Dir.mktmpdir do |directory|
-        success = system HOMEBREW_BREW_FILE, "bump", "--formulae", "--bump-synced", "--write-pr-to=#{directory}",
+        success = system HOMEBREW_BREW_FILE, "bump", "--#{type}", *options, "--write-pr-to=#{directory}",
                          *selection
         Homebrew.failed = true unless success
         files = Pathname(directory).glob("*.json")
@@ -173,45 +175,56 @@ module Homebrew
         opoo "Remaining bumps will be retried on the next run." if files.size > max_matrix_jobs
         proposals = files.first(max_matrix_jobs).to_h { |path| [path.basename(".json").to_s, JSON.parse(path.read)] }
         Pathname(file).atomic_write(JSON.generate(proposals))
-        File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "formulae=#{proposals.keys.to_json}" }
+        File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "#{type}=#{proposals.keys.to_json}" }
       end
     end
 
-    # Apply a prepared bump using the checked-out formulae and workflow inputs as the reference.
-    sig { params(file: String, name: String).void }
-    def self.commit_prepared_pr(file, name)
-      tap = CoreTap.instance
-      requested = requested_formulae
+    # Apply a prepared bump using the checked-out formulae or casks and workflow inputs as the reference.
+    sig { params(file: String, name: String, casks: T::Boolean).void }
+    def self.commit_prepared_pr(file, name, casks: false)
+      tap = casks ? CoreCaskTap.instance : CoreTap.instance
+      type = casks ? "casks" : "formulae"
+      requested = requested_packages(casks:)
       allowed = if requested.empty?
         tap.autobump
       else
         requested.map { |arg| tap.alias_table.fetch(arg, arg) }
       end
-      odie "Unexpected formula in the prepared bump." unless allowed.include?(name)
+      odie "Unexpected #{type} in the prepared bump." unless allowed.include?(name)
 
       proposal = JSON.parse(File.read(file)).fetch(name)
-      version, formulae = proposal.fetch_values("version", "formulae")
-      branch = "bump-#{name}-#{version}"
+      version, packages = proposal.fetch_values("version", type)
+      # `brew bump-cask-pr` replaces the separators allowed in cask versions in branch names.
+      version_separators = casks ? ",:" : ""
+      branch = "bump-#{name}-#{version.tr(version_separators, "-")}"
       group = tap.synced_versions_formulae.find { |members| members.include?(name) } || [name]
       if proposal.fetch("base") != ENV.fetch("GITHUB_SHA") || tap.git_head != proposal.fetch("base") ||
-         !version.match?(/\A[[:alnum:]][[:alnum:].+_-]*\z/) ||
-         !formulae.key?(name) || (formulae.keys - group).present?
-        odie "Unexpected formulae, version or base commit in the prepared bump."
+         !version.match?(/\A[[:alnum:]][[:alnum:].+_#{version_separators}-]*\z/) ||
+         !packages.key?(name) || (packages.keys - group).present?
+        odie "Unexpected #{type}, version or base commit in the prepared bump."
+      end
+      if casks
+        # `brew bump-cask-pr` shortens versions in commit titles and names single-architecture bumps.
+        title = proposal.fetch("title")
+        versions = Regexp.union(version, version.split(",").fetch(0))
+        architecture = title.match(/\A#{Regexp.escape(name)} #{versions}(?: \((arm|intel) only\))?\z/)
+        odie "Unexpected title in the prepared bump." unless architecture
+        branch += "-#{architecture[1]}-only" if architecture[1]
       end
       SystemCommand.safe_system "git", "check-ref-format", "refs/heads/#{branch}"
-      url = GitHub.url_to("repos", "Homebrew/homebrew-core", "pulls")
+      url = GitHub.url_to("repos", tap.full_name, "pulls")
       url.query = URI.encode_www_form(head: "Homebrew:#{branch}", base: "main", state: "all")
       return if GitHub::API.open_rest(url).present?
 
       require "utils/ast"
 
       destinations = Set.new
-      changes = formulae.map do |formula_name, contents|
-        path = tap.formula_files_by_name.fetch(formula_name)
-        unless Utils::AST::FormulaAST.valid_bump?(path.read, contents, version:)
-          odie "Unexpected changes in the prepared bump for #{formula_name}."
+      changes = packages.map do |package_name, contents|
+        path = (casks ? tap.cask_files_by_name : tap.formula_files_by_name).fetch(package_name)
+        unless (casks ? Utils::AST::CaskAST : Utils::AST::FormulaAST).valid_bump?(path.read, contents, version:)
+          odie "Unexpected changes in the prepared bump for #{package_name}."
         end
-        aliases = tap.alias_reverse_table.fetch(formula_name, [])
+        aliases = tap.alias_reverse_table.fetch(package_name, [])
         rename = Array(alias_update_pair(aliases, Version.new(version))).map { |a| tap.alias_dir/a }
         destination = rename.last
         if destination && (destination.exist? || destination.symlink? || !destinations.add?(destination))
@@ -226,7 +239,7 @@ module Homebrew
           path.atomic_write(contents)
           source, destination = aliases
           FileUtils.mv source, destination if source && destination
-          commit_files([path, *aliases], "#{path.basename(".rb")} #{version}")
+          commit_files([path, *aliases], title || "#{path.basename(".rb")} #{version}")
         end
       end
       pr = proposal.slice("title", "body")
@@ -234,9 +247,9 @@ module Homebrew
     end
 
     # A rerun can open the PR for a previous push after checking its commits.
-    sig { void }
-    def self.sign_pr
-      CoreTap.instance.path.cd do
+    sig { params(casks: T::Boolean).void }
+    def self.sign_pr(casks: false)
+      (casks ? CoreCaskTap : CoreTap).instance.path.cd do
         branch = Utils.safe_popen_read("git", "branch", "--show-current").chomp
         odie "Expected a bump branch." unless branch.start_with?("bump-")
         base = ENV.fetch("GITHUB_SHA")

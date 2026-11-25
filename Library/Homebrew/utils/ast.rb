@@ -944,9 +944,51 @@ module Utils
         @tree_rewriter = T.let(TreeRewriter.new(processed_source.buffer), TreeRewriter)
       end
 
+      # Compare a prepared cask with the release edits allowed in its checkout.
+      sig { params(original: String, proposed: String, version: String).returns(T::Boolean) }
+      def self.valid_bump?(original, proposed, version:)
+        checkout = new(original)
+        proposal = new(proposed)
+        # `brew audit --fix` may have corrected the minimum macOS version.
+        minimum = proposal.depends_on_macos_value
+        if minimum.is_a?(RuboCop::AST::SymbolNode) && !checkout.update_depends_on_macos_minimum!(minimum.value)
+          return false
+        end
+
+        old_values = checkout.blank_bump_values!
+        new_values = proposal.blank_bump_values!
+        return false if checkout.process != proposal.process
+        return false unless new_values.fetch(:sha256).all? { |checksum| checksum.match?(/\A\h{64}\z/) }
+
+        require "livecheck/livecheck_version"
+
+        livecheck_version = lambda do |value|
+          Homebrew::Livecheck::LivecheckVersion.new(value.to_s.split(",").map { |part| Version.new(part) })
+        end
+        bumps = old_values.fetch(:version).zip(new_values.fetch(:version)).reject { |current, bump| current == bump }
+        bumps.any? { |_, bump| bump == version } && bumps.all? do |current, bump|
+          bump.to_s.match?(/\A[[:alnum:]][[:alnum:].,:+_-]*\z/) &&
+            livecheck_version.call(bump) > livecheck_version.call(current)
+        end
+      end
+
       sig { returns(String) }
       def process
         tree_rewriter.process
+      end
+
+      # Blank the version and checksum strings replaced by a bump and return them by stanza.
+      sig { returns(T::Hash[Symbol, T::Array[String]]) }
+      def blank_bump_values!
+        [:version, :sha256].to_h do |name|
+          values = stanzas(name).flat_map do |stanza|
+            stanza.arguments.flat_map do |argument|
+              argument.is_a?(RuboCop::AST::HashNode) ? argument.pairs.map(&:value) : [argument]
+            end
+          end.select(&:str_type?)
+          values.each { |value| tree_rewriter.replace(value.source_range, '""') }
+          [name, values.map(&:str_content)]
+        end
       end
 
       sig { params(name: Symbol, value: T.any(Numeric, String, Symbol)).void }
@@ -1042,18 +1084,24 @@ module Utils
         end
       end
 
+      # The value of the top-level `depends_on macos:` stanza.
+      sig { returns(T.nilable(Node)) }
+      def depends_on_macos_value
+        top_level_stanzas(:depends_on).flat_map { |stanza| stanza.arguments.grep(RuboCop::AST::HashNode) }
+                                      .flat_map(&:pairs)
+                                      .find { |pair| literal_value(pair.key) == :macos }
+                                      &.value
+      end
+
       # Sets the minimum macOS version of the `depends_on macos:` stanza, adding
       # the stanza when it is missing. Returns `false` when the minimum version
       # cannot be expressed, e.g. an exact version list or a maximum.
       sig { params(version: Symbol).returns(T::Boolean) }
       def update_depends_on_macos_minimum!(version)
-        depends_on_pairs = top_level_stanzas(:depends_on).flat_map do |stanza_node|
-          stanza_node.arguments.grep(RuboCop::AST::HashNode).flat_map(&:pairs)
-        end
-        if (macos_pair = depends_on_pairs.find { |pair| literal_value(pair.key) == :macos })
-          return false unless minimum_macos_value?(macos_pair.value)
+        if (macos_value = depends_on_macos_value)
+          return false unless minimum_macos_value?(macos_value)
 
-          tree_rewriter.replace(macos_pair.value.source_range, ruby_literal(version))
+          tree_rewriter.replace(macos_value.source_range, ruby_literal(version))
           return true
         end
 

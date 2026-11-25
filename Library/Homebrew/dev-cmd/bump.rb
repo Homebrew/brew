@@ -102,9 +102,8 @@ module Homebrew
                # odeprecated: true,
                description: "Open a pull request for the new version if none have been opened yet."
         flag   "--write-pr-to=",
-               depends_on:  "--formula",
-               description: "With `--formula`, write one JSON file per proposed pull request in <directory> " \
-                            "for later publication."
+               description: "With `--formula` or `--cask`, write one JSON file per proposed pull request in " \
+                            "<directory> for later publication."
         flag   "--prepare-prs=", hidden: true
         flag   "--commit-pr-from=", hidden: true
         switch "--sign-pr", hidden: true
@@ -127,15 +126,22 @@ module Homebrew
 
       sig { override.void }
       def run
+        # Formulae and casks may share a name and therefore a proposal file.
+        if args.write_pr_to && !args.formula? && !args.cask?
+          raise UsageError, "`--write-pr-to` requires `--formula` or `--cask`."
+        end
+
         if (file = args.prepare_prs)
-          return Homebrew::Bump.prepare_prs(file)
+          return Homebrew::Bump.prepare_prs(file, casks: args.cask?)
         elsif (file = args.commit_pr_from)
-          raise UsageError, "Specify one prepared formula." if args.named.size != 1
+          raise UsageError, "Specify one prepared formula or cask." if args.named.size != 1
 
           Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
-          return Homebrew::API.with_no_api_env { Homebrew::Bump.commit_prepared_pr(file, args.named.fetch(0)) }
+          return Homebrew::API.with_no_api_env do
+            Homebrew::Bump.commit_prepared_pr(file, args.named.fetch(0), casks: args.cask?)
+          end
         elsif args.sign_pr?
-          return Homebrew::Bump.sign_pr
+          return Homebrew::Bump.sign_pr(casks: args.cask?)
         end
 
         Utils::GemSetup.install_bundler_gems!(groups: ["livecheck"])
