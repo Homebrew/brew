@@ -23,6 +23,9 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def casks?; end
 
+  sig { returns(T.nilable(String)) }
+  def commit_pr_from; end
+
   sig { returns(T::Boolean) }
   def eval_all?; end
 
@@ -50,9 +53,18 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def open_pr?; end
 
+  sig { returns(T.nilable(String)) }
+  def prepare_prs; end
+
   sig { returns(T::Boolean) }
   def repology?; end
 
+  sig { returns(T::Boolean) }
+  def sign_pr?; end
+
   sig { returns(T.nilable(String)) }
   def start_with; end
+
+  sig { returns(T.nilable(String)) }
+  def write_pr_to; end
 end

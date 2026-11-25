@@ -45,6 +45,9 @@ module Homebrew
         EOS
         switch "-n", "--dry-run",
                description: "Print what would be done rather than doing it."
+        flag   "--write-pr-to=",
+               description: "Write the proposed formula changes and pull request details as JSON in <directory> " \
+                            "for publication in a separate step."
         switch "--write-only",
                description: "Make the expected file modifications without taking any Git actions."
         switch "--commit",
@@ -60,6 +63,7 @@ module Homebrew
         switch "--no-browse",
                description: "Print the pull request URL instead of opening in a browser."
         switch "--no-fork",
+               # odeprecated: true,
                description: "Don't try to fork the repository."
         comma_array "--mirror",
                     description: "Use the specified <URL> as a mirror URL. If <URL> is a comma-separated list " \
@@ -100,6 +104,8 @@ module Homebrew
                description: "JSON-encoded resource version data from `brew bump`.",
                hidden:      true
 
+        conflicts "--dry-run", "--write-pr-to="
+        conflicts "--write-only", "--write-pr-to="
         conflicts "--dry-run", "--write-only"
         conflicts "--no-audit", "--strict"
         conflicts "--no-audit", "--online"
@@ -184,35 +190,23 @@ module Homebrew
         added_release_info = Set.new
         patch_inclusion = GitHub::PatchInclusion.new
 
+        undo = T.let([], T::Array[T.proc.void])
         commits = all_formulae.map do |formula_name|
-          prepare_formula_bump(formula_name, formula, tap, tap_remote_repo, added_release_info, patch_inclusion)
+          prepare_formula_bump(formula_name, formula, tap, tap_remote_repo, added_release_info, patch_inclusion,
+                               undo:)
         end
 
-        completed_alias_moves = T.let([], T::Array[T::Array[Pathname]])
+        restore_on_audit_failure = !args.dry_run? && !args.write_only?
         commits.each do |commit|
           commit_formula = Formula[commit.formula_name]
           # For each formula, run `brew audit` to check for any issues.
-          audit_result = run_audit(commit_formula, commit.additional_files,
-                                   skip_synced_versions: args.bump_synced.present?)
-          if !args.dry_run? && (alias_rename = commit.additional_files)
-            completed_alias_moves << alias_rename
-          end
-
-          next unless audit_result
-
-          # If `brew audit` fails, revert the changes made to any formula.
-          if !args.dry_run? && !args.write_only?
-            commits.each { |revert| revert.sourcefile_path.atomic_write(revert.old_contents) }
-            completed_alias_moves.reverse_each do |alias_rename|
-              if (source = alias_rename.first) && (destination = alias_rename.last)
-                FileUtils.mv destination, source
-              end
-            end
-          end
+          next unless run_audit(commit_formula, commit.additional_files, undo:,
+                                skip_synced_versions: args.bump_synced.present?)
 
           odie "`brew audit` failed for #{commit.formula_name}!"
         end
 
+        restore_on_audit_failure = false
         new_formula_version = commits.fetch(0).new_version
 
         pr_title = if args.bump_synced.nil?
@@ -230,6 +224,18 @@ module Homebrew
 
           pr_message += "<h4>#{commit.formula_name}</h4>" if commits.length != 1
           pr_message += "#{commit.formula_pr_message}<hr>"
+        end
+
+        if (directory = args.write_pr_to)
+          formulae = commits.to_h do |commit|
+            [commit.sourcefile_path.basename(".rb").to_s, commit.sourcefile_path.read]
+          end
+          path = Pathname(directory)
+          path.mkpath
+          proposal = { base: tap.git_head, version: new_formula_version.to_s,
+                       title: pr_title, body: pr_message, formulae: }
+          (path/"#{formula.name}.json").atomic_write(JSON.generate(proposal))
+          return
         end
 
         return if args.write_only? && !args.commit?
@@ -261,16 +267,19 @@ module Homebrew
         else
           Utils::Browser.open url
         end
+      ensure
+        restore_checkout(undo) if undo && (args.write_pr_to || restore_on_audit_failure)
       end
 
       # Prepare one formula's source changes and pull request details.
       sig {
         params(
           formula_name: String, formula: Formula, tap: Tap, tap_remote_repo: String,
-          added_release_info: T::Set[String], patch_inclusion: GitHub::PatchInclusion
+          added_release_info: T::Set[String], patch_inclusion: GitHub::PatchInclusion, undo: T::Array[T.proc.void]
         ).returns(PreparedBump)
       }
-      def prepare_formula_bump(formula_name, formula, tap, tap_remote_repo, added_release_info, patch_inclusion)
+      def prepare_formula_bump(formula_name, formula, tap, tap_remote_repo, added_release_info, patch_inclusion,
+                               undo: [])
         commit_formula = Formula[formula_name]
         raise FormulaUnspecifiedError if commit_formula.blank?
 
@@ -290,7 +299,7 @@ module Homebrew
 
         old_mirrors = commit_formula_spec.mirrors
         new_mirrors ||= args.mirror
-        if new_url.present? && (new_mirror = determine_mirror(new_url))
+        if new_url.present? && (new_mirror = URL.automatic_mirror(new_url))
           new_mirrors ||= [new_mirror]
           check_for_mirrors(commit_formula.name, old_mirrors, new_mirrors)
         end
@@ -413,7 +422,7 @@ module Homebrew
 
         unless patch_source_ambiguous?(formula_ast)
           formula_ast.remove_patches do |patch_node|
-            patches_for_removal(patch_node) do |patch_urls|
+            formula_ast.patches_for_removal(patch_node) do |patch_urls|
               reasons = patch_urls.to_h do |patch_url|
                 [patch_url, patch_inclusion.removal_reason(patch_url, source_url: new_url || old_url,
                                                                     tag: new_tag, revision: new_revision)]
@@ -430,7 +439,10 @@ module Homebrew
           end
           new_contents = formula_ast.process
         end
-        commit_formula.path.atomic_write(new_contents) unless args.dry_run?
+        unless args.dry_run?
+          undo << -> { commit_formula.path.atomic_write(old_contents) }
+          commit_formula.path.atomic_write(new_contents)
+        end
 
         formula_checkboxes = []
 
@@ -439,27 +451,19 @@ module Homebrew
           formula_checkboxes << "- [ ] `patch` blocks have been checked."
         end
 
-        alias_rename = alias_update_pair(commit_formula, new_formula_version)
+        alias_rename = Homebrew::Bump.alias_update_pair(commit_formula.aliases, new_formula_version)
         ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}" if alias_rename.present?
 
         formula_checkboxes.concat(resource_checkboxes(commit_formula, new_contents, new_formula_version))
 
-        if formula_checkboxes.present?
-          formula_pr_message += <<~EOS
-
-
-            #{formula_checkboxes.join("\n")}
-          EOS
-        end
-
-        formula_pr_message += github_release_notes(new_url, added_release_info)
+        formula_pr_message += "\n\n#{formula_checkboxes.join("\n")}\n" if formula_checkboxes.present?
 
         PreparedBump.new(
           sourcefile_path:    commit_formula.path,
           old_contents:,
           commit_message:     "#{commit_formula.name} #{new_formula_version}",
           additional_files:   alias_rename&.map { |name| tap.alias_dir/name },
-          formula_pr_message:,
+          formula_pr_message: formula_pr_message + github_release_notes(new_url, added_release_info),
           formula_name:       commit_formula.full_name,
           new_version:        new_formula_version,
         )
@@ -576,7 +580,7 @@ module Homebrew
       # Whether platform or conditional source declarations prevent checking patches against one release.
       sig { params(formula_ast: Utils::AST::FormulaAST).returns(T::Boolean) }
       def patch_source_ambiguous?(formula_ast)
-        patch_scope_nodes(formula_ast.children).any? do |node|
+        formula_ast.patch_scope_nodes.any? do |node|
           if node.is_a?(Utils::AST::SendNode)
             node.method_name == :url && node.each_ancestor(:block).any? do |parent|
               Utils::AST::FormulaAST::PATCH_PLATFORM_BLOCKS.include?(parent.method_name)
@@ -589,60 +593,6 @@ module Homebrew
             end
           end
         end
-      end
-
-      # Selects whole patches or independent platform branches containing only supported declarations.
-      # The caller must return true only when every URL yielded together is included in the release.
-      sig {
-        params(node: Utils::AST::BlockNode, block: T.proc.params(urls: T::Array[String]).returns(T::Boolean))
-          .returns(T::Array[Utils::AST::BlockNode])
-      }
-      def patches_for_removal(node, &block)
-        platform_blocks = Utils::AST::FormulaAST::PATCH_PLATFORM_BLOCKS
-        # Retain stable-only patches to avoid leaving a redundant `stable` block.
-        return [] unless node.each_ancestor.all? do |parent|
-          parent.class_type? || parent.begin_type? ||
-          (parent.is_a?(Utils::AST::BlockNode) && parent.send_node.receiver.nil? &&
-           [:patch, *platform_blocks].include?(parent.method_name))
-        end
-        return [] unless node.arguments.empty?
-
-        if node.method_name == :patch && (arguments = node.send_node.arguments).present?
-          strip = Utils::AST.literal_value(arguments.first)
-          return [] if arguments.length != 1 || !strip.is_a?(Symbol) || !strip.to_s.match?(/\Ap\d+\z/)
-        end
-
-        children = Utils::AST.body_children(node.body)
-        calls = patch_scope_nodes(children)
-        unsupported_calls = calls.reject do |call|
-          case call
-          when Utils::AST::SendNode
-            call.receiver.nil? && [:url, :sha256, :directory, :type, :resolves].include?(call.method_name)
-          when Utils::AST::BlockNode
-            call.send_node.receiver.nil? && call.arguments.empty? && platform_blocks.include?(call.method_name)
-          end
-        end
-
-        if unsupported_calls.empty?
-          urls = calls.grep(Utils::AST::SendNode).select { |call| call.method_name == :url }.map do |call|
-            value = call.first_argument
-            value.str_content if call.arguments.length == 1 && value&.str_type?
-          end
-          return [node] if urls.present? && urls.none?(&:nil?) && yield(urls.compact.uniq)
-        end
-
-        return [] if children.any? do |child|
-          unsupported_calls.include?(child) || (child.is_a?(Utils::AST::SendNode) && child.method_name == :url)
-        end
-
-        branches = children.grep(Utils::AST::BlockNode)
-        if branches.length > 1
-          # Only split disjoint OS or architecture pairs.
-          return [] unless branches.all? { |branch| branch.send_node.arguments.empty? }
-          return [] unless [[:on_linux, :on_macos], [:on_arm, :on_intel]].include?(branches.map(&:method_name).sort)
-        end
-
-        branches.flat_map { |branch| patches_for_removal(branch, &block) }
       end
 
       sig { params(formula: Formula, new_version: String).void }
@@ -730,30 +680,16 @@ module Homebrew
 
       private
 
-      sig { params(nodes: T::Array[Utils::AST::Node]).returns(T::Array[Utils::AST::Node]) }
-      def patch_scope_nodes(nodes)
-        nodes.flat_map do |node|
-          if node.is_a?(Utils::AST::BlockNode) && node.send_node.receiver.nil? &&
-             [:stable, *Utils::AST::FormulaAST::PATCH_PLATFORM_BLOCKS].include?(node.method_name)
-            [node, *patch_scope_nodes(Utils::AST.body_children(node.body))]
-          else
-            [node]
-          end
+      sig { params(undo: T::Array[T.proc.void]).void }
+      def restore_checkout(undo)
+        error = T.let(nil, T.nilable(StandardError))
+        undo.reverse_each do |restore|
+          restore.call
+        rescue => e
+          onoe e.message if error
+          error ||= e
         end
-      end
-
-      sig { params(url: String).returns(T.nilable(String)) }
-      def determine_mirror(url)
-        case url
-        when %r{.*ftp\.gnu\.org/gnu.*}
-          url.sub "ftp.gnu.org/gnu", "ftpmirror.gnu.org"
-        when %r{.*download\.savannah\.gnu\.org/*}
-          url.sub "download.savannah.gnu.org", "download-mirror.savannah.gnu.org"
-        when %r{.*www\.apache\.org/dyn/closer\.lua\?path=.*}
-          url.sub "www.apache.org/dyn/closer.lua?path=", "archive.apache.org/dist/"
-        when %r{.*mirrors\.ocf\.berkeley\.edu/debian.*}
-          url.sub "mirrors.ocf.berkeley.edu/debian", "mirrorservice.org/sites/ftp.debian.org/debian"
-        end
+        raise error if error
       end
 
       sig { params(formula: String, old_mirrors: T::Array[String], new_mirrors: T::Array[String]).void }
@@ -859,26 +795,6 @@ module Homebrew
 
         check_throttle(formula, version)
         check_pull_requests(formula, tap_remote_repo, version:) unless args.write_only?
-      end
-
-      sig { params(formula: Formula, new_formula_version: Version).returns(T.nilable(T::Array[String])) }
-      def alias_update_pair(formula, new_formula_version)
-        versioned_alias = formula.aliases.grep(/^.*@\d+(\.\d+)?$/).first
-        return if versioned_alias.nil?
-
-        name, old_alias_version = versioned_alias.split("@")
-        return if old_alias_version.blank?
-
-        new_alias_regex = if old_alias_version.split(".").length == 1
-          /^\d+/
-        else
-          /^\d+\.\d+/
-        end
-        new_alias_version, = *new_formula_version.to_s.match(new_alias_regex)
-        return if new_alias_version.blank?
-        return if Version.new(new_alias_version) <= Version.new(old_alias_version)
-
-        [versioned_alias, "#{name}@#{new_alias_version}"]
       end
 
       sig { returns(T.nilable(T::Hash[String, T::Hash[Symbol, T.nilable(String)]])) }
@@ -1016,10 +932,10 @@ module Homebrew
       end
 
       sig {
-        params(formula: Formula, alias_rename: T.nilable(T::Array[Pathname]),
+        params(formula: Formula, alias_rename: T.nilable(T::Array[Pathname]), undo: T::Array[T.proc.void],
                skip_synced_versions: T::Boolean).returns(T::Boolean)
       }
-      def run_audit(formula, alias_rename, skip_synced_versions: false)
+      def run_audit(formula, alias_rename, undo:, skip_synced_versions: false)
         audit_args = ["--formula"]
         audit_args << "--strict" if args.strict?
         audit_args << "--online" if args.online?
@@ -1035,7 +951,10 @@ module Homebrew
           return false
         end
         if alias_rename && (source = alias_rename.first) && (destination = alias_rename.last)
+          odie "Alias #{destination.basename} already exists." if destination.exist? || destination.symlink?
+
           FileUtils.mv source, destination
+          undo << -> { FileUtils.mv destination, source }
         end
         failed_audit = false
         if args.no_audit?

@@ -3047,6 +3047,11 @@ displays whether a pull request has been opened with the URL.
 
 : Open a pull request for the new version if none have been opened yet.
 
+`--write-pr-to`
+
+: With `--formula`, write one JSON file per proposed pull request in
+  *`directory`* for later publication.
+
 `--start-with`
 
 : Letter or word that the list of package results should alphabetically follow.
@@ -3168,6 +3173,11 @@ uses.
 `-n`, `--dry-run`
 
 : Print what would be done rather than doing it.
+
+`--write-pr-to`
+
+: Write the proposed formula changes and pull request details as JSON in
+  *`directory`* for publication in a separate step.
 
 `--write-only`
 

@@ -165,6 +165,81 @@ RSpec.describe Homebrew::DevCmd::Bump do
       .and_return([content, "", instance_double(Process::Status, success?: true)])
   end
 
+  it "accepts only one publication phase at a time" do
+    expect { described_class.new(["--prepare-prs=bumps.json", "--sign-pr"]) }
+      .to raise_error(Homebrew::CLI::OptionConflictError)
+  end
+
+  it "collects completed scheduled bumps when another formula fails" do
+    dir = mktmpdir
+    (dir/"event").write("{}")
+    ENV["GITHUB_EVENT_PATH"] = (dir/"event").to_s
+    ENV["GITHUB_OUTPUT"] = (dir/"output").to_s
+    allow(Homebrew::Bump).to receive(:system)
+      .with(HOMEBREW_BREW_FILE, "bump", "--formulae", "--bump-synced", start_with("--write-pr-to="),
+            "--auto", "--tap=Homebrew/core") do |_, _, _, _, flag|
+      (Pathname(flag.delete_prefix("--write-pr-to="))/"testball.json").write('{"version":"2.0"}')
+      false
+    end
+    described_class.new(["--prepare-prs=#{dir}/bumps.json"]).run
+    expect([(dir/"output").read.chomp, JSON.parse((dir/"bumps.json").read), Homebrew.failed?])
+      .to eq(['formulae=["testball"]', { "testball" => { "version" => "2.0" } }, true])
+  ensure
+    Homebrew.failed = false
+  end
+
+  it "commits a prepared formula and its versioned alias on the local bump branch" do
+    ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+    tap = CoreTap.instance
+    path = tap.new_formula_path("testball")
+    path.dirname.mkpath
+    path.write("class Testball < Formula\n  url \"https://example.org/testball-1.0.tar.gz\"\nend\n")
+    peer = tap.new_formula_path("peer")
+    peer.dirname.mkpath
+    peer.write(path.read.sub("Testball", "Peer"))
+    tap.alias_dir.mkpath
+    (tap.alias_dir/"testball@0").make_symlink(peer.relative_path_from(tap.alias_dir))
+    (tap.alias_dir/"testball@1").make_symlink(path.relative_path_from(tap.alias_dir))
+    tap.path.cd do
+      system("git", "init", "--initial-branch=main", exception: true)
+      system("git", "config", "user.name", "Homebrew Tests", exception: true)
+      system("git", "config", "user.email", "tests@brew.sh", exception: true)
+      system("git", "add", ".", exception: true)
+      system("git", "commit", "-m", "Initial", exception: true)
+    end
+    versioned = path.read.sub("1.0", "2.0")
+    proposal = mktmpdir/"proposal.json"
+    event = mktmpdir/"event.json"
+    event.write(JSON.generate(inputs: { formulae: "homebrew/core/testball@1" }))
+    ENV["GITHUB_EVENT_PATH"] = event.to_s
+    ENV["GITHUB_SHA"] = tap.git_head
+    output = mktmpdir/"output"
+    ENV["GITHUB_OUTPUT"] = output.to_s
+    allow(GitHub::API).to receive(:open_rest).and_return([])
+    pr = { "title" => "testball 2.0", "body" => "One\nTwo" }
+    proposal.write(JSON.generate(testball: pr.merge(base: tap.git_head, version: "3.0",
+                                                    formulae: { testball: versioned })))
+    expect { described_class.new(["--commit-pr-from=#{proposal}", "--", "testball"]).run }
+      .to raise_error(SystemExit).and output(/Unexpected .*prepared bump for testball/).to_stderr
+    expect([tap.git_repository.branch_name, (tap.alias_dir/"testball@1").realpath, output.exist?])
+      .to eq(["main", path, false])
+
+    allow(tap).to receive(:synced_versions_formulae).and_return([%w[testball peer]])
+    formulae = { testball: versioned, peer: peer.read.sub("1.0", "2.0") }
+    proposal.write(JSON.generate(testball: pr.merge(base: tap.git_head, version: "2.0", formulae:)))
+    expect { described_class.new(["--commit-pr-from=#{proposal}", "--", "testball"]).run }
+      .to raise_error(SystemExit).and output(/Alias testball@2/).to_stderr
+    expect([tap.git_repository.branch_name, (tap.alias_dir/"testball@0").realpath,
+            (tap.alias_dir/"testball@1").realpath]).to eq(["main", peer, path])
+
+    proposal.write(JSON.generate(testball: pr.merge(base: tap.git_head, version: "2.0",
+                                                    formulae: { testball: versioned })))
+    described_class.new(["--commit-pr-from=#{proposal}", "--", "testball"]).run
+    expect([tap.git_repository.commit_message, path.read, (tap.alias_dir/"testball@2").realpath,
+            output.read.lines.map(&:chomp)])
+      .to eq(["testball 2.0", versioned, path, ["branch=bump-testball-2.0", "pr=#{pr.to_json}"]])
+  end
+
   describe "formula and cask", :cask, :integration_test do
     it "prints messages for HEAD-only Formulae and latest Casks" do
       content = <<~RUBY

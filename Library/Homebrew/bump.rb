@@ -111,11 +111,7 @@ module Homebrew
             ohai "git checkout --quiet -"
             ohai "create pull request with GitHub API (base branch: #{remote_branch})"
           else
-            SystemCommand.safe_system "git", "add", args: changed_files
-            Utils::Git.set_name_email!
-            SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose",
-                                      "--message=#{commit_message}",
-                                      "--", args: changed_files
+            commit_files(changed_files, commit_message)
           end
         end
       end
@@ -138,6 +134,149 @@ module Homebrew
           odie "Unable to open pull request for #{tap_remote_repo}: #{e.message}!"
         end
       end
+    end
+
+    sig { params(paths: T::Array[Pathname], message: String).void }
+    def self.commit_files(paths, message)
+      SystemCommand.safe_system "git", "add", args: paths
+      Utils::Git.set_name_email!
+      SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose", "--message=#{message}", "--", args: paths
+    end
+
+    # Formulae selected in a manual autobump run, including core aliases.
+    sig { returns(T::Array[String]) }
+    private_class_method def self.requested_formulae
+      require "shellwords"
+
+      input = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH"))).dig("inputs", "formulae").to_s
+      Shellwords.split(input).map do |arg|
+        name = arg.sub(%r{\Ahomebrew/core/}i, "")
+        raise ArgumentError, "Expected a core formula name." unless name.match?(/\A[a-z0-9][a-z0-9+._@-]*\z/)
+
+        name
+      end
+    end
+
+    # Collect completed bumps even when another formula failed.
+    sig { params(file: String).void }
+    def self.prepare_prs(file)
+      names = requested_formulae
+      selection = names.empty? ? ["--auto", "--tap=Homebrew/core"] : ["--", *names]
+      Dir.mktmpdir do |directory|
+        success = system HOMEBREW_BREW_FILE, "bump", "--formulae", "--bump-synced", "--write-pr-to=#{directory}",
+                         *selection
+        Homebrew.failed = true unless success
+        files = Pathname(directory).glob("*.json")
+        next if files.empty?
+
+        max_matrix_jobs = 256
+        opoo "Remaining bumps will be retried on the next run." if files.size > max_matrix_jobs
+        proposals = files.first(max_matrix_jobs).to_h { |path| [path.basename(".json").to_s, JSON.parse(path.read)] }
+        Pathname(file).atomic_write(JSON.generate(proposals))
+        File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "formulae=#{proposals.keys.to_json}" }
+      end
+    end
+
+    # Apply a prepared bump using the checked-out formulae and workflow inputs as the reference.
+    sig { params(file: String, name: String).void }
+    def self.commit_prepared_pr(file, name)
+      tap = CoreTap.instance
+      requested = requested_formulae
+      allowed = if requested.empty?
+        tap.autobump
+      else
+        requested.map { |arg| tap.alias_table.fetch(arg, arg) }
+      end
+      odie "Unexpected formula in the prepared bump." unless allowed.include?(name)
+
+      proposal = JSON.parse(File.read(file)).fetch(name)
+      version, formulae = proposal.fetch_values("version", "formulae")
+      branch = "bump-#{name}-#{version}"
+      group = tap.synced_versions_formulae.find { |members| members.include?(name) } || [name]
+      if proposal.fetch("base") != ENV.fetch("GITHUB_SHA") || tap.git_head != proposal.fetch("base") ||
+         !version.match?(/\A[[:alnum:]][[:alnum:].+_-]*\z/) ||
+         !formulae.key?(name) || (formulae.keys - group).present?
+        odie "Unexpected formulae, version or base commit in the prepared bump."
+      end
+      SystemCommand.safe_system "git", "check-ref-format", "refs/heads/#{branch}"
+      url = GitHub.url_to("repos", "Homebrew/homebrew-core", "pulls")
+      url.query = URI.encode_www_form(head: "Homebrew:#{branch}", base: "main", state: "all")
+      return if GitHub::API.open_rest(url).present?
+
+      require "utils/ast"
+
+      destinations = Set.new
+      changes = formulae.map do |formula_name, contents|
+        path = tap.formula_files_by_name.fetch(formula_name)
+        unless Utils::AST::FormulaAST.valid_bump?(path.read, contents, version:)
+          odie "Unexpected changes in the prepared bump for #{formula_name}."
+        end
+        aliases = tap.alias_reverse_table.fetch(formula_name, [])
+        rename = Array(alias_update_pair(aliases, Version.new(version))).map { |a| tap.alias_dir/a }
+        destination = rename.last
+        if destination && (destination.exist? || destination.symlink? || !destinations.add?(destination))
+          odie "Alias #{destination.basename} already exists or is proposed twice."
+        end
+
+        [path, contents, rename]
+      end
+      tap.path.cd do
+        SystemCommand.safe_system "git", "switch", "-c", branch
+        changes.each do |path, contents, aliases|
+          path.atomic_write(contents)
+          source, destination = aliases
+          FileUtils.mv source, destination if source && destination
+          commit_files([path, *aliases], "#{path.basename(".rb")} #{version}")
+        end
+      end
+      pr = proposal.slice("title", "body")
+      File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "branch=#{branch}", "pr=#{pr.to_json}" }
+    end
+
+    # A rerun can open the PR for a previous push after checking its commits.
+    sig { void }
+    def self.sign_pr
+      CoreTap.instance.path.cd do
+        branch = Utils.safe_popen_read("git", "branch", "--show-current").chomp
+        odie "Expected a bump branch." unless branch.start_with?("bump-")
+        base = ENV.fetch("GITHUB_SHA")
+        ref = "refs/heads/#{branch}"
+        if Utils.safe_popen_read("git", "ls-remote", "--refs", "origin", ref).empty?
+          Utils::Git.set_name_email!(author: false)
+          SystemCommand.safe_system "git", "rebase", "--force-rebase", "--gpg-sign", base
+          File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "push=true" }
+        else
+          SystemCommand.safe_system "git", "fetch", "origin", ref
+          SystemCommand.safe_system "git", "merge-base", "--is-ancestor", base, "FETCH_HEAD"
+          local, remote = %w[HEAD FETCH_HEAD].map do |head|
+            Utils.safe_popen_read("git", "log", "--format=%T %s", "#{base}..#{head}")
+          end
+          odie "The remote branch differs from the prepared bump." if local.blank? || remote != local
+
+          commits = Utils.safe_popen_read("git", "rev-list", "#{base}..FETCH_HEAD").lines(chomp: true)
+          SystemCommand.safe_system "git", "verify-commit", *commits
+        end
+      end
+    end
+
+    sig { params(aliases: T::Array[String], new_formula_version: Version).returns(T.nilable(T::Array[String])) }
+    def self.alias_update_pair(aliases, new_formula_version)
+      versioned_alias = aliases.grep(/^.*@\d+(\.\d+)?$/).first
+      return if versioned_alias.nil?
+
+      name, old_alias_version = versioned_alias.split("@")
+      return if old_alias_version.blank?
+
+      new_alias_regex = if old_alias_version.split(".").length == 1
+        /^\d+/
+      else
+        /^\d+\.\d+/
+      end
+      new_alias_version, = *new_formula_version.to_s.match(new_alias_regex)
+      return if new_alias_version.blank?
+      return if Version.new(new_alias_version) <= Version.new(old_alias_version)
+
+      [versioned_alias, "#{name}@#{new_alias_version}"]
     end
 
     sig { params(url: String).returns(String) }

@@ -17,6 +17,145 @@ RSpec.describe Utils::AST::FormulaAST do
     RUBY
   end
 
+  describe ".valid_bump?" do
+    let(:original) do
+      <<~RUBY
+        class Foo < Formula
+          url "https://example.org/foo-1.tar.gz"
+          sha256 "#{"a" * 64}"
+
+          def install
+            system "make", "install"
+          end
+        end
+      RUBY
+    end
+
+    let(:updated) { original.sub("foo-1", "foo-2").sub("a" * 64, "b" * 64) }
+
+    let(:with_pypi_resource) do
+      resource = <<~RUBY
+        resource "example" do
+          url "https://files.pythonhosted.org/packages/example-1.0.tar.gz"
+          sha256 "#{"c" * 64}"
+        end
+      RUBY
+      original.sub("  def install", "#{resource.gsub(/^/, "  ")}\n  def install")
+    end
+
+    it "accepts release data and rejects changes to the installer or download host" do
+      changes = [updated, updated.sub('"make"', '"cmake"'), updated.sub("example.org", "example.net")]
+      expect(changes.map { |source| described_class.valid_bump?(original, source) }).to eq([true, false, false])
+    end
+
+    it "requires a strict version increase over the checkout" do
+      base = original.sub("foo-1", "foo-3.0")
+      expect(%w[2.0 3.0 4.0].map do |version|
+        described_class.valid_bump?(base, base.sub("foo-3.0", "foo-#{version}"), version:)
+      end).to eq([false, false, true])
+    end
+
+    it "generates the same GNU mirror for upper-case schemes" do
+      expect(URL.automatic_mirror("HTTPS://ftp.gnu.org/gnu/foo-2.tar.gz"))
+        .to eq("HTTPS://ftpmirror.gnu.org/foo-2.tar.gz")
+    end
+
+    it "allows FTP archive and automatic mirror updates only within the same origin" do
+      base = original.sub("https://example.org", "ftp://ftp.gnu.org/gnu")
+      release = base.sub("foo-1", "foo-2")
+      mirrored = release.sub("  sha256", "  mirror \"ftp://ftpmirror.gnu.org/foo-2.tar.gz\"\n  sha256")
+      proposals = [mirrored, release.sub("ftp://", "http://"), release.sub("ftp.gnu.org", "example.net"),
+                   release.sub("ftp.gnu.org", "ftp.gnu.org:2121")]
+      expect(proposals.map { |proposal| described_class.valid_bump?(base, proposal) })
+        .to eq([true, false, false, false])
+    end
+
+    it "allows dropping stable mirrors and checks the origins of the remaining mirrors" do
+      first = "  mirror \"https://one.example/foo-1.tar.gz\"\n"
+      second = "  mirror \"https://two.example/foo-1.tar.gz\"\n"
+      with_mirrors = original.sub("  sha256", "#{first}#{second}  sha256")
+      retained = updated.sub("  sha256", "#{second.sub("foo-1", "foo-2")}  sha256")
+      proposals = [updated, retained, retained.sub("two.example", "three.example")]
+      expect(proposals.map { |source| described_class.valid_bump?(with_mirrors, source) }).to eq([true, true, false])
+    end
+
+    it "accepts only the automatic mirror for the new stable URL" do
+      source = original.sub("example.org", "ftp.gnu.org/gnu")
+      mirror = '  mirror "https://ftpmirror.gnu.org/foo-2.tar.gz"'
+      with_mirror = source.sub("foo-1", "foo-2").sub("  sha256", "#{mirror}\n  sha256")
+      proposals = [with_mirror, with_mirror.sub("ftpmirror.gnu.org", "example.net"),
+                   with_mirror.sub("ftpmirror.gnu.org/foo-2", "ftpmirror.gnu.org/other-2"),
+                   with_mirror.sub(mirror, "#{mirror}\n#{mirror}")]
+      expect(proposals.map do |proposal|
+        described_class.valid_bump?(source, proposal)
+      end).to eq([true, false, false, false])
+    end
+
+    it "requires an unambiguous stable URL when adding an automatic mirror" do
+      source = original.sub("  sha256", "  url \"https://example.net/foo-1.tar.gz\"\n  sha256")
+                       .sub("example.org", "ftp.gnu.org/gnu")
+      proposal = source.sub("  sha256", "  mirror \"https://ftpmirror.gnu.org/foo-1.tar.gz\"\n  sha256")
+      expect(described_class.valid_bump?(source, proposal)).to be(false)
+    end
+
+    it "checks the stable version from an override, Git tag or archive URL" do
+      url = 'url "https://example.org/foo-2.0.tar.gz"'
+      releases = [url, "#{url}, tag: 'v3.0'", "#{url}, tag: 'v3.0'\nversion '4.0'"]
+      versions = %w[2.0 3.0 4.0]
+      expect(releases.map do |release|
+        source = "class Foo < Formula\nstable do\n#{release}\nend\nend\n"
+        versions.select { |version| described_class.valid_bump?(source.gsub(/[234]\.0/, "1.0"), source, version:) }
+      end).to eq([["2.0"], ["3.0"], ["4.0"]])
+    end
+
+    it "declines a version it cannot establish from the stable declarations" do
+      url = 'url "https://example.org/foo-2.0.tar.gz"'
+      releases = ["#{url}, tag: RELEASE_TAG", "#{url}\non_macos do\nversion '2.0'\nend",
+                  "#{url}\nother.stable do\nversion '2.0'\nend"]
+      expect(releases.map do |release|
+        source = "class Foo < Formula\n#{release}\nend\n"
+        described_class.new(source).stable_version
+      end).to all(be_nil)
+    end
+
+    it "limits mirror removal to the stable download" do
+      source = <<~RUBY
+        class Foo < Formula
+          stable do
+            url "https://example.org/foo.tar.gz"
+            mirror RELEASE_MIRROR
+          end
+
+          resource "bar" do
+            url "https://example.org/bar.tar.gz"
+            mirror "https://mirror.example/bar.tar.gz"
+          end
+        end
+      RUBY
+      without_stable = source.lines.reject { |line| line.include?("RELEASE_MIRROR") }.join
+      without_both = without_stable.lines.reject { |line| line.strip.start_with?("mirror ") }.join
+      expect([without_stable, without_both].map { |proposal| described_class.valid_bump?(source, proposal) })
+        .to eq([true, false])
+    end
+
+    it "accepts a new PyPI resource containing only a source and checksum" do
+      expect(described_class.valid_bump?(original, with_pypi_resource.sub("foo-1", "foo-2"))).to be(true)
+    end
+
+    it "accepts regenerated PyPI resources with an optional literal version" do
+      base = with_pypi_resource
+      proposed = base.sub("foo-1", "foo-2").sub("example-1.0", "example-2.0").sub("c" * 64, "d" * 64)
+      declarations = [base.sub("    sha256", "    version '1.0'\n    sha256"),
+                      base.sub("  end", "    version \"1.0\"\n  end"),
+                      base.sub("  end", "    version(\"1.0\")\n  end"),
+                      base.sub("  end", "    version release_version\n  end"),
+                      base.sub("  end", "    version \"1.0\"\n    patch :DATA\n  end"),
+                      base.sub("  end", "    version \"1.0\"; patch :DATA\n  end")]
+      expect(declarations.map { |source| described_class.valid_bump?(source, proposed, version: "2") })
+        .to eq([true, true, true, false, false, false])
+    end
+  end
+
   describe "#remove_patches" do
     let(:patch) do
       <<~RUBY.chomp

@@ -3,6 +3,7 @@
 
 require "cmd/shared_examples/args_parse"
 require "dev-cmd/bump-formula-pr"
+require "utils/ast"
 require "utils/pypi"
 
 RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
@@ -116,6 +117,24 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         expect(formula_path.read).not_to include(patch_url, "# Backport a build fix.", "\n\n\n")
       end
 
+      context "when writing a pull request proposal" do
+        let(:directory) { mktmpdir }
+        let(:options) { ["--write-pr-to=#{directory}"] }
+
+        it "exports the audited change and restores the checkout without publishing" do
+          original = formula_path.read
+          expect(Homebrew::Bump).not_to receive(:create_pr)
+          allow(CoreTap.instance).to receive(:git_head).and_return("a" * 40)
+          command.run
+          proposal = JSON.parse((directory/"patchball.json").read)
+          prepared = proposal.fetch("formulae").fetch("patchball")
+          expect(prepared).to include(source_url)
+          expect(Utils::AST::FormulaAST.valid_bump?(original, prepared,
+                                                    version: proposal.fetch("version"))).to be(true)
+          expect(formula_path.read).to eq(original)
+        end
+      end
+
       context "with a dry run" do
         let(:options) { ["--dry-run"] }
 
@@ -202,6 +221,42 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         end
       end
 
+      context "when exporting" do
+        let(:options) { ["--no-audit", "--write-pr-to=#{mktmpdir}"] }
+
+        it "restores earlier and partially prepared formulae when release notes fail" do
+          originals = formulae.map { |formula| formula.path.read }
+          allow(command).to receive(:github_release_notes)
+            .and_invoke(->(*_) { "" }, ->(*_) { raise IOError, "notes" })
+
+          expect { command.run }.to raise_error(IOError, "notes")
+          expect(formulae.map { |formula| formula.path.read }).to eq(originals)
+        end
+
+        it "preserves an occupied alias and undoes earlier moves" do
+          destination = tap.alias_dir/"second@2"
+          destination.make_symlink("missing")
+          aliases = tap.alias_dir.children.to_h { |path| [path, path.readlink] }
+
+          expect { command.run }.to raise_error(SystemExit).and output(/Alias second@2 already exists/).to_stderr
+          expect(tap.alias_dir.children.to_h { |path| [path, path.readlink] }).to eq(aliases)
+        end
+
+        it "restores the other files and aliases when a formula cannot be restored" do
+          other_paths = formulae.values_at(0, 2).map(&:path)
+          originals = other_paths.map(&:read)
+          aliases = tap.alias_dir.children.to_h { |path| [path, path.readlink] }
+          path = formulae.fetch(1).path
+          allow(path).to receive(:atomic_write).and_call_original
+          allow(path).to receive(:atomic_write).with(path.read).and_raise(Errno::EACCES)
+          allow(tap).to receive(:git_head).and_return("a" * 40)
+
+          expect { command.run }.to raise_error(Errno::EACCES)
+          expect(other_paths.map(&:read)).to eq(originals)
+          expect(tap.alias_dir.children.to_h { |entry| [entry, entry.readlink] }).to eq(aliases)
+        end
+      end
+
       context "with a third-party tap" do
         let(:tap) { Tap.fetch("user", "repo") }
 
@@ -215,7 +270,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
           allow(Formula).to receive(:[]).with("first")
                                         .and_return(Formulary.from_contents("first", core_path, core_contents,
                                                                             tap: CoreTap.instance))
-          allow(command).to receive(:alias_update_pair).and_return(nil)
+          allow(Homebrew::Bump).to receive(:alias_update_pair).and_return(nil)
           original_contents = formulae.map { |formula| formula.path.read }
           audited_formulae = []
           allow(command).to receive(:system) do |*arguments|
@@ -414,11 +469,11 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
     end
   end
 
-  describe "#patches_for_removal" do
+  describe "patch removal during a formula bump" do
     subject(:remaining_source) do
       ast = Utils::AST::FormulaAST.new(formula_contents)
       ast.remove_patches do |node|
-        bump_formula_pr.patches_for_removal(node) { |urls| (urls - included_urls).empty? }
+        ast.patches_for_removal(node) { |urls| (urls - included_urls).empty? }
       end
       ast.process
     end
@@ -434,6 +489,58 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       RUBY
     end
     let(:formula_contents) { "class Foo < Formula\n#{patch}\nend\n" }
+
+    let(:release_url) { "https://github.com/example/project/archive/v2.0.tar.gz" }
+    let(:inclusion) { instance_double(GitHub::PatchInclusion) }
+
+    before do
+      allow(GitHub::PatchInclusion).to receive(:new).and_return(inclusion)
+      allow(inclusion).to receive(:removal_reason)
+        .with(anything, source_url: release_url, tag: nil, revision: nil) do |url|
+          "Included" if included_urls.include?(url)
+        end
+    end
+
+    def valid_patch_bump?(original, proposal)
+      header = "class Foo < Formula"
+      Utils::AST::FormulaAST.valid_bump?(original.sub(header, "#{header}\nurl '#{release_url.sub("v2", "v1")}'"),
+                                         proposal.sub(header, "#{header}\nurl '#{release_url}'"))
+    end
+
+    it "retains a whole patch without evidence for the proposed release" do
+      other_patch = patch.sub("a" * 40, "c" * 40)
+      base = formula_contents.sub(patch, other_patch)
+      expect(valid_patch_bump?(base, base.sub("#{other_patch}\n", ""))).to be(false)
+    end
+
+    it "uses the proposed Git tag and revision to check patch inclusion" do
+      git = "https://github.com/example/project.git"
+      sha = "f" * 40
+      base = formula_contents.sub("Formula\n", "Formula\nurl '#{git}', tag: 'v1', revision: '#{"0" * 40}'\n")
+      proposed = base.sub("'v1'", "'v2'").sub("0" * 40, sha).sub("#{patch}\n", "")
+      expect(inclusion).to receive(:removal_reason)
+        .with(patch_url, source_url: git, tag: "v2", revision: sha)
+        .and_return("Included")
+      expect(Utils::AST::FormulaAST.valid_bump?(base, proposed, version: "2")).to be(true)
+    end
+
+    it "preserves a platform wrapper containing another release declaration" do
+      platform = "on_macos do\nsha256 '#{"b" * 64}'\n#{patch}\nend"
+      base = formula_contents.sub(patch, platform)
+      expect(valid_patch_bump?(base, base.sub("#{platform}\n", ""))).to be(false)
+    end
+
+    it "accepts removing only the formula copy of an identical resource patch" do
+      resource = "resource 'bar' do\n#{patch}\nend\n"
+      source = "class Foo < Formula\n#{patch}\n#{resource}end\n"
+      proposals = [source.sub("#{patch}\n", ""), source.sub(resource, "resource 'bar' do\nend\n")]
+      expect(proposals.map { |proposal| valid_patch_bump?(source, proposal) }).to eq([true, false])
+    end
+
+    it "keeps stable-scoped patches when validating a bump" do
+      source = "class Foo < Formula\nstable do\nurl 'https://example.org/foo.tar.gz'\n#{patch}\nend\nend\n"
+      expect(valid_patch_bump?(source, source.sub("#{patch}\n", ""))).to be(false)
+    end
 
     context "with platform blocks inside a patch" do
       let(:formula_contents) do
@@ -462,8 +569,9 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
     it "retains patches in stable, HEAD, resources and Ruby conditionals" do
       expect(["stable do", "head do", 'resource "foo" do', "if OS.linux?"].map do |opening|
         source = "class Foo < Formula\n#{opening}\n#{patch}\nend\nend\n"
-        node = Utils::AST.process_source(source).last.each_node(:block).find { |block| block.method_name == :patch }
-        bump_formula_pr.patches_for_removal(node) { true }
+        ast = Utils::AST::FormulaAST.new(source)
+        node = ast.children.fetch(0).each_node(:block).find { |block| block.method_name == :patch }
+        ast.patches_for_removal(node) { true }
       end).to all(be_empty)
     end
 
@@ -472,6 +580,38 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       let(:left_branch) { "on_macos do\nurl '#{patch_url}'\nsha256 '#{"b" * 64}'\nend\n" }
       let(:right_branch) { "on_linux do\nurl '#{other_url}'\nsha256 '#{"d" * 64}'\nend\n" }
       let(:patch) { "patch do\n#{left_branch}#{right_branch}end" }
+
+      it "accepts removal of the macOS branch and checks the retained Linux patch" do
+        proposals = [remaining_source, remaining_source.sub("d" * 64, "e" * 64)]
+        expect(proposals.map { |proposal| valid_patch_bump?(formula_contents, proposal) })
+          .to eq([true, false])
+      end
+
+      it "requires evidence for the particular platform branch being removed" do
+        expect(valid_patch_bump?(formula_contents, formula_contents.sub(right_branch, ""))).to be(false)
+      end
+
+      context "with a dependency between two similar patches" do
+        let(:included_urls) { [patch_url, other_url, other_url.sub("c" * 40, "e" * 40)] }
+
+        it "matches the reduced patch on its original side of the dependency" do
+          second = patch.sub("c" * 40, "e" * 40)
+          base = "class Foo < Formula\n#{patch}\ndepends_on 'bar'\n#{second}\nend\n"
+          reduced = "patch do\n#{left_branch}end"
+          proposal = base.sub("#{patch}\n", "").sub(second, reduced)
+          expect(valid_patch_bump?(base, proposal)).to be(true)
+        end
+      end
+
+      context "when a resource has the same macOS patch" do
+        let(:formula_contents) do
+          "class Foo < Formula\nresource 'bar' do\npatch do\n#{left_branch}end\nend\n#{patch}\nend\n"
+        end
+
+        it "accepts removal from the formula while keeping the resource patch" do
+          expect(valid_patch_bump?(formula_contents, remaining_source)).to be(true)
+        end
+      end
 
       context "with a local macOS patch" do
         let(:left_branch) { "on_macos do\nfile 'Patches/foo/mac.patch'\nend\n" }
@@ -499,13 +639,17 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         it "removes only the incorporated architecture branch" do
           expect(remaining_source).to eq(formula_contents.sub(arm_branch, ""))
         end
+
+        it "accepts the prepared bump with the remaining architecture branch" do
+          expect(valid_patch_bump?(formula_contents, remaining_source)).to be(true)
+        end
       end
 
       it "retains defaults and overlapping platform conditions" do
         expect(["url '#{patch_url}'", "on_arm do\nurl '#{patch_url}'\nend"].map do |default|
           ast = Utils::AST::FormulaAST.new("class Foo < Formula\npatch do\n#{default}\n#{right_branch}end\nend\n")
-          node = ast.children.first
-          bump_formula_pr.patches_for_removal(node) { |urls| urls == [other_url] }
+          node = ast.children.grep(Utils::AST::BlockNode).fetch(0)
+          ast.patches_for_removal(node) { |urls| urls == [other_url] }
         end).to all(be_empty)
       end
     end

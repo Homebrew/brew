@@ -5,6 +5,7 @@ require "ast_constants"
 require "on_system"
 require "rubocop-ast"
 require "rubocops/cask/constants/stanza"
+require "url"
 
 module Utils
   # Helper functions for editing Ruby files.
@@ -97,6 +98,10 @@ module Utils
         :"on_#{name}"
       end
       PATCH_PLATFORM_BLOCKS = T.let(patch_platform_blocks.freeze, T::Array[Symbol])
+      BUMP_URL_ORIGIN = %r{\A(?i:https?|ftp)://[a-zA-Z0-9.:-]+(?=/|\z)}
+      PYPI_RESOURCE = %r{\Aresource[ ]"[a-zA-Z0-9._+-]+"[ ]do
+                           \n[ ]+url[ ]"https://files\.pythonhosted\.org/[-a-zA-Z0-9_./%+]+"
+                           \n[ ]+sha256[ ]"[a-f0-9]{64}"\n[ ]+end\z}x
 
       delegate process: :tree_rewriter
 
@@ -127,6 +132,198 @@ module Utils
         @processed_source = T.let(processed_source, ProcessedSource)
         @children = T.let(children, T::Array[Node])
         @tree_rewriter = T.let(TreeRewriter.new(processed_source.buffer), TreeRewriter)
+      end
+
+      # Compare a prepared formula with the release edits allowed in its checkout.
+      sig { params(original: String, proposed: String, version: T.nilable(String)).returns(T::Boolean) }
+      def self.valid_bump?(original, proposed, version: nil)
+        checkout = new(original)
+        proposal = new(proposed)
+        if version
+          current = checkout.stable_version
+          return false if !current || proposal.stable_version != version
+          return false if Version.new(version) <= Version.new(current)
+        end
+
+        return true if checkout.bump_template(proposal) == proposal.bump_template(proposal)
+
+        checkout.matches_patch_removals?(proposal)
+      end
+
+      sig { returns(T::Hash[Symbol, T.nilable(SendNode)]) }
+      def stable_declarations
+        nodes = children.dup
+        declarations = []
+        independent_scopes = [:resource, :head, :patch, :livecheck, :bottle, :service, :test]
+        while (node = nodes.pop)
+          next if node.class_type? || node.module_type? || node.def_type? || node.defs_type?
+          next if node.is_a?(BlockNode) && !node.send_node.receiver && independent_scopes.include?(node.method_name)
+
+          if node.is_a?(SendNode) && [:url, :version].include?(node.method_name) && node.arguments.present?
+            declarations << node
+          end
+          nodes.concat(node.child_nodes)
+        end
+
+        declarations.group_by(&:method_name).transform_values do |calls|
+          call = calls.fetch(0)
+          next if !calls.one? || call.receiver
+          next unless call.each_ancestor.all? do |scope|
+            scope.class_type? || scope.begin_type? ||
+            (scope.is_a?(BlockNode) && scope.method?(:stable) && scope.send_node.receiver.nil?)
+          end
+
+          call
+        end
+      end
+      private :stable_declarations
+
+      # Read the stable version without evaluating the formula.
+      sig { returns(T.nilable(String)) }
+      def stable_version
+        declarations = stable_declarations
+        unless declarations.key?(:version)
+          return stable_source(declarations[:url], keys: [:tag])&.version&.to_s.presence
+        end
+
+        call = declarations[:version]
+        return unless call
+
+        call.first_argument&.str_content.presence if call.arguments.one?
+      end
+
+      # Extract literal source details used to identify the proposed release.
+      sig { params(call: T.nilable(SendNode), keys: T::Array[Symbol]).returns(T.nilable(URL)) }
+      def stable_source(call = stable_declarations[:url], keys: [:tag, :revision])
+        value = call&.first_argument&.str_content
+        return if !call || value.blank?
+
+        specs = {}
+        if (options = call.arguments[1])
+          return if call.arguments.length != 2 || !options.is_a?(RuboCop::AST::HashNode)
+
+          return unless options.children.all? { |pair| pair.pair_type? && pair.key.sym_type? }
+
+          keys.each do |key|
+            pair = options.pairs.rfind { |entry| entry.key.value == key }
+            next unless pair
+            return nil unless pair.value.str_type?
+
+            specs[key] = pair.value.str_content
+          end
+        end
+        URL.new(value, specs)
+      end
+
+      # Keep executable source intact while comparing release declarations.
+      sig { params(proposal: FormulaAST).returns(String) }
+      def bump_template(proposal)
+        if (mirrors = stable_mirror_origins).present?
+          retained = proposal.retained_mirror_origins
+          mirrors.each do |node, origin|
+            if retained.first == origin
+              retained.shift
+            else
+              remove_stanza_node(node)
+            end
+          end
+        end
+
+        nodes = children.dup
+        while (node = nodes.shift)
+          case node
+          when BlockNode
+            next if node.send_node.receiver || node.arguments.children.present?
+
+            if [:stable, *PATCH_PLATFORM_BLOCKS].include?(node.method_name)
+              nodes.concat(body_children(node.body))
+              next
+            end
+            next unless node.method?(:resource)
+
+            statements = body_children(node.body)
+            version = statements.grep(SendNode).find do |call|
+              call.method?(:version) && call.receiver.nil? && call.arguments.one? && call.first_argument&.str_type?
+            end
+            # PyPI regenerates the resource with just its URL and checksum.
+            source = node.source
+            source = source.sub(/^ +#{Regexp.escape(version.source)}\n/, "") if version
+            if PYPI_RESOURCE.match?(source)
+              remove_stanza_node(node)
+            else
+              nodes.concat(statements)
+            end
+          when SendNode
+            next if node.receiver
+
+            value = node.first_argument
+            if node.arguments.one? && ((node.method?(:revision) && value&.int_type?) ||
+               ([:sha256, :version].include?(node.method_name) && value&.str_type?))
+              remove_stanza_node(node)
+            elsif [:url, :mirror].include?(node.method_name) && value&.str_type?
+              origin = value.str_content[BUMP_URL_ORIGIN]
+              tree_rewriter.replace(value.source_range, origin.inspect) if origin
+              node.arguments.grep(RuboCop::AST::HashNode).each do |options|
+                options.pairs.each do |pair|
+                  next if !pair.key.sym_type? || [:tag, :revision].exclude?(pair.key.value) || !pair.value.str_type?
+
+                  tree_rewriter.replace(pair.value.source_range, '""')
+                end
+              end
+            end
+          end
+        end
+        process
+      end
+
+      # Compare patch edits at their original positions in the two release templates.
+      sig { params(proposal: FormulaAST).returns(T::Boolean) }
+      def matches_patch_removals?(proposal)
+        scopes = patches_by_scope
+        return false if scopes.empty?
+
+        candidates_by_scope = proposal.patches_by_scope
+        removals = {}.compare_by_identity
+        scopes.each do |scope, patches|
+          candidates = candidates_by_scope.fetch(scope, []).map(&:source)
+          unmatched = patches.reject do |patch|
+            index = candidates.index(patch.source)
+            candidates.delete_at(index) if index
+          end
+          unmatched.each do |patch|
+            candidate = candidates.first
+            if candidate && (branches = prepared_patch_branches(patch, candidate))
+              candidates.shift
+              removals[patch] = branches
+            else
+              removals[patch] = patches_for_removal(patch) { |_urls, branch| branch.equal?(patch) }
+            end
+          end
+        end
+        removed_urls = Set.new
+        remove_patches do |patch|
+          selected = removals.fetch(patch, [])
+          next [] if selected.empty?
+
+          patches_for_removal(patch) do |urls, branch|
+            next false unless selected.any? { |node| node.equal?(branch) }
+
+            removed_urls.merge(urls)
+            true
+          end
+        end
+        return false if removed_urls.empty? || process != proposal.process
+
+        source = proposal.stable_source
+        return false unless source
+
+        require "utils/github/patch_inclusion"
+
+        inclusion = GitHub::PatchInclusion.new
+        removed_urls.all? do |url|
+          inclusion.removal_reason(url, source_url: source.to_s, tag: source.specs[:tag],
+                                        revision: source.specs[:revision]).present?
+        end
       end
 
       sig { returns(T.nilable(Node)) }
@@ -362,6 +559,72 @@ module Utils
         remove_stanza_node(stanza_node)
       end
 
+      # Selects whole patches or independent platform branches containing only supported declarations.
+      # The caller decides whether to remove a branch given all its patch URLs.
+      sig {
+        params(node: BlockNode, block: T.proc.params(urls: T::Array[String], branch: BlockNode).returns(T::Boolean))
+          .returns(T::Array[BlockNode])
+      }
+      def patches_for_removal(node, &block)
+        # Retain stable-only patches to avoid leaving a redundant `stable` block.
+        return [] unless node.each_ancestor.all? do |parent|
+          parent.class_type? || parent.begin_type? ||
+          (parent.is_a?(BlockNode) && parent.send_node.receiver.nil? &&
+           [:patch, *PATCH_PLATFORM_BLOCKS].include?(parent.method_name))
+        end
+        return [] unless node.arguments.empty?
+
+        if node.method_name == :patch && (arguments = node.send_node.arguments).present?
+          strip = literal_value(arguments.first)
+          return [] if arguments.length != 1 || !strip.is_a?(Symbol) || !strip.to_s.match?(/\Ap\d+\z/)
+        end
+
+        children = body_children(node.body)
+        calls = patch_scope_nodes(children)
+        unsupported_calls = calls.reject do |call|
+          case call
+          when SendNode
+            call.receiver.nil? && [:url, :sha256, :directory, :type, :resolves].include?(call.method_name)
+          when BlockNode
+            call.send_node.receiver.nil? && call.arguments.empty? && PATCH_PLATFORM_BLOCKS.include?(call.method_name)
+          end
+        end
+
+        if unsupported_calls.empty?
+          urls = calls.grep(SendNode).select { |call| call.method_name == :url }.map do |call|
+            value = call.first_argument
+            value.str_content if call.arguments.length == 1 && value&.str_type?
+          end
+          return [node] if urls.present? && urls.none?(&:nil?) && yield(urls.compact.uniq, node)
+        end
+
+        return [] if children.any? do |child|
+          unsupported_calls.include?(child) || (child.is_a?(SendNode) && child.method_name == :url)
+        end
+
+        branches = children.grep(BlockNode)
+        if branches.length > 1
+          # Only split disjoint OS or architecture pairs.
+          return [] unless branches.all? { |branch| branch.send_node.arguments.empty? }
+          return [] unless [[:on_linux, :on_macos], [:on_arm, :on_intel]].include?(branches.map(&:method_name).sort)
+        end
+
+        branches.flat_map { |branch| patches_for_removal(branch, &block) }
+      end
+
+      # Enumerates source declarations in stable and platform scopes.
+      sig { params(nodes: T::Array[Node]).returns(T::Array[Node]) }
+      def patch_scope_nodes(nodes = children)
+        nodes.flat_map do |node|
+          if node.is_a?(BlockNode) && node.send_node.receiver.nil? &&
+             [:stable, *PATCH_PLATFORM_BLOCKS].include?(node.method_name)
+            [node, *patch_scope_nodes(body_children(node.body))]
+          else
+            [node]
+          end
+        end
+      end
+
       # Yields patch blocks in all scopes; the caller returns patches or branches to remove.
       # Removes adjoining comments and platform wrappers emptied by patch removal.
       sig { params(block: T.proc.params(node: BlockNode).returns(T::Array[BlockNode])).void }
@@ -439,7 +702,70 @@ module Utils
         tree_rewriter.insert_after(preceding_expr, "\n#{stanza}")
       end
 
+      protected
+
+      # Only declarations retained in the release template separate neighbouring patches.
+      sig { returns(T::Hash[[Integer, T::Array[String]], T::Array[BlockNode]]) }
+      def patches_by_scope
+        omitted = tree_rewriter.as_replacements.filter_map { |range, replacement| range if replacement.empty? }
+        position = 0
+        groups = {}
+        patch_scope_nodes.each do |node|
+          if node.is_a?(BlockNode)
+            next if PATCH_PLATFORM_BLOCKS.include?(node.method_name)
+
+            if node.method?(:patch)
+              scope = [position, node.each_ancestor(:block).map { |parent| parent.send_node.source }]
+              (groups[scope] ||= []) << node
+              next
+            end
+          end
+          range = node.source_range
+          position += 1 if omitted.none? { |removed| removed == range || removed.contains?(range) }
+        end
+        groups
+      end
+
+      sig { returns(T::Array[String]) }
+      def retained_mirror_origins
+        mirrors = stable_mirror_origins
+        if mirrors.one?
+          urls = stable_children.grep(SendNode).select { |call| call.receiver.nil? && call.method?(:url) }
+          source = urls.fetch(0).first_argument&.str_content if urls.one?
+          mirror = mirrors.fetch(0).first.first_argument&.str_content
+          return [] if source && mirror && URL.automatic_mirror(source) == mirror
+        end
+        mirrors.map(&:last)
+      end
+
+      sig { returns(T::Array[[SendNode, String]]) }
+      def stable_mirror_origins
+        stable_children.grep(SendNode).filter_map do |node|
+          next if node.receiver || !node.method?(:mirror) || !node.arguments.one?
+
+          value = node.arguments.fetch(0)
+          origin = value.str_content[BUMP_URL_ORIGIN] if value.str_type?
+          [node, origin || node.source]
+        end
+      end
+
       private
+
+      sig { params(patch: BlockNode, candidate: String).returns(T.nilable(T::Array[BlockNode])) }
+      def prepared_patch_branches(patch, candidate)
+        branches = patches_for_removal(patch) do |_urls, branch|
+          branch.each_node(:block).none? { |part| candidate.include?(part.source) }
+        end
+        return if branches.empty? || branches.first.equal?(patch)
+
+        remaining = patch.source.dup
+        offset = patch.source_range.begin_pos
+        branches.reverse_each do |branch|
+          range = stanza_removal_range(branch, remove_leading_comments: true)
+          remaining[(range.begin_pos - offset)...(range.end_pos - offset)] = ""
+        end
+        branches if remaining == candidate
+      end
 
       sig { returns(String) }
       attr_reader :formula_contents
@@ -510,6 +836,11 @@ module Utils
 
       sig { params(stanza_node: Node, remove_leading_comments: T::Boolean).void }
       def remove_stanza_node(stanza_node, remove_leading_comments: false)
+        tree_rewriter.remove(stanza_removal_range(stanza_node, remove_leading_comments:))
+      end
+
+      sig { params(stanza_node: Node, remove_leading_comments: T::Boolean).returns(Parser::Source::Range) }
+      def stanza_removal_range(stanza_node, remove_leading_comments:)
         stanza_range = stanza_node.source_range
         if remove_leading_comments
           processed_source.comments.reverse_each do |comment|
@@ -545,7 +876,7 @@ module Utils
           end
         end
 
-        tree_rewriter.remove(stanza_range)
+        stanza_range
       end
 
       sig {
