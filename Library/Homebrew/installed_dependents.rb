@@ -54,18 +54,10 @@ module InstalledDependents
         dependent.missing_dependencies(hide: keg_names).flat_map do |d|
           formula = begin
             d.to_installed_formula
-          rescue FormulaUnavailableError
-            next []
-          rescue Homebrew::UntrustedTapError, TapFormulaAmbiguityError => e
-            loaders = begin
-              if e.is_a?(TapFormulaAmbiguityError)
-                e.loaders
-              else
-                [Formulary.loader_for(d.name, warn: false)]
-              end
-            rescue TapFormulaAmbiguityError => ambiguity
-              ambiguity.loaders
-            end
+          rescue FormulaUnavailableError, Homebrew::UntrustedTapError, TapFormulaAmbiguityError => e
+            next [] unless d.formula_name?
+
+            loaders = e.is_a?(TapFormulaAmbiguityError) ? e.loaders : d.formula_loaders
             matching_kegs = loaders.filter_map do |loader|
               kegs_by_source[[loader.name, loader.tap]]&.max_by(&:scheme_and_version)
             end
@@ -93,7 +85,7 @@ module InstalledDependents
           source = begin
             f = d.to_installed_formula
             [f.name, f.tap]
-          rescue FormulaUnavailableError
+          rescue FormulaUnavailableError, Homebrew::UntrustedTapError
             [Utils.name_from_full_name(d.name), d.tap]
           end
           kegs_by_source[source]&.max_by(&:scheme_and_version)
@@ -184,10 +176,8 @@ module InstalledDependents
           [dep.to_formula.name]
         rescue TapFormulaAmbiguityError => e
           e.loaders.map(&:name)
-        rescue Homebrew::UntrustedTapError, FormulaSpecificationError
-          dep.formula_loaders.map(&:name)
-        rescue FormulaUnavailableError
-          []
+        rescue Homebrew::UntrustedTapError, FormulaSpecificationError, FormulaUnavailableError
+          dep.formula_name? ? dep.formula_loaders.map(&:name) : []
         end
         dependency_names.each do |dependency_name|
           dependents[dependency_name] = dependents.fetch(dependency_name, []) + [formula.name]

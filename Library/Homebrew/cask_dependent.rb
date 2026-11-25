@@ -39,7 +39,7 @@ class CaskDependent
   def runtime_dependencies(read_from_tab: true, undeclared: true)
     deps.flat_map do |dep|
       [dep, *dep.to_installed_formula.runtime_dependencies(read_from_tab:, undeclared:)]
-    rescue FormulaUnavailableError
+    rescue FormulaUnavailableError, Homebrew::UntrustedTapError
       [dep]
     end.uniq
   end

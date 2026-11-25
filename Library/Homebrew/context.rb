@@ -15,13 +15,16 @@ module Context
         quiet:                          T::Boolean,
         verbose:                        T::Boolean,
         deferred_environment_expansion: T::Boolean,
+        tolerate_formula_load_errors:   T::Boolean,
       ).void
     }
-    def initialize(debug: false, quiet: false, verbose: false, deferred_environment_expansion: false)
+    def initialize(debug: false, quiet: false, verbose: false, deferred_environment_expansion: false,
+                   tolerate_formula_load_errors: false)
       @debug = debug
       @quiet = quiet
       @verbose = verbose
       @deferred_environment_expansion = deferred_environment_expansion
+      @tolerate_formula_load_errors = tolerate_formula_load_errors
     end
 
     sig { returns(T::Boolean) }
@@ -43,6 +46,9 @@ module Context
     def deferred_environment_expansion?
       @deferred_environment_expansion
     end
+
+    sig { returns(T::Boolean) }
+    def tolerate_formula_load_errors? = @tolerate_formula_load_errors
   end
 
   @current = T.let(nil, T.nilable(ContextStruct))
@@ -93,13 +99,16 @@ module Context
       quiet:                          T::Boolean,
       verbose:                        T::Boolean,
       deferred_environment_expansion: T::Boolean,
+      tolerate_formula_load_errors:   T::Boolean,
       _block:                         T.proc.void,
     ).returns(T.untyped)
   }
   def with_context(debug: debug?, quiet: quiet?, verbose: verbose?,
-                   deferred_environment_expansion: deferred_environment_expansion?, &_block)
+                   deferred_environment_expansion: deferred_environment_expansion?,
+                   tolerate_formula_load_errors: Context.current.tolerate_formula_load_errors?, &_block)
     old_context = Context.current
-    Thread.current[:context] = ContextStruct.new(debug:, quiet:, verbose:, deferred_environment_expansion:)
+    Thread.current[:context] = ContextStruct.new(debug:, quiet:, verbose:, deferred_environment_expansion:,
+                                                 tolerate_formula_load_errors:)
 
     begin
       yield

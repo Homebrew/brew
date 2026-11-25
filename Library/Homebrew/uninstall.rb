@@ -56,14 +56,15 @@ module Homebrew
           rm_pin rack unless dry_run
         else
           kegs.each do |keg|
-            begin
+            pinned_name = begin
               f = Formulary.from_rack(rack)
-              if f.pinned?
-                onoe "#{f.full_name} is pinned. You must unpin it to uninstall."
-                break # exit keg loop and move on to next rack
-              end
+              f.full_name if f.pinned?
             rescue
-              nil
+              keg.name if (HOMEBREW_PINNED_KEGS/keg.name).symlink?
+            end
+            if pinned_name
+              onoe "#{pinned_name} is pinned. You must unpin it to uninstall."
+              break # exit keg loop and move on to next rack
             end
 
             keg.lock do
@@ -184,7 +185,11 @@ module Homebrew
     def self.rm_pin(rack)
       Formulary.from_rack(rack).unpin
     rescue
-      nil
+      pin = HOMEBREW_PINNED_KEGS/rack.basename
+      return if pin.exist? || !pin.symlink?
+
+      pin.unlink
+      Utils::Path.rmdir_if_possible(HOMEBREW_PINNED_KEGS)
     end
   end
 end

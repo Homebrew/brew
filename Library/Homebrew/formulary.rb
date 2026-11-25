@@ -355,6 +355,13 @@ module Formulary
       alias_path = Pathname(alias_path) if alias_path.is_a?(String)
       klass(flags:, ignore_errors:)
         .new(name, path, spec, alias_path:, tap:, force_bottle:)
+    rescue FormulaUnavailableError, Homebrew::UntrustedTapError, SignalException, NoMemoryError
+      raise
+    # A formula can raise its own exception class or call exit while being loaded.
+    rescue Exception => e # rubocop:disable Lint/RescueException
+      raise unless Context.current.tolerate_formula_load_errors?
+
+      raise FormulaUnreadableError.new(name, e)
     end
 
     sig { overridable.params(flags: T::Array[String], ignore_errors: T::Boolean).returns(T.class_of(Formula)) }
@@ -919,6 +926,9 @@ module Formulary
         begin
           factory("#{tap}/#{formula_name}", spec, alias_path:, warn: false, force_bottle:, flags:)
         rescue FormulaUnavailableError
+          # During untap, prefer the keg's own copy to a namesake from another tap.
+          raise if Context.current.tolerate_formula_load_errors?
+
           # formula may be migrated to different tap. Try to search in core and all taps.
           factory(formula_name, spec, alias_path:, warn: false, force_bottle:, flags:)
         end
