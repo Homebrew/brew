@@ -339,11 +339,20 @@ module Cask
             api_source = api_source.dup
             api_source["version"] = api_source["version"].presence
             api_source["version"] ||= @sourcefile_path.dirname.dirname.dirname.basename.to_s.presence
-            if api_source["version"].nil? || api_source["artifacts"].nil?
-              installed_tab = CaskLoader.load_installed_tab(token)
-              api_source["version"] ||= installed_tab.version.presence
-              api_source["artifacts"] ||= CaskLoader.resolve_installed_artifacts(
-                token, installed_tab.uninstall_artifacts, tap: installed_tab.tap, api_fallback: @api_fallback
+            installed_tab = CaskLoader.load_installed_tab(token)
+            api_source["version"] ||= installed_tab.version.presence
+            api_source["artifacts"] ||= CaskLoader.resolve_installed_artifacts(
+              token, installed_tab.uninstall_artifacts, tap: installed_tab.tap, api_fallback: @api_fallback
+            )
+
+            if api_source.dig("depends_on", "formula").blank? &&
+               (formula_deps = Hash.try_convert(installed_tab.runtime_dependencies)
+                                   &.transform_keys(&:to_s)
+                                   &.fetch("formula", nil)).is_a?(Array)
+              api_source["depends_on"] = (api_source["depends_on"] || {}).merge(
+                "formula" => formula_deps.filter_map do |dep|
+                  dep["full_name"] if dep.is_a?(Hash) && dep["declared_directly"]
+                end,
               )
             end
           end
