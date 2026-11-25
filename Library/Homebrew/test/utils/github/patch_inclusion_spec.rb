@@ -10,7 +10,7 @@ RSpec.describe GitHub::PatchInclusion do
   let(:release_sha) { "b" * 40 }
   let(:patch_url) { "https://github.com/example/project/commit/#{patch_sha}.patch?full_index=1" }
   let(:source_url) { "https://github.com/example/project/archive/refs/tags/v2.0.tar.gz" }
-  let(:comparison) { "https://api.github.com/repos/example/project/compare/#{patch_sha}...#{release_sha}" }
+  let(:comparison) { "https://api.github.com/repos/example/project/compare/#{patch_sha}...#{release_sha}?per_page=1" }
 
   before do
     allow(GitHub::API).to receive(:open_rest).with(

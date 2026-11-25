@@ -107,6 +107,12 @@ module Homebrew
       ARCHIVE_EXTENSIONS = /\.(?:tar\.gz|tar\.bz2|tar\.xz|tgz|zip|gem|crate|tar|nupkg)\z/i
       private_constant :ARCHIVE_EXTENSIONS
 
+      sig { params(url: T.nilable(String), version: String).returns(T::Boolean) }
+      def self.versioned_archive?(url, version)
+        basename = File.basename(url.to_s.partition(/[?#]/).first)
+        basename.match?(ARCHIVE_EXTENSIONS) && Version.parse(basename).to_s == version
+      end
+
       # Cabal package versions are dot-separated non-negative integers only.
       HACKAGE_PKGID = /\A(.+)-(\d+(?:\.\d+)*)\z/
       private_constant :HACKAGE_PKGID

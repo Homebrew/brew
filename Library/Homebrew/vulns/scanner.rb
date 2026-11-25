@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require "sbom"
+require "livecheck/strategy/git"
+require "utils/github/patch_inclusion"
 require "vulns/identify"
 require "vulns/osv"
 require "vulns/vulnerability"
@@ -9,6 +11,8 @@ require "vulns/vulnerability"
 module Homebrew
   module Vulns
     class Scanner
+      include Utils::Output::Mixin
+
       sig {
         params(source_url: T.nilable(String), head_url: T.nilable(String),
                homepage: T.nilable(String)).returns(T.nilable(String))
@@ -106,10 +110,31 @@ module Homebrew
         min_severity_level = min_severity ? SEVERITY_LEVELS.fetch(min_severity) : 0
         @min_severity_level = T.let(min_severity_level, Integer)
         @fix_type = fix_type
+        @patch_inclusion = T.let(GitHub::PatchInclusion.new, GitHub::PatchInclusion)
       end
 
-      Target = Struct.new(:repo_url, :tag, :version, :from_installed_sbom, :current_recipe_applies,
-                          keyword_init: true)
+      Target = Struct.new(:repo_url, :tag, :version, :source_tag, :revision, :versioned_archive, :from_installed_sbom,
+                          :current_recipe_applies, keyword_init: true) do
+        # Infer a tag only when the source archive names the version and one upstream tag matches.
+        sig { returns(T.nilable(String)) }
+        def release_tag
+          return source_tag if source_tag
+          return tag if revision
+          return unless versioned_archive
+          return @release_tag if defined?(@release_tag)
+
+          @release_tag = T.let(nil, T.nilable(String))
+          result = Livecheck::Strategy::Git.ls_remote_tags(repo_url)
+          return if result[:messages].present?
+
+          content = result[:content]
+          return unless content.is_a?(String)
+
+          candidates = [tag, "v#{tag}", "n#{tag}", "#{File.basename(repo_url)}-#{tag}"]
+          matches = Livecheck::Strategy::Git.tags_from_content(content) & candidates
+          @release_tag = matches.first if matches.one?
+        end
+      end
       private_constant :Target
 
       sig { returns(Results) }
@@ -141,6 +166,10 @@ module Homebrew
             vulns = vulns.reject { |v| v.fix_available?(target.tag, target.repo_url) }
           when :unreleased
             vulns = vulns.reject { |v| v.released_fix_available?(target.tag, target.repo_url) }
+          end
+          # The current recipe can pin a different commit even at the installed version.
+          if target.from_installed_sbom || formula.any_installed_prefix.nil?
+            vulns.reject! { |v| fixed_in_release?(v, target) }
           end
           next if vulns.empty?
 
@@ -175,34 +204,33 @@ module Homebrew
         head_url = formula.head&.url
         homepage = formula.homepage
 
-        stable_repo_url = self.class.target_repo_url(stable_url, head_url, homepage)
-        stable_tag = Identify.tag(stable_url) || stable&.specs&.[](:tag) || stable&.version&.to_s
-
         if (prefix = formula.any_installed_prefix)
           installed_pkg_version = formula.any_installed_version
-          installed_version = installed_pkg_version&.version.to_s
+          version = installed_pkg_version&.version.to_s
           current_recipe_applies = installed_pkg_version == formula.pkg_version
 
           if (sbom = self.class.source_from_sbom(prefix))
             sbom_url, sbom_version = sbom
             repo_url = self.class.target_repo_url(sbom_url, head_url, homepage)
-            tag = Identify.tag(sbom_url) || sbom_version || installed_version.presence
-            if repo_url && tag
-              return Target.new(repo_url:, tag:, version: installed_version,
-                                from_installed_sbom: true, current_recipe_applies:)
+            sbom_tag = Identify.tag(sbom_url)
+            if repo_url && (tag = sbom_tag || sbom_version || version.presence)
+              return Target.new(repo_url:, tag:, version:, current_recipe_applies:, from_installed_sbom: true,
+                                source_tag: sbom_tag, versioned_archive: Identify.versioned_archive?(sbom_url, tag))
             end
           end
-
-          return if stable_repo_url.nil? || stable_tag.nil?
-
-          return Target.new(repo_url: stable_repo_url, tag: stable_tag, version: installed_version,
-                            from_installed_sbom: false, current_recipe_applies:)
+        else
+          version = formula.version.to_s
+          current_recipe_applies = true
         end
 
-        return if stable_repo_url.nil? || stable_tag.nil?
+        repo_url = self.class.target_repo_url(stable_url, head_url, homepage)
+        source_tag = Identify.tag(stable_url) || stable&.specs&.[](:tag)
+        tag = source_tag || stable&.version&.to_s
+        return if repo_url.nil? || tag.nil?
 
-        Target.new(repo_url: stable_repo_url, tag: stable_tag, version: formula.version.to_s,
-                   from_installed_sbom: false, current_recipe_applies: true)
+        Target.new(repo_url:, tag:, version:, source_tag:, from_installed_sbom: false, current_recipe_applies:,
+                   revision:          stable&.specs&.[](:revision),
+                   versioned_archive: Identify.versioned_archive?(stable_url, tag))
       end
 
       sig { params(formula: Formula).returns(T::Boolean) }
@@ -211,6 +239,30 @@ module Homebrew
         return false if target.nil? || target.from_installed_sbom
 
         !target.current_recipe_applies
+      end
+
+      sig { params(vuln: Vulnerability, target: Target).returns(T::Boolean) }
+      def fixed_in_release?(vuln, target)
+        return false unless @patch_inclusion.available?
+        return false unless (repository = target.repo_url[%r{\Ahttps://github\.com/([\w.-]+/[\w.-]+)\z}, 1])
+
+        fixes = vuln.git_fix_commits(target.repo_url)
+        return false if fixes.empty?
+        return false unless (tag = target.release_tag)
+        return false if vuln.lists_version?(target.version, target.tag, tag)
+        return false if target.revision && !target.revision.match?(/\A\h{40}\z/)
+
+        ref = target.revision || "refs/tags/#{tag}"
+        fixes.all? do |alternatives|
+          alternatives.any? { |sha| @patch_inclusion.included_in_ref(repository, sha, ref:) }
+        end
+      rescue GitHub::API::Error, ErrorDuringExecution => e
+        if @patch_inclusion.available?
+          odebug "Could not check #{vuln.id} against #{target.repo_url} tag #{tag}: #{e.message}"
+        else
+          opoo "GitHub commit checks stopped. Findings with unverified fixes remain open.\n#{e.message}"
+        end
+        false
       end
 
       sig { params(ids: T::Array[T::Hash[String, T.untyped]]).returns(T::Array[Vulnerability]) }
