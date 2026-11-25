@@ -33,14 +33,19 @@ module Cask
       cask = T.cast(formula_or_cask, Cask)
       tab = super
 
-      tab.tabfile = cask.metadata_main_container_path/FILENAME
-      tab.uninstall_flight_blocks = cask.uninstall_flight_blocks?
       tab.runtime_dependencies = Tab.runtime_deps_hash(cask)
-      tab.source["version"] = cask.version.to_s
-      tab.source["path"] = cask.sourcefile_path.to_s
-      tab.uninstall_artifacts = cask.artifacts_list(uninstall_only: true)
-
+      tab.update_caskfile(cask)
       tab
+    end
+
+    # Update the recorded definition while preserving the installation history.
+    sig { params(cask: Cask).void }
+    def update_caskfile(cask)
+      self.tabfile ||= cask.metadata_main_container_path/FILENAME
+      self.uninstall_flight_blocks = cask.uninstall_flight_blocks?
+      self.uninstall_artifacts = cask.artifacts_list(uninstall_only: true)
+      self.source = source.merge("version" => cask.version.to_s, "path" => cask.sourcefile_path.to_s,
+                                 "tap" => cask.tap&.name, "tap_git_head" => cask.tap_git_head)
     end
 
     # Returns a {Tab} for an already installed cask,

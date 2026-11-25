@@ -878,6 +878,18 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
     end
 
+    test_each(%w[2.57 2.61]) do |app_version|
+      it "uses the shared upgrade path for an auto-updating app at #{app_version}" do
+        cask = Cask::CaskLoader.from_path(cask_path("outdated/auto-updates"))
+        InstallHelper.stub_cask_installation(cask)
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: app_version)
+
+        expect { described_class.new(["--yes", "--cask", cask.token]).run }.to change(cask, :installed_version)
+          .from("2.57")
+          .to("2.61")
+      end
+    end
+
     test_each([true, false].product([true, false])) do |as_dependency, prefetch|
       it "installs casks with as_dependency: #{as_dependency} and prefetch: #{prefetch}" do
         allow(Homebrew::Install).to receive(:enqueue_cask_installers).and_return([]) unless prefetch

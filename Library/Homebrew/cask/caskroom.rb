@@ -116,15 +116,15 @@ module Cask
 
       # Preserve the original version and artifacts whenever the receipt cannot reproduce them.
       version = cask.version.to_s
-      json_uninstall_artifacts = JSON.parse(JSON.generate(cask.artifacts_list(uninstall_only: true)))
+      uninstall_artifacts = cask.artifacts_list(uninstall_only: true)
       # Keep missing artifacts distinguishable from an intentional empty artifact list.
-      return if source_artifacts.nil? && tab.uninstall_artifacts.blank? && json_uninstall_artifacts.empty?
+      return if source_artifacts.nil? && tab.uninstall_artifacts.blank? && uninstall_artifacts.empty?
 
       installed_json = cask.to_installed_json_hash
       installed_json["url_specs"] ||= source_url_specs if source_url_specs
       receipt_artifacts = tab.uninstall_artifacts.presence
-      if receipt_artifacts.nil? || !artifacts_equivalent?(receipt_artifacts, json_uninstall_artifacts)
-        installed_json["artifacts"] = json_uninstall_artifacts
+      if receipt_artifacts.nil? || !artifacts_equivalent?(receipt_artifacts, uninstall_artifacts)
+        installed_json["artifacts"] ||= uninstall_artifacts
       end
       installed_json["version"] = version if caskfile.dirname.dirname.dirname.basename.to_s != version
 
@@ -136,9 +136,9 @@ module Cask
         # Only durable on-disk data may satisfy this check: the API fallback would mask a
         # migrated caskfile that lost its artifacts for as long as the API definition matches.
         migrated_cask = CaskLoader.load_from_installed_caskfile(json_caskfile, api_fallback: false)
-        migrated_artifacts = JSON.parse(JSON.generate(migrated_cask.artifacts_list(uninstall_only: true)))
+        migrated_artifacts = migrated_cask.artifacts_list(uninstall_only: true)
         if migrated_cask.version.to_s != version ||
-           !artifacts_equivalent?(migrated_artifacts, json_uninstall_artifacts)
+           !artifacts_equivalent?(migrated_artifacts, uninstall_artifacts)
           raise "migrated Cask metadata differs from the original after preserving version and artifacts"
         end
       rescue
@@ -154,9 +154,9 @@ module Cask
 
     sig { params(first: T::Array[T.anything], second: T::Array[T.anything]).returns(T::Boolean) }
     def self.artifacts_equivalent?(first, second)
-      first.tally == second.tally
+      # Installed JSON represents DSL values such as Pathnames and symbols as strings.
+      JSON.parse(first.to_json).tally == JSON.parse(second.to_json).tally
     end
-    private_class_method :artifacts_equivalent?
 
     # Return tokens for Caskroom directories missing expected installed metadata.
     sig { returns(T::Array[String]) }
