@@ -94,6 +94,12 @@ module Homebrew
       actionlint_files = T.let([], T::Array[Pathname])
       Array(files).map { Pathname(it) }
                   .each do |path|
+        # Check an explicitly named formula alias at its target under the installed tap.
+        if (tap = Tap.from_path(path)) && path.dirname.expand_path == tap.alias_dir && path.symlink? && path.file?
+          target = path.realpath.relative_path_from(tap.path.realpath)
+          path = tap.path/target if target.each_filename.first != ".."
+        end
+
         case path.extname
         when ".rb"
           ruby_files << path
@@ -247,6 +253,7 @@ module Homebrew
         args << "--only" << cops_to_include.join(",")
       end
 
+      rubocop_command = [*HOMEBREW_RUBY_EXEC_ARGS, "--", RUBOCOP]
       files.map!(&:expand_path)
       base_dir = Dir.pwd
       if files.blank? || files == [HOMEBREW_REPOSITORY]
@@ -256,15 +263,16 @@ module Homebrew
         args << "--config" << (HOMEBREW_REPOSITORY/"docs/docs_rubocop_style.yml")
       elsif files.any? { |f| f.to_s.start_with? HOMEBREW_LIBRARY_PATH }
         base_dir = HOMEBREW_LIBRARY_PATH
-      elsif (tap = single_tap(files))
+      elsif (tap_paths = single_tap_paths(files))
         # RuboCop roots its project index at the working directory for this
         # config (see `tap_rubocop_style.yml`). A tap has to be indexed on its
         # own: rooted at `Library`, the index spans every installed tap and the
         # cross-file cops pair one tap's constants and methods with another's as
-        # reassignments and duplicates. The paths stay as given, so the shared
+        # reassignments and duplicates. Use installed paths so the shared
         # config's `Taps/...` exclusions keep matching a symlinked tap.
         args << "--config" << (HOMEBREW_LIBRARY/"tap_rubocop_style.yml")
-        base_dir = tap.path
+        base_dir, files = tap_paths
+        rubocop_command.push("--tap-root", base_dir) if base_dir.symlink?
       else
         args << "--config" << (HOMEBREW_LIBRARY/".rubocop.yml")
         base_dir = HOMEBREW_LIBRARY if files.any? { |f| f.to_s.start_with? HOMEBREW_LIBRARY }
@@ -286,7 +294,6 @@ module Homebrew
 
       args += files
 
-      ruby_args = HOMEBREW_RUBY_EXEC_ARGS.dup
       case output_type
       when :print
         args << "--debug" if debug
@@ -297,11 +304,11 @@ module Homebrew
 
         args << "--color" if Tty.color?
 
-        system cache_env, *ruby_args, "--", RUBOCOP, *args, chdir: base_dir
+        system cache_env, *rubocop_command, *args, chdir: base_dir
         $CHILD_STATUS.success?
       when :json
-        result = system_command ruby_args.shift,
-                                args:  [*ruby_args, "--", RUBOCOP, "--format", "json", *args],
+        result = system_command rubocop_command.shift,
+                                args:  [*rubocop_command, "--format", "json", *args],
                                 env:   cache_env,
                                 chdir: base_dir
         json = json_result!(result)
@@ -311,13 +318,27 @@ module Homebrew
       end
     end
 
-    sig { params(files: T::Array[Pathname]).returns(T.nilable(Tap)) }
-    def self.single_tap(files)
-      taps = files.filter_map { |file| Tap.from_path(file) }
-      return if taps.empty? || taps.length != files.length
-      return unless taps.map(&:name).uniq.one?
+    sig { params(files: T::Array[Pathname]).returns(T.nilable([Pathname, T::Array[Pathname]])) }
+    def self.single_tap_paths(files)
+      return if files.empty?
 
-      taps.first
+      taps = files.map { |file| Tap.from_path(file) }.uniq
+      tap = taps.first
+      return [tap.path, files] if tap && taps.length == 1
+
+      # setup-homebrew symlinks the installed tap to the workflow checkout.
+      roots = (taps.compact | Tap.installed).map(&:path).select(&:symlink?)
+      return if roots.empty? || !files.all?(&:exist?)
+
+      resolved = files.map(&:realpath)
+      roots.each do |root|
+        checkout = root.realpath
+        relative = resolved.map { |file| file.relative_path_from(checkout) }
+        next if relative.any? { |file| file.each_filename.first == ".." }
+
+        return [root, relative.map { |file| root/file }.uniq]
+      end
+      nil
     end
 
     sig {
