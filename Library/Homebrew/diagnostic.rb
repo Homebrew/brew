@@ -803,7 +803,8 @@ module Homebrew
       # odeprecated "Remove this check when the minimum curl is 7.55 at the next major/minor release."
       sig { returns(T.nilable(Finding)) }
       def check_github_api_tokens
-        return if Homebrew::EnvConfig.github_api_token.blank?
+        return if Homebrew::EnvConfig.github_api_token.blank? &&
+                  ["", HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_AUTH].include?(HOMEBREW_GITHUB_PACKAGES_AUTH)
 
         require "utils/curl"
 
@@ -812,11 +813,11 @@ module Homebrew
 
         Finding.new(
           <<~EOS,
-            GitHub API tokens are set, but curl #{Utils::Curl.curl_version} is older than #{minimum_version}.
-            Homebrew does not pass these tokens to curl. Requests use unauthenticated
-            rate limits and cannot access private repositories or write to GitHub.
+            Homebrew omits GitHub API and Docker registry tokens with curl #{Utils::Curl.curl_version}.
+            GitHub API requests use unauthenticated rate limits and requests to
+            private repositories or registries may fail.
           EOS
-          remediation: "Upgrade curl to #{minimum_version} or newer to use GitHub API tokens.",
+          remediation: "Upgrade curl to #{minimum_version} or newer to use these tokens.",
         )
       end
 
