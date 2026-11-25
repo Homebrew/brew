@@ -78,11 +78,20 @@ module Utils
         require "utils/curl"
 
         curl = Utils::Curl.curl_executable
-        args = Utils::Curl.curl_args(*args, "--silent", "--output", File::NULL, show_error: false)
         if ENV["HOMEBREW_ANALYTICS_DEBUG"]
+          # Keep the response and curl's error message so a failure shows why.
+          failure_args = if Utils::Curl.curl_supports_fail_with_body?
+            Utils::Curl.curl_fail_with_body_args
+          else
+            # Older curls drop the response with `--fail`, so turn off a curlrc `--fail` and print the status
+            # after the response instead.
+            ["--no-fail", *Utils::Curl.curl_http_code_write_out_args(prefix: "\nHTTP status: ", suffix: "\n")]
+          end
+          args = Utils::Curl.curl_args(*args, "--silent", *failure_args, show_output: true)
           puts "#{curl} #{args.join(" ")} \"#{url}\""
-          puts Utils.safe_popen_read(curl, args: [*args, url])
+          puts Utils.safe_popen_read(curl, *args, url, err: :out)
         else
+          args = Utils::Curl.curl_args(*args, "--silent", "--output", File::NULL, show_error: false)
           pid = spawn curl, *args, url, out: File::NULL, err: File::NULL
           Process.detach(pid)
         end

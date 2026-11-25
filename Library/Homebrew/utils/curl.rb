@@ -860,10 +860,28 @@ module Utils
 
     sig { returns(T::Boolean) }
     def curl_supports_fail_with_body?
-      @curl_supports_fail_with_body ||= Hash.new do |h, key|
-        h[key] = curl_version >= Version.new("7.76.0")
-      end
+      @curl_supports_fail_with_body ||= Hash.new { |h, key| h[key] = curl_version >= Version.new("7.76.0") }
       @curl_supports_fail_with_body[curl_path]
+    end
+
+    # Arguments that return an error when the HTTP response code is 400 or greater and, when the curl in use
+    # supports `--fail-with-body`, continue to return body content.
+    sig { params(use_homebrew_curl: T::Boolean).returns(T::Array[String]) }
+    def curl_fail_with_body_args(use_homebrew_curl: false)
+      # `--fail-with-body` needs curl 7.76.0, so older curls drop the body instead.
+      return ["--fail"] if !use_homebrew_curl && !curl_supports_fail_with_body?
+
+      # A curlrc can enable `--fail`, which curl before 8.17.0 rejects alongside `--fail-with-body`.
+      ["--no-fail", "--fail-with-body"]
+    end
+
+    # Arguments that write the HTTP response code between `prefix` and `suffix` after the response.
+    sig { params(prefix: String, suffix: String).returns(T::Array[String]) }
+    def curl_http_code_write_out_args(prefix: "", suffix: "")
+      # This is a Curl format token, not a Ruby one.
+      # rubocop:disable Style/FormatStringToken
+      ["--write-out", "#{prefix}%{http_code}#{suffix}"]
+      # rubocop:enable Style/FormatStringToken
     end
 
     sig { returns(T::Boolean) }

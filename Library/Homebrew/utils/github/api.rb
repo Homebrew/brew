@@ -312,10 +312,9 @@ module GitHub
         return {}
       end
 
-      # This is a Curl format token, not a Ruby one.
-      # rubocop:disable Style/FormatStringToken
-      args = ["--header", "Accept: application/vnd.github+json", "--write-out", "\n%{http_code}"]
-      # rubocop:enable Style/FormatStringToken
+      require "utils/curl"
+      args = ["--header", "Accept: application/vnd.github+json",
+              *Utils::Curl.curl_http_code_write_out_args(prefix: "\n")]
 
       token = credentials
       args += credentials_curl_args

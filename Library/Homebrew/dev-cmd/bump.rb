@@ -15,7 +15,6 @@ module Homebrew
     class Bump < AbstractCommand
       DEFAULT_CURL_ARGS = [
         "--compressed",
-        "--fail-with-body",
         "--location",
         "--max-redirs",
         "5",
@@ -910,7 +909,8 @@ module Homebrew
         return content if content
         return unless url
 
-        stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
+        stdout, _stderr, status = Utils::Curl.curl_output(*Utils::Curl.curl_fail_with_body_args, *DEFAULT_CURL_ARGS,
+                                                          url, **DEFAULT_CURL_OPTIONS).to_a
         stdout.scrub if status.success?
       end
 

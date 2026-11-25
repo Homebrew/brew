@@ -67,9 +67,6 @@ module Homebrew
 
       # `curl` arguments used in `Strategy#page_content` method.
       PAGE_CONTENT_CURL_ARGS = T.let([
-        # Return an error when the HTTP response code is 400 or greater but
-        # continue to return body content
-        "--fail-with-body",
         # Include HTTP response headers in output, so we can identify the
         # final URL after any redirections
         "--include",
@@ -307,16 +304,18 @@ module Homebrew
           [:default, :browser]
         end
 
+        use_homebrew_curl = options.homebrew_curl || !curl_supports_fail_with_body? || false
         stderr = T.let(nil, T.nilable(String))
         user_agents.each_with_index do |user_agent, i|
           stdout, stderr, status = curl_output(
             *curl_post_args,
+            # Return an error when the HTTP response code is 400 or greater but
+            # continue to return body content
+            *curl_fail_with_body_args(use_homebrew_curl:),
             *args,
             url,
             **DEFAULT_CURL_OPTIONS,
-            use_homebrew_curl: options.homebrew_curl ||
-                               !curl_supports_fail_with_body? ||
-                               false,
+            use_homebrew_curl:,
             cookies:           options.cookies,
             header:            options.header,
             referer:           options.referer,
