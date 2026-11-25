@@ -66,23 +66,38 @@ module RuboCop
         end
       end
 
+      # Yields to block each `depends_on` node for dependency_name.
+      #
+      # @param dependency_name dependency's name
+      sig {
+        params(
+          dependency_name: T.any(String, Symbol),
+          types:           Symbol,
+          _block:          T.proc.params(method: RuboCop::AST::SendNode).void,
+        ).void
+      }
+      def audit_depends_on(dependency_name, *types, &_block)
+        return if @body.nil?
+
+        types = [:any] if types.empty?
+        dependency_nodes = find_every_method_call_by_name(@body, :depends_on)
+        dependency_nodes.each do |node|
+          next if types.none? { |type| depends_on_name_type?(node, dependency_name, type) }
+
+          offending_node(node)
+          yield node
+        end
+      end
+
       # Returns if the formula depends on dependency_name.
       #
       # @param dependency_name dependency's name
       sig { params(dependency_name: T.any(String, Symbol), types: Symbol).returns(T::Boolean) }
       def depends_on?(dependency_name, *types)
-        return false if @body.nil?
-
-        types = [:any] if types.empty?
-        dependency_nodes = find_every_method_call_by_name(@body, :depends_on)
-        idx = dependency_nodes.index do |n|
-          types.any? { |type| depends_on_name_type?(n, dependency_name, type) }
+        audit_depends_on(dependency_name, *types) do
+          return true
         end
-        return false if idx.nil?
-
-        @offensive_node = T.let(dependency_nodes[idx], T.nilable(RuboCop::AST::Node))
-
-        true
+        false
       end
 
       # Returns true if given dependency name and dependency type exist in given dependency method call node.
