@@ -544,7 +544,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
 
-      expect(app.backup_copy_args(target_path, source_path)).to eq(["-c", "-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-c", "-pR", "#{target_path}/.", source_path])
     end
 
     it "uses portable copy arguments on older macOS versions", :needs_macos do
@@ -552,7 +552,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
 
-      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", "#{target_path}/.", source_path])
     end
 
     it "uses portable copy arguments across filesystems", :needs_macos do
@@ -564,7 +564,7 @@ RSpec.describe Cask::Artifact::App, :cask do
       allow(source_path).to receive(:dirname).and_return(source_dir)
       allow(source_dir).to receive(:stat).and_return(instance_double(File::Stat, dev: 2))
 
-      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", "#{target_path}/.", source_path])
     end
   end
 
@@ -598,6 +598,36 @@ RSpec.describe Cask::Artifact::App, :cask do
   describe "upgrade" do
     before do
       install_phase
+    end
+
+    it "restores the installed app and its Caskroom link after a partial removal" do
+      plist = target_path/"Contents/Info.plist"
+      original = plist.read
+      allow(Cask::Utils).to receive(:gain_permissions_remove).and_call_original
+      allow(Cask::Utils).to receive(:gain_permissions_remove).with(plist.dirname, command:) do
+        plist.unlink
+        raise Errno::EACCES
+      end
+
+      expect { app.uninstall_phase(command:, successor: cask) }.to raise_error(Errno::EACCES)
+      expect(source_path.readlink).to eq(target_path)
+      expect(plist.read).to eq(original)
+
+      allow(Cask::Utils).to receive(:gain_permissions_remove).with(plist.dirname, command:).and_call_original
+      app.uninstall_phase(command:, successor: cask)
+      expect((source_path/"Contents/Info.plist").read).to eq(original)
+    end
+
+    it "keeps the installed app and its Caskroom link when the backup copy fails" do
+      allow(command).to receive(:run!).and_call_original
+      allow(command).to receive(:run!).with("/bin/cp", any_args) do |_, args:, **|
+        FileUtils.cp_r(target_path, args.last)
+        raise Errno::ENOSPC
+      end
+
+      expect { app.uninstall_phase(command:, successor: cask) }.to raise_error(Errno::ENOSPC)
+      expect(source_path.readlink).to eq(target_path)
+      expect(source_path.dirname.children).to contain_exactly(source_path)
     end
 
     it "upgrades apps in the home directory without sudo" do
@@ -644,6 +674,39 @@ RSpec.describe Cask::Artifact::App, :cask do
     end
 
     describe "when the system blocks modifying apps" do
+      it "explains how to grant access if removing the whole app is also denied" do
+        allow(OnSystem).to receive(:os_condition_met?).with(:ventura, :or_newer).and_return(true)
+        allow(Cask::Quarantine).to receive(:app_management_permissions_granted?).and_return(false)
+        allow(Cask::Utils).to receive(:gain_permissions_remove).and_call_original
+        allow(Cask::Utils).to receive(:gain_permissions_remove).with(target_path, command:).and_raise(Errno::EPERM)
+
+        expect { app.uninstall_phase(command:, successor: cask) }
+          .to raise_error(Cask::CaskError, /System Settings → Privacy & Security → App Management/)
+      end
+
+      test_each([
+        ["Operation not permitted", Cask::CaskError, /App Management permissions/],
+        ["Permission denied", Cask::CaskError, /App Management permissions/],
+        ["Input/output error", ErrorDuringExecution, %r{Input/output error}],
+      ]) do |reason, error_class, message|
+        it "reports #{error_class} when elevated rm reports #{reason}" do
+          allow(OnSystem).to receive(:os_condition_met?).with(:ventura, :or_newer).and_return(true)
+          allow(Cask::Quarantine).to receive(:app_management_permissions_granted?).and_return(false)
+          allow(app).to receive(:undeletable?).and_return(false)
+          allow(app.target).to receive(:parent).and_return(instance_double(Pathname, writable?: false))
+          allow(command).to receive(:run!).and_call_original
+          rm_args = ["-R", "-f", "--", target_path]
+          allow(command).to receive(:run!)
+            .with("/bin/rm", args: rm_args, sudo: nil, print_stderr: false)
+            .and_raise(ErrorDuringExecution.new(
+                         ["/usr/bin/sudo", "--", "/bin/rm", *rm_args],
+                         status: 1, output: [[:stderr, "rm: #{target_path}: #{reason}\n"]],
+                       ))
+
+          expect { app.uninstall_phase(command:, successor: cask) }.to raise_error(error_class, message)
+        end
+      end
+
       it "uninstalls and reinstalls the app" do
         target_contents_path = target_path.join("Contents")
 

@@ -688,6 +688,13 @@ module Cask
 
     sig { params(successor: T.nilable(Cask), quit: T::Boolean).void }
     def start_upgrade(successor:, quit: true)
+      if OnSystem.os_condition_met?(:ventura, :or_newer)
+        artifacts.grep(Artifact::App).each do |app|
+          next if !app.target.directory? || app.target.symlink? || app.target.owned?
+
+          Quarantine.check_app_management_permissions!(app: app.target, command: @command, action: "upgrade")
+        end
+      end
       uninstall_artifacts(successor:, quit:)
       backup
     end
