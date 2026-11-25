@@ -577,6 +577,61 @@ RSpec.describe Homebrew::Cmd::Update do
     expect(args_file.read).to eq("update-report\n--auto-update\n")
   end
 
+  describe "when the cached packages API is up to date" do
+    let(:api_cache) { test_root/"cache/api" }
+
+    before do
+      setup_update_utils
+      (api_cache/"internal").mkpath
+      (api_cache/"internal/packages.arm64_tahoe.jws.json").write "cached"
+      (api_cache/"formula_names.txt").write "wget"
+      (api_cache/"cask_names.txt").write "firefox"
+      (test_root/"cache/all_commands_list.txt").write ""
+    end
+
+    def run_cached_api_update
+      run_update_shell(
+        <<~SH,
+          source "#{update_script}"
+          bottle_tag() { echo arm64_tahoe; }
+          api_curl_download() { echo 304; }
+          brew() { echo "$*"; }
+          git_init_if_necessary() { :; }
+          git() { [[ "$1" == "--version" ]]; }
+          homebrew-update
+        SH
+        {
+          "HOMEBREW_BREW_GIT_REMOTE"     => "https://github.com/Homebrew/brew",
+          "HOMEBREW_CACHE"               => api_cache.dirname.to_s,
+          "HOMEBREW_CELLAR"              => (test_root/"cellar").to_s,
+          "HOMEBREW_DEVELOPER"           => nil,
+          "HOMEBREW_LIBRARY"             => (test_root/"Library").to_s,
+          "HOMEBREW_NO_INSTALL_FROM_API" => nil,
+          "HOMEBREW_PREFIX"              => (test_root/"prefix").to_s,
+          "HOMEBREW_REPOSITORY"          => test_root.to_s,
+        },
+      )
+    end
+
+    it "keeps formula and cask names available across consecutive no-op updates" do
+      2.times do
+        stdout, stderr, status = run_cached_api_update
+        expect([status.success?, stdout, (api_cache/"formula_names.txt").read, (api_cache/"cask_names.txt").read])
+          .to eq([true, "Already up-to-date.\n", "wget", "firefox"]), stderr
+      end
+    end
+
+    test_each(%w[formula cask]) do |type|
+      it "runs update-report to rebuild the missing #{type} name index" do
+        (api_cache/"#{type}_names.txt").rename(api_cache/"#{type}_names.before.txt")
+
+        stdout, stderr, status = run_cached_api_update
+        expect([status.success?, stdout, (api_cache/"formula_names.before.txt").read,
+                (api_cache/"cask_names.before.txt").read]).to eq([true, "update-report\n", "wget", "firefox"]), stderr
+      end
+    end
+  end
+
   it "keeps the current API file's saved ETag when removing other OS versions' API files" do
     api_internal = test_root/"cache/api/internal"
     setup_update_utils

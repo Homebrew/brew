@@ -434,16 +434,6 @@ fetch_api_file() {
     return 1
   fi
 
-  if [[ "${filename}" == "formula.jws.json" ]] || [[ "${filename}" == "internal/packages.$(bottle_tag).jws.json" ]]
-  then
-    local is_formula_file=1
-  fi
-
-  if [[ "${filename}" == "cask.jws.json" ]] || [[ "${filename}" == "internal/packages.$(bottle_tag).jws.json" ]]
-  then
-    local is_cask_file=1
-  fi
-
   if [[ -f "${cache_path}" ]]
   then
     INITIAL_JSON_BYTESIZE="$(wc -c "${cache_path}")"
@@ -513,15 +503,6 @@ fetch_api_file() {
   fi
   rm -f "${new_cache_path}" "${new_etag_path}"
 
-  if [[ -n ${is_formula_file} ]] && [[ -f "${api_cache}/formula_names.txt" ]]
-  then
-    mv -f "${api_cache}/formula_names.txt" "${api_cache}/formula_names.before.txt"
-  fi
-  if [[ -n ${is_cask_file} ]] && [[ -f "${api_cache}/cask_names.txt" ]]
-  then
-    mv -f "${api_cache}/cask_names.txt" "${api_cache}/cask_names.before.txt"
-  fi
-
   if [[ ${curl_exit_code} -eq 0 ]]
   then
     touch "${cache_path}"
@@ -529,8 +510,7 @@ fetch_api_file() {
     CURRENT_JSON_BYTESIZE="$(wc -c "${cache_path}")"
     if [[ "${INITIAL_JSON_BYTESIZE}" != "${CURRENT_JSON_BYTESIZE}" ]]
     then
-
-      if [[ -n ${is_formula_file} ]]
+      if [[ "${filename}" == "formula.jws.json" || "${filename}" == "internal/packages.$(bottle_tag).jws.json" ]]
       then
         rm -f "${api_cache}/formula_aliases.txt"
       fi
@@ -1135,6 +1115,7 @@ EOS
 
   safe_cd "${HOMEBREW_REPOSITORY}"
 
+  local api_cache="${HOMEBREW_CACHE}/api"
   # HOMEBREW_UPDATE_AUTO wasn't modified in subshell.
   # shellcheck disable=SC2031
   if [[ -n "${HOMEBREW_UPDATED}" ]] ||
@@ -1144,8 +1125,19 @@ EOS
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
      [[ ! -f "${HOMEBREW_CACHE}/all_commands_list.txt" ]] ||
+     [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" &&
+     (! -f "${api_cache}/formula_names.txt" || ! -f "${api_cache}/cask_names.txt") ]] ||
      [[ -n "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_UPDATE_AUTO}" ]]
   then
+    if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" ]]
+    then
+      local names_file
+      for names_file in "${api_cache}"/{formula,cask}_names.txt
+      do
+        [[ -f "${names_file}" ]] || continue
+        mv -f "${names_file}" "${names_file%.txt}.before.txt"
+      done
+    fi
     brew update-report "$@"
     return $?
   elif [[ -z "${HOMEBREW_UPDATE_AUTO}" && -z "${HOMEBREW_QUIET}" ]]
