@@ -33,6 +33,14 @@ RSpec.describe Formula do
     end
   end
 
+  it "infers the tap from the formula path without looking up a core formula" do
+    allow(Formulary).to receive(:core_path).and_raise("unexpected core formula lookup")
+    tap = Tap.fetch("user/repo")
+    paths = [CoreTap.instance.new_formula_path("testball"), tap.new_formula_path("testball"), fixture("testball.rb")]
+
+    expect(paths.map { |path| Testball.new("testball", path).tap }).to eq([CoreTap.instance, tap, nil])
+  end
+
   describe "#enqueue_resources_and_patches" do
     let(:f) do
       formula do

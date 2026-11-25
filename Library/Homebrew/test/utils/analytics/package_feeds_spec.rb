@@ -178,12 +178,11 @@ RSpec.describe Utils::Analytics::PackageFeeds do
   end
 
   it "continues through history pages containing no formula changes" do
+    stub_const("Utils::Analytics::PackageFeeds::BATCH_SIZE", 1)
     formula
     commit
-    100.times do |index|
-      (repository/"README").write(index.to_s)
-      commit
-    end
+    (repository/"README").write("docs")
+    commit
     formula(version: "2.0")
     commit
     result = feeds

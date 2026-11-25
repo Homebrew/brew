@@ -137,7 +137,6 @@
 **/vendor/bundle/ruby/*/gems/rspec-expectations-*/
 **/vendor/bundle/ruby/*/gems/rspec_junit_formatter-*/
 **/vendor/bundle/ruby/*/gems/rspec-mocks-*/
-**/vendor/bundle/ruby/*/gems/rspec-retry-*/
 **/vendor/bundle/ruby/*/gems/rspec-support-*/
 **/vendor/bundle/ruby/*/gems/rspec-sorbet-*/
 **/vendor/bundle/ruby/*/gems/rubocop-*/

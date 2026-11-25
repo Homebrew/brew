@@ -315,12 +315,7 @@ class Formula # rubocop:disable Metrics/ClassLength
 
     @force_bottle = force_bottle
 
-    @tap = tap
-    @tap ||= if path == Formulary.core_path(name)
-      CoreTap.instance
-    else
-      Tap.from_path(path)
-    end
+    @tap = tap || Tap.from_path(path)
 
     @pypi_packages_info = T.let(self.class.pypi_packages_info, T.nilable(PypiPackages))
 

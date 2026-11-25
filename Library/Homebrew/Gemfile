@@ -51,7 +51,6 @@ group :tests, optional: true do
   gem "rspec-expectations", require: false
   gem "rspec-github", require: false
   gem "rspec_junit_formatter", require: false
-  gem "rspec-retry", require: false
   gem "rspec-sorbet", require: false
   gem "simplecov", require: false
   gem "simplecov-cobertura", require: false

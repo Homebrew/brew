@@ -9,6 +9,13 @@ module OS
 
         requires_ancestor { Homebrew::DevCmd::Tests }
 
+        sig { void }
+        def check_test_environment!
+          super
+          # Build the verified index once for spec_helper's per-example clones.
+          Homebrew::API::Internal.fetch_packages_api! unless args.load_only?
+        end
+
         private
 
         sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }

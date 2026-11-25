@@ -19,7 +19,6 @@ gem:
     - netrc
     - parallel
     - rspec-github
-    - rspec-retry
     - rspec_junit_formatter
     - rubocop-md
     - rubocop-performance

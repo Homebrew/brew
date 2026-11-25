@@ -17,6 +17,9 @@ module Homebrew
     require "minitest/assertions"
     include ::Minitest::Assertions
 
+    TEST_PROCESS_GRACE_PERIOD = 5
+    private_constant :TEST_PROCESS_GRACE_PERIOD
+
     sig { params(assertions: Integer).returns(Integer) }
     attr_writer :assertions
 
@@ -64,7 +67,7 @@ module Homebrew
             target = pid
           end
 
-          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TEST_PROCESS_GRACE_PERIOD
           loop do
             reaped ||= reap_test_process(pid, Process::WNOHANG)
             Process.kill(0, target) if target.negative?

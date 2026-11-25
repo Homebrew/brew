@@ -28,7 +28,6 @@ Warnings.ignore :parser_syntax do
 end
 
 require "rspec/github"
-require "rspec/retry"
 require "rspec/sorbet"
 require "rubocop/rspec/support"
 require "find"
@@ -159,19 +158,12 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.silence_filter_announcements = true if ENV["TEST_ENV_NUMBER"]
 
   # Improve backtrace formatting
-  config.filter_gems_from_backtrace "rspec-retry", "sorbet-runtime"
+  config.filter_gems_from_backtrace "sorbet-runtime"
   config.backtrace_exclusion_patterns << %r{test/spec_helper\.rb}
 
   config.expect_with :rspec do |c|
     c.max_formatted_output_length = 200
   end
-
-  # Use rspec-retry to handle flaky tests.
-  config.default_sleep_interval = 1
-
-  # Don't want the nicer default retry behaviour when using CodeCov to
-  # identify flaky tests.
-  config.default_retry_count = 2 unless ENV["CODECOV_TOKEN"]
 
   config.expect_with :rspec do |expectations|
     # This option will default to `true` in RSpec 4. It makes the `description`
@@ -191,22 +183,8 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   end
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
-  # Increase timeouts for integration tests (as we expect them to take longer).
-  config.around(:each, :integration_test) do |example|
-    example.metadata[:timeout] ||= 120
-    example.run
-  end
-
-  config.around(:each, :needs_network) do |example|
-    example.metadata[:timeout] ||= 120
-
-    # Don't want the nicer default retry behaviour when using CodeCov to
-    # identify flaky tests.
-    example.metadata[:retry] ||= 4 unless ENV["CODECOV_TOKEN"]
-
-    example.metadata[:retry_wait] ||= 2
-    example.metadata[:exponential_backoff] ||= true
-    example.run
+  [:integration_test, :needs_network].each do |tag|
+    config.define_derived_metadata(tag) { |metadata| metadata[:timeout] ||= 120 }
   end
 
   # Never truncate output objects.
@@ -393,6 +371,14 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
     end
 
     if package_path
+      if OS.mac?
+        # Clone the signed envelope and its verified cache together. The index
+        # checks the envelope's mtime, and tests may touch their own copy.
+        sidecars = source_api_internal_cache.glob("#{package_path.basename}.payload{,.index}")
+        Kernel.system("/bin/cp", "-cnp", package_path, *sidecars, target_api_internal_cache, exception: true)
+        package_path = target_api_internal_cache/package_path.basename
+      end
+
       [:generic, :linux, :macos, *MacOSVersion::SYMBOLS.keys].product([:arm, :intel]).each do |system, arch|
         tag = Utils::Bottles::Tag.new(system:, arch:)
         target = target_api_internal_cache/"packages.#{tag}.jws.json"
@@ -405,9 +391,6 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
         $stdout.reopen(File::NULL)
         $stderr.reopen(File::NULL)
         $stdin.reopen(File::NULL)
-      else
-        # don't retry when focusing
-        config.default_retry_count = 0
       end
 
       begin

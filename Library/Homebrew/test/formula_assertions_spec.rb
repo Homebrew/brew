@@ -72,36 +72,40 @@ RSpec.describe Homebrew::Assertions do
       end
     end
 
-    it "kills the worker when its leader ignores the requested signal" do
-      expect(remaining_worker_output(:ignore)).to eq("")
-    end
+    context "when escalating to KILL" do
+      before { stub_const("Homebrew::Assertions::TEST_PROCESS_GRACE_PERIOD", 0.1) }
 
-    it "kills the worker when its leader is reaped before cleanup" do
-      expect(remaining_worker_output(:exit)).to eq("")
-    end
-
-    it "kills the worker when its leader exits on the requested signal" do
-      expect(remaining_worker_output(:wait)).to eq("")
-    end
-
-    it "kills the worker and the leader when the leader changes process groups" do
-      expect(remaining_worker_output(:move_group)).to eq("")
-    end
-
-    it "kills and reaps a child that ignores the requested signal" do
-      IO.pipe do |reader, writer|
-        formula_assertions.with_test_process(RbConfig.ruby, "-e", <<~RUBY, out: writer) do
-          Signal.trap(:TERM, :IGNORE)
-          $stdout.sync = true
-          puts Process.pid
-          sleep
-        RUBY
-          writer.close
-          reader.gets
-        end
+      it "kills the worker when its leader ignores the requested signal" do
+        expect(remaining_worker_output(:ignore)).to eq("")
       end
 
-      expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("KILL")
+      it "kills the worker when its leader is reaped before cleanup" do
+        expect(remaining_worker_output(:exit)).to eq("")
+      end
+
+      it "kills the worker when its leader exits on the requested signal" do
+        expect(remaining_worker_output(:wait)).to eq("")
+      end
+
+      it "kills the worker and the leader when the leader changes process groups" do
+        expect(remaining_worker_output(:move_group)).to eq("")
+      end
+
+      it "kills and reaps a child that ignores the requested signal" do
+        IO.pipe do |reader, writer|
+          formula_assertions.with_test_process(RbConfig.ruby, "-e", <<~RUBY, out: writer) do
+            Signal.trap(:TERM, :IGNORE)
+            $stdout.sync = true
+            puts Process.pid
+            sleep
+          RUBY
+            writer.close
+            reader.gets
+          end
+        end
+
+        expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("KILL")
+      end
     end
 
     it "preserves exceptions from the test block" do
