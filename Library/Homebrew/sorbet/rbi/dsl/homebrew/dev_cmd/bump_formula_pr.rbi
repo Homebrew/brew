@@ -85,4 +85,7 @@ class Homebrew::DevCmd::BumpFormulaPr::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def write_only?; end
+
+  sig { returns(T.nilable(String)) }
+  def write_pr_to; end
 end

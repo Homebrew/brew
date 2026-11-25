@@ -634,13 +634,14 @@ _brew_bump() {
     '(--tap)--installed[Check formulae and casks that are currently installed]' \
     '(--tap)--no-autobump[Ignore formulae/casks in autobump list (official repositories only)]' \
     '--no-fork[Don'\''t try to fork the repository]' \
-    '(--open-pr)--no-pull-requests[Do not retrieve pull requests from GitHub]' \
-    '(--no-pull-requests)--open-pr[Open a pull request for the new version if none have been opened yet]' \
+    '(--open-pr --write-pr-to)--no-pull-requests[Do not retrieve pull requests from GitHub]' \
+    '(--no-pull-requests --write-pr-to)--open-pr[Open a pull request for the new version if none have been opened yet]' \
     '--quiet[Make some output more quiet]' \
     '--repology[Use Repology to check for outdated packages]' \
     '--start-with[Letter or word that the list of package results should alphabetically follow]' \
     '(--installed --no-autobump)--tap[Check formulae and casks within the given tap, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]' \
+    '(--no-pull-requests --open-pr)--write-pr-to[With `--formula`, write one JSON file per proposed pull request in directory for later publication]' \
     - formula \
     '(--cask)--formula[Check only formulae]' \
     '*:formula:__brew_formulae' \
@@ -695,7 +696,7 @@ _brew_bump_formula_pr() {
   _arguments \
     '--commit[When passed with `--write-only`, generate a new commit after writing changes to the formula file]' \
     '--debug[Display any debugging information]' \
-    '(--write-only)--dry-run[Print what would be done rather than doing it]' \
+    '(--write-pr-to --write-only)--dry-run[Print what would be done rather than doing it]' \
     '--force[Remove all mirrors if `--mirror` was not specified]' \
     '--fork-org[Use the specified GitHub organisation for forking]' \
     '--help[Show this message]' \
@@ -717,7 +718,8 @@ _brew_bump_formula_pr() {
     '(--tag)--url[Specify the URL for the new download. If a URL is specified, the SHA-256 checksum of the new download should also be specified]' \
     '--verbose[Make some output more verbose]' \
     '--version[Use the specified version to override the value parsed from the URL or tag. Note that `--version=0` can be used to delete an existing version override from a formula if it has become redundant]' \
-    '(--dry-run)--write-only[Make the expected file modifications without taking any Git actions]' \
+    '(--write-pr-to --dry-run)--write-only[Make the expected file modifications without taking any Git actions]' \
+    '(--dry-run --write-only)--write-pr-to[Write the proposed formula changes and pull request details as JSON in directory for publication in a separate step]' \
     - formula \
     '*:formula:__brew_formulae'
 }

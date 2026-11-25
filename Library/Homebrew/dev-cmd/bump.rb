@@ -3,6 +3,7 @@
 
 require "api/env"
 require "abstract_command"
+require "bump"
 require "bump_version_parser"
 require "livecheck/livecheck"
 require "release_cooldown"
@@ -95,9 +96,18 @@ module Homebrew
         switch "--installed",
                description: "Check formulae and casks that are currently installed."
         switch "--no-fork",
+               # odeprecated: true,
                description: "Don't try to fork the repository."
         switch "--open-pr",
+               # odeprecated: true,
                description: "Open a pull request for the new version if none have been opened yet."
+        flag   "--write-pr-to=",
+               depends_on:  "--formula",
+               description: "With `--formula`, write one JSON file per proposed pull request in <directory> " \
+                            "for later publication."
+        flag   "--prepare-prs=", hidden: true
+        flag   "--commit-pr-from=", hidden: true
+        switch "--sign-pr", hidden: true
         flag   "--start-with=",
                description: "Letter or word that the list of package results should alphabetically follow."
         switch "--bump-synced",
@@ -109,12 +119,25 @@ module Homebrew
         conflicts "--installed", "--eval-all"
         conflicts "--installed", "--auto"
         conflicts "--no-pull-requests", "--open-pr"
+        conflicts "--no-pull-requests", "--write-pr-to="
+        conflicts "--open-pr", "--write-pr-to=", "--prepare-prs=", "--commit-pr-from=", "--sign-pr"
 
         named_args [:formula, :cask], without_api: true
       end
 
       sig { override.void }
       def run
+        if (file = args.prepare_prs)
+          return Homebrew::Bump.prepare_prs(file)
+        elsif (file = args.commit_pr_from)
+          raise UsageError, "Specify one prepared formula." if args.named.size != 1
+
+          Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
+          return Homebrew::API.with_no_api_env { Homebrew::Bump.commit_prepared_pr(file, args.named.fetch(0)) }
+        elsif args.sign_pr?
+          return Homebrew::Bump.sign_pr
+        end
+
         Utils::GemSetup.install_bundler_gems!(groups: ["livecheck"])
 
         Homebrew::API.with_no_api_env do
@@ -576,7 +599,7 @@ module Homebrew
           puts "Open bump pull requests:  #{open_bump_pull_requests_text}" if open_bump_pull_requests_text
         end
 
-        if !args.open_pr? ||
+        if (!args.open_pr? && !args.write_pr_to) ||
            message?(new_version.general) ||
            all_newer_than_upstream
           return
@@ -612,6 +635,7 @@ module Homebrew
           "--message=Created by `brew bump`",
         ]
 
+        bump_pr_args << "--write-pr-to=#{args.write_pr_to}" if args.write_pr_to
         bump_pr_args << "--no-fork" if args.no_fork?
 
         if args.bump_synced? && outdated_synced_formulae.present?
@@ -918,7 +942,7 @@ module Homebrew
       def skip_repology?(formula_or_cask)
         return true unless args.repology?
 
-        (ENV["CI"].present? && args.open_pr? && formula_or_cask.livecheck_defined?) ||
+        (ENV["CI"].present? && (args.open_pr? || args.write_pr_to.present?) && formula_or_cask.livecheck_defined?) ||
           (formula_or_cask.is_a?(Formula) && formula_or_cask.versioned_formula?)
       end
 

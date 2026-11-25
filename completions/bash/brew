@@ -589,6 +589,7 @@ _brew_bump() {
       --start-with
       --tap
       --verbose
+      --write-pr-to
       "
       return
       ;;
@@ -681,6 +682,7 @@ _brew_bump_formula_pr() {
       --verbose
       --version
       --write-only
+      --write-pr-to
       "
       return
       ;;

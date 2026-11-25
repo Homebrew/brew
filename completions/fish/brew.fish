@@ -479,6 +479,7 @@ __fish_brew_complete_arg 'bump' -l repology -d 'Use Repology to check for outdat
 __fish_brew_complete_arg 'bump' -l start-with -d 'Letter or word that the list of package results should alphabetically follow'
 __fish_brew_complete_arg 'bump' -l tap -d 'Check formulae and casks within the given tap, specified as user`/`repo'
 __fish_brew_complete_arg 'bump' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'bump' -l write-pr-to -d 'With `--formula`, write one JSON file per proposed pull request in directory for later publication'
 __fish_brew_complete_arg 'bump; and not __fish_seen_argument -l cask -l casks' -a '(__fish_brew_suggest_formulae_all)'
 __fish_brew_complete_arg 'bump; and not __fish_seen_argument -l formula -l formulae' -a '(__fish_brew_suggest_casks_all)'
 
@@ -544,6 +545,7 @@ __fish_brew_complete_arg 'bump-formula-pr' -l url -d 'Specify the URL for the ne
 __fish_brew_complete_arg 'bump-formula-pr' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'bump-formula-pr' -l version -d 'Use the specified version to override the value parsed from the URL or tag. Note that `--version=0` can be used to delete an existing version override from a formula if it has become redundant'
 __fish_brew_complete_arg 'bump-formula-pr' -l write-only -d 'Make the expected file modifications without taking any Git actions'
+__fish_brew_complete_arg 'bump-formula-pr' -l write-pr-to -d 'Write the proposed formula changes and pull request details as JSON in directory for publication in a separate step'
 __fish_brew_complete_arg 'bump-formula-pr' -a '(__fish_brew_suggest_formulae_all)'
 
 

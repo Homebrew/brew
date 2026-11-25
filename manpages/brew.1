@@ -1912,6 +1912,9 @@ Don\[u2019]t try to fork the repository\.
 \fB\-\-open\-pr\fP
 Open a pull request for the new version if none have been opened yet\.
 .TP
+\fB\-\-write\-pr\-to\fP
+With \fB\-\-formula\fP, write one JSON file per proposed pull request in \fIdirectory\fP for later publication\.
+.TP
 \fB\-\-start\-with\fP
 Letter or word that the list of package results should alphabetically follow\.
 .TP
@@ -1993,6 +1996,9 @@ If a \fIversion\fP is specified, a best effort to determine the \fIURL\fP and \f
 .TP
 \fB\-n\fP, \fB\-\-dry\-run\fP
 Print what would be done rather than doing it\.
+.TP
+\fB\-\-write\-pr\-to\fP
+Write the proposed formula changes and pull request details as JSON in \fIdirectory\fP for publication in a separate step\.
 .TP
 \fB\-\-write\-only\fP
 Make the expected file modifications without taking any Git actions\.
