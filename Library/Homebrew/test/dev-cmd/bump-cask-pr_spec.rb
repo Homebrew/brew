@@ -94,6 +94,41 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
   end
 
   describe "#run" do
+    it "exports a pull request proposal and restores the checkout without publishing" do
+      cask_path = CoreCaskTap.instance.new_cask_path("test")
+      cask_path.dirname.mkpath
+      cask_path.write <<~RUBY
+        cask "test" do
+          version "1.2.3"
+          sha256 "#{"a" * 64}"
+
+          url "https://brew.sh/test-\#{version}.dmg"
+        end
+      RUBY
+      original = cask_path.read
+      directory = mktmpdir
+      command = described_class.new([
+        "--write-pr-to=#{directory}", "--no-audit", "--no-style", "--version=1.2.4", "--sha256=#{"b" * 64}", "test"
+      ])
+
+      allow(CoreCaskTap.instance).to receive_messages(allow_bump?: true, git?: true, git_head: "c" * 40,
+                                                      remote_repository: "Homebrew/homebrew-cask", install: nil)
+      allow(command.args.named).to receive(:to_casks).and_return([Cask::CaskLoader.from_path(cask_path)])
+      allow(command).to receive(:check_pull_requests)
+      allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
+      expect(Homebrew::Bump).not_to receive(:create_pr)
+
+      command.run
+
+      expect([JSON.parse((directory/"test.json").read), cask_path.read]).to eq([{
+        "base"    => "c" * 40,
+        "version" => "1.2.4",
+        "title"   => "test 1.2.4",
+        "body"    => "Created with `brew bump-cask-pr`.",
+        "casks"   => { "test" => original.sub("1.2.3", "1.2.4").sub("a" * 64, "b" * 64) },
+      }, original])
+    end
+
     it "updates a cask disabled only on the current arch" do
       cask_path = CoreCaskTap.instance.new_cask_path("test")
       cask_path.dirname.mkpath

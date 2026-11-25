@@ -24,6 +24,9 @@ module Homebrew
         EOS
         switch "-n", "--dry-run",
                description: "Print what would be done rather than doing it."
+        flag   "--write-pr-to=",
+               description: "Write the proposed cask changes and pull request details as JSON in <directory> " \
+                            "for publication in a separate step."
         switch "--write-only",
                description: "Make the expected file modifications without taking any Git actions."
         switch "--commit",
@@ -57,6 +60,8 @@ module Homebrew
         flag   "--fork-org=",
                description: "Use the specified GitHub organisation for forking."
 
+        conflicts "--dry-run", "--write-pr-to="
+        conflicts "--write-only", "--write-pr-to="
         conflicts "--dry-run", "--write"
         conflicts "--version", "--version-arm"
         conflicts "--version", "--version-intel"
@@ -138,6 +143,7 @@ module Homebrew
         if new_version.blank? && new_base_url.nil? && new_hash.nil?
           raise UsageError, "No `--version`, `--url` or `--sha256` argument specified!"
         end
+        raise UsageError, "`--write-pr-to` requires a new version." if args.write_pr_to && new_version.blank?
 
         check_throttle(cask, new_version:)
         check_pull_requests(cask, new_version:) unless args.write_only?
@@ -201,6 +207,17 @@ module Homebrew
         run_cask_audit(cask, old_contents, audit_exceptions)
         run_cask_style(cask, old_contents)
 
+        pr_message = Homebrew::Bump.pr_message("bump-cask-pr", user_message: args.message)
+        if (directory = args.write_pr_to)
+          proposal = { base: tap.git_head, version: branch_version.to_s, title: commit_message, body: pr_message,
+                       casks: { cask.token => sourcefile_path.read } }
+          sourcefile_path.atomic_write(old_contents)
+          path = Pathname(directory)
+          path.mkpath
+          (path/"#{cask.token}.json").atomic_write(JSON.generate(proposal))
+          return
+        end
+
         return if args.write_only? && !args.commit?
 
         url = Homebrew::Bump.create_pr(
@@ -208,7 +225,7 @@ module Homebrew
             package_tap: cask.tap,
             branch_name:,
             pr_title:    commit_message,
-            pr_message:  Homebrew::Bump.pr_message("bump-cask-pr", user_message: args.message),
+            pr_message:,
             commits:     [
               Homebrew::Bump::Commit.new(
                 sourcefile_path:,

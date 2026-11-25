@@ -3049,7 +3049,7 @@ displays whether a pull request has been opened with the URL.
 
 `--write-pr-to`
 
-: With `--formula`, write one JSON file per proposed pull request in
+: With `--formula` or `--cask`, write one JSON file per proposed pull request in
   *`directory`* for later publication.
 
 `--start-with`
@@ -3070,6 +3070,11 @@ supplied by the user.
 `-n`, `--dry-run`
 
 : Print what would be done rather than doing it.
+
+`--write-pr-to`
+
+: Write the proposed cask changes and pull request details as JSON in
+  *`directory`* for publication in a separate step.
 
 `--write-only`
 

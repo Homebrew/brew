@@ -21,6 +21,74 @@ RSpec.describe Utils::AST::CaskAST do
     RUBY
   end
 
+  describe ".valid_bump?" do
+    let(:original) do
+      <<~RUBY
+        cask "foo" do
+          version "1.0,10"
+          sha256 arm:   "#{"a" * 64}",
+                 intel: "#{"b" * 64}"
+
+          url "https://brew.sh/foo-\#{version.csv.first}.dmg"
+          name "Foo"
+
+          depends_on macos: :ventura
+
+          app "Foo.app"
+        end
+      RUBY
+    end
+
+    let(:updated) { original.sub("1.0,10", "1.0.1,2").sub("a" * 64, "c" * 64).sub("b" * 64, "d" * 64) }
+
+    it "accepts release data and rejects changes to the download or artifacts" do
+      changes = [updated, updated.sub("brew.sh", "example.org"), updated.sub("Foo.app", "Bar.app")]
+      expect(changes.map { |source| described_class.valid_bump?(original, source, version: "1.0.1,2") })
+        .to eq([true, false, false])
+    end
+
+    it "requires the proposed version to be a strict increase over the checkout" do
+      results = %w[0.9,20 1.0,10 1.0.1,2].map do |version|
+        described_class.valid_bump?(original, updated.sub("1.0.1,2", version), version:)
+      end
+      expect([*results, described_class.valid_bump?(original, updated, version: "1.0.2")])
+        .to eq([false, false, true, false])
+    end
+
+    it "rejects malformed versions and checksums" do
+      changes = { updated.sub("1.0.1,2", "1.0.1/2") => "1.0.1/2", updated.sub("c" * 64, "c" * 63) => "1.0.1,2" }
+      expect(changes.map { |source, version| described_class.valid_bump?(original, source, version:) })
+        .to eq([false, false])
+    end
+
+    it "accepts a bump of one architecture's version and checksum" do
+      checkout = <<~RUBY
+        cask "foo" do
+          on_arm do
+            version "1.0"
+            sha256 "#{"a" * 64}"
+          end
+          on_intel do
+            version "1.0"
+            sha256 "#{"b" * 64}"
+          end
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+        end
+      RUBY
+      expect(described_class.valid_bump?(checkout, checkout.sub("1.0", "1.1").sub("a" * 64, "c" * 64),
+                                         version: "1.1")).to be(true)
+    end
+
+    it "accepts only the minimum macOS version edits made by `brew audit --fix`" do
+      without = ->(source) { source.sub("  depends_on macos: :ventura\n\n", "") }
+      changes = [[original, updated.sub(":ventura", ":sonoma")], [without.call(original), updated],
+                 [original, without.call(updated)]]
+      expect(changes.map { |checkout, source| described_class.valid_bump?(checkout, source, version: "1.0.1,2") })
+        .to eq([true, true, false])
+    end
+  end
+
   describe "#replace_first_stanza_value" do
     it "replaces the first matching stanza argument" do
       cask_ast.replace_first_stanza_value(:url, "https://brew.sh/foo-2.0.dmg")

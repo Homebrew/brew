@@ -170,6 +170,11 @@ RSpec.describe Homebrew::DevCmd::Bump do
       .to raise_error(Homebrew::CLI::OptionConflictError)
   end
 
+  it "requires a package type when writing pull request proposals" do
+    expect { described_class.new(["--write-pr-to=#{mktmpdir}"]).run }
+      .to raise_error(UsageError, /`--write-pr-to` requires `--formula` or `--cask`/)
+  end
+
   it "collects completed scheduled bumps when another formula fails" do
     dir = mktmpdir
     (dir/"event").write("{}")
@@ -238,6 +243,77 @@ RSpec.describe Homebrew::DevCmd::Bump do
     expect([tap.git_repository.commit_message, path.read, (tap.alias_dir/"testball@2").realpath,
             output.read.lines.map(&:chomp)])
       .to eq(["testball 2.0", versioned, path, ["branch=bump-testball-2.0", "pr=#{pr.to_json}"]])
+  end
+
+  it "collects scheduled cask bumps from the cask tap" do
+    dir = mktmpdir
+    (dir/"event").write("{}")
+    ENV["GITHUB_EVENT_PATH"] = (dir/"event").to_s
+    ENV["GITHUB_OUTPUT"] = (dir/"output").to_s
+    allow(Homebrew::Bump).to receive(:system)
+      .with(HOMEBREW_BREW_FILE, "bump", "--casks", start_with("--write-pr-to="),
+            "--auto", "--tap=Homebrew/cask") do |_, _, _, flag|
+      (Pathname(flag.delete_prefix("--write-pr-to="))/"test-cask.json").write('{"version":"2.0"}')
+      true
+    end
+    described_class.new(["--casks", "--prepare-prs=#{dir}/bumps.json"]).run
+    expect([(dir/"output").read.chomp, JSON.parse((dir/"bumps.json").read)])
+      .to eq(['casks=["test-cask"]', { "test-cask" => { "version" => "2.0" } }])
+  end
+
+  it "commits a prepared cask on the local bump branch" do
+    ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+    tap = CoreCaskTap.instance
+    path = tap.new_cask_path("test-cask")
+    path.dirname.mkpath
+    path.write <<~RUBY
+      cask "test-cask" do
+        on_arm do
+          version "1.0,10"
+          sha256 "#{"a" * 64}"
+        end
+        on_intel do
+          version "1.0,10"
+          sha256 "#{"b" * 64}"
+        end
+
+        url "https://brew.sh/test-cask-\#{version.csv.first}.dmg"
+      end
+    RUBY
+    tap.path.cd do
+      system("git", "init", "--initial-branch=main", exception: true)
+      system("git", "config", "user.name", "Homebrew Tests", exception: true)
+      system("git", "config", "user.email", "tests@brew.sh", exception: true)
+      system("git", "add", ".", exception: true)
+      system("git", "commit", "-m", "Initial", exception: true)
+    end
+    updated = path.read.sub("1.0,10", "1.1,20").sub("a" * 64, "c" * 64)
+    proposal = mktmpdir/"proposal.json"
+    event = mktmpdir/"event.json"
+    event.write(JSON.generate(inputs: { casks: "homebrew/cask/test-cask" }))
+    ENV["GITHUB_EVENT_PATH"] = event.to_s
+    ENV["GITHUB_SHA"] = tap.git_head
+    output = mktmpdir/"output"
+    ENV["GITHUB_OUTPUT"] = output.to_s
+    allow(GitHub::API).to receive(:open_rest).and_return([])
+    pr = { "title" => "test-cask 1.1 (arm only)", "body" => "One\nTwo" }
+    command = described_class.new(["--casks", "--commit-pr-from=#{proposal}", "--", "test-cask"])
+    proposal.write(JSON.generate("test-cask" => pr.merge(base: tap.git_head, version: "1.1,20",
+                                                         casks: { "test-cask" => updated.sub("brew.sh", "x.org") })))
+    expect { command.run }
+      .to raise_error(SystemExit).and output(/Unexpected changes in the prepared bump for test-cask/).to_stderr
+    expect([tap.git_repository.branch_name, output.exist?]).to eq(["main", false])
+
+    proposal.write(JSON.generate("test-cask" => pr.merge("title" => "Merge me", base: tap.git_head, version: "1.1,20",
+                                                         casks: { "test-cask" => updated })))
+    expect { command.run }
+      .to raise_error(SystemExit).and output(/Unexpected title in the prepared bump/).to_stderr
+
+    proposal.write(JSON.generate("test-cask" => pr.merge(base: tap.git_head, version: "1.1,20",
+                                                         casks: { "test-cask" => updated })))
+    command.run
+    expect([tap.git_repository.commit_message, path.read, output.read.lines.map(&:chomp)])
+      .to eq(["test-cask 1.1 (arm only)", updated, ["branch=bump-test-cask-1.1-20-arm-only", "pr=#{pr.to_json}"]])
   end
 
   describe "formula and cask", :cask, :integration_test do

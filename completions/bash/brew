@@ -624,6 +624,7 @@ _brew_bump_cask_pr() {
       --version-linux-arm
       --version-linux-intel
       --write-only
+      --write-pr-to
       "
       return
       ;;
