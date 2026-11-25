@@ -42,6 +42,12 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
       EOS
     end
 
+    before do
+      allow(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", hash_including(args: ["print", start_with("system/")]))
+        .and_return(instance_double(SystemCommand::Result, exit_status: 1))
+    end
+
     it "works when job is owned by user" do
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
         .with("my.fancy.package.service", sudo: false)
@@ -123,7 +129,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
     before do
       allow(fake_system_command).to receive(:run)
         .with("/bin/launchctl", hash_including(args: ["print", anything]))
-        .and_return(instance_double(SystemCommand::Result, success?: false))
+        .and_return(instance_double(SystemCommand::Result, success?: false, exit_status: 1))
     end
 
     it "searches installed launchctl items" do

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative "shared_examples/uninstall_zap"
+require "securerandom"
 
 RSpec.describe Cask::Artifact::Uninstall, :cask do
   before { allow(Cask::Artifact::AbstractUninstall).to receive(:ancestor_bundle_ids).and_return([]) }
@@ -26,6 +27,113 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
         allow(artifact).to receive(:sleep)
 
         expect { artifact.uninstall_phase(command: fake_system_command) }.not_to raise_error
+      end
+    end
+
+    context "when checking for system launchctl services" do
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-launchctl")) }
+      let(:fake_system_command) { class_double(SystemCommand) }
+      let(:service) { "my.fancy.package.service" }
+      let(:system_plists) do
+        [Pathname.new(TEST_TMPDIR)/"LaunchAgents/#{service}.plist",
+         Pathname.new(TEST_TMPDIR)/"LaunchDaemons/#{service}.plist"]
+      end
+
+      before do
+        allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+          .with(service, sudo: false)
+          .and_return(["", false, :launchctl_list])
+        allow(Pathname).to receive(:new).and_call_original
+        allow(Pathname).to receive(:new).with("/Library/LaunchAgents/#{service}.plist").and_return(system_plists[0])
+        allow(Pathname).to receive(:new).with("/Library/LaunchDaemons/#{service}.plist").and_return(system_plists[1])
+        system_plists.each { |path| path.dirname.mkpath }
+      end
+
+      after do
+        system_plists.each do |path|
+          path.unlink if path.exist?
+          path.dirname.rmdir
+        end
+      end
+
+      it "avoids sudo if the system service and plists are absent" do
+        allow(fake_system_command).to receive(:run)
+          .with("/bin/launchctl", args: ["print", "system/#{service}"], must_succeed: false, print_stderr: false)
+          .and_return(instance_double(SystemCommand::Result, exit_status: 113))
+        expect(SystemCommand).not_to receive(:sudo_available?)
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+
+      it "removes a user service without requesting sudo when the system service is absent" do
+        allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+          .with(service, sudo: false)
+          .and_return(["", true, :launchctl_print])
+        allow(fake_system_command).to receive(:run)
+          .with("/bin/launchctl", args: ["print", "system/#{service}"], must_succeed: false, print_stderr: false)
+          .and_return(instance_double(SystemCommand::Result, exit_status: 113))
+        allow(artifact).to receive(:sleep)
+        expect(fake_system_command).to receive(:run)
+          .with("/bin/launchctl", args: ["remove", service], must_succeed: false, sudo: false, sudo_as_root: false)
+          .and_return(instance_double(SystemCommand::Result, success?: true))
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+
+      it "retains privileged cleanup when a system service is present" do
+        allow(fake_system_command).to receive(:run)
+          .with("/bin/launchctl", args: ["print", "system/#{service}"], must_succeed: false, print_stderr: false)
+          .and_return(instance_double(SystemCommand::Result, exit_status: 0))
+        expect(SystemCommand).to receive(:sudo_available?).and_return(false)
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+
+      it "retains privileged cleanup when the system lookup is inconclusive" do
+        allow(fake_system_command).to receive(:run)
+          .with("/bin/launchctl", args: ["print", "system/#{service}"], must_succeed: false, print_stderr: false)
+          .and_return(instance_double(SystemCommand::Result, exit_status: 1))
+        expect(SystemCommand).to receive(:sudo_available?).and_return(false)
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+
+      it "retains privileged cleanup when a system plist exists" do
+        system_plists.first.write("")
+        expect(SystemCommand).to receive(:sudo_available?).and_return(false)
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+
+      it "retains privileged cleanup when a system plist directory cannot be inspected" do
+        directory = system_plists.first.dirname
+        allow(system_plists.first).to receive(:dirname).and_return(directory)
+        allow(directory).to receive(:readable?).and_return(false)
+        expect(SystemCommand).to receive(:sudo_available?).and_return(false)
+
+        artifact.uninstall_phase(command: fake_system_command)
+      end
+    end
+
+    it "removes a real user launchctl job without sudo", :integration_test, :needs_macos do
+      service = "org.homebrew.test.launchctl-#{SecureRandom.hex(12)}"
+      cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-launchctl"))
+      artifact = described_class.new(cask, launchctl: service)
+      ENV.delete("HOMEBREW_NO_SUDO")
+
+      begin
+        SystemCommand.run!("/bin/launchctl", args: ["submit", "-l", service, "--", "/usr/bin/true"])
+        expect(SystemCommand.run("/bin/launchctl", args: ["list", service], must_succeed: false)).to be_success
+        expect(SystemCommand.run("/bin/launchctl", args: ["print", "system/#{service}"], must_succeed: false,
+                                                 print_stderr: false).exit_status).to eq(113)
+        expect(SystemCommand).not_to receive(:sudo_available?)
+
+        artifact.uninstall_phase(command: SystemCommand)
+
+        expect(SystemCommand.run("/bin/launchctl", args: ["list", service], must_succeed: false,
+                                                 print_stderr: false)).not_to be_success
+      ensure
+        SystemCommand.run("/bin/launchctl", args: ["remove", service], must_succeed: false, print_stderr: false)
       end
     end
 
