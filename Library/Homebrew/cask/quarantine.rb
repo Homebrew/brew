@@ -267,13 +267,27 @@ module Cask
       # Allow undocumented way to skip the prompt.
       if ENV["HOMEBREW_NO_APP_MANAGEMENT_PERMISSIONS_PROMPT"]
         opoo <<~EOF
-          Your terminal does not have App Management permissions, so Homebrew will delete and reinstall the app.
+          Your terminal does not have App Management permissions, so Homebrew may need to delete and reinstall the app.
           This may result in some configurations (like notification settings or location in the Dock/Launchpad) being lost.
           To fix this, go to System Settings → Privacy & Security → App Management and add or enable your terminal.
         EOF
       end
 
       false
+    end
+
+    # Trigger the macOS permission prompt before starting an operation that requires access.
+    sig { params(app: Pathname, command: T.class_of(SystemCommand), action: String).void }
+    def self.check_app_management_permissions!(app:, command:, action:)
+      return if app_management_permissions_granted?(app:, command:)
+
+      raise CaskError, <<~EOS
+        Cannot #{action} '#{app}' because your terminal does not have App Management permissions.
+        macOS prevents modifying apps without these permissions, even when using `sudo`.
+        To fix this, approve the permissions prompt (if one was just shown) or go to
+        System Settings → Privacy & Security → App Management and add or enable your terminal.
+        Then run this command again.
+      EOS
     end
   end
 end

@@ -15,6 +15,24 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#start_upgrade" do
+    it "checks App Management access for apps owned by another user before uninstalling artifacts" do
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      installer = described_class.new(cask, command: NeverSudoSystemCommand)
+      app = cask.artifacts.grep(Cask::Artifact::App).fetch(0)
+      app.target.mkpath
+      allow(OnSystem).to receive(:os_condition_met?).with(:ventura, :or_newer).and_return(true)
+      allow(app.target).to receive(:owned?).and_return(false)
+      allow(Cask::Quarantine).to receive(:app_management_permissions_granted?)
+        .with(app: app.target, command: NeverSudoSystemCommand)
+        .and_return(false)
+
+      expect(installer).not_to receive(:uninstall_artifacts)
+      expect { installer.start_upgrade(successor: cask) }
+        .to raise_error(Cask::CaskError, /System Settings → Privacy & Security → App Management/)
+    end
+  end
+
   describe "#check_deprecate_disable" do
     test_each([[:deprecate!, :disable!], [:disable!, :deprecate!]]) do |first, second|
       context "with #{first} before #{second}" do

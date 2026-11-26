@@ -63,7 +63,8 @@ module Cask
 
       sig { overridable.params(target: Pathname, source: Pathname).returns(T::Array[T.any(String, Pathname)]) }
       def backup_copy_args(target, source)
-        ["-pR", target, source]
+        # Preserve extended attributes and merge directory contents if cp retries with sudo.
+        ["-pR", target.lstat.directory? ? "#{target}/." : target, source]
       end
 
       private
@@ -198,9 +199,9 @@ module Cask
         ).void
       }
       def move_back(skip: false, force: false, adopt: false, command: SystemCommand, successor: nil)
-        FileUtils.rm source if source.symlink? && source.dirname.join(source.readlink) == target
+        linked = source.symlink? && source.dirname.join(source.readlink) == target
 
-        if Utils.path_occupied?(source)
+        if !linked && Utils.path_occupied?(source)
           message = "It seems there is already #{self.class.english_article} " \
                     "#{self.class.english_name} at '#{source}'"
           raise CaskError, "#{message}." if !force && !adopt
@@ -210,6 +211,7 @@ module Cask
         end
 
         unless target.exist?
+          source.unlink if linked
           return if skip || force
 
           raise CaskError, "It seems the #{self.class.english_name} source '#{target}' is not there."
@@ -218,11 +220,30 @@ module Cask
         ohai "Backing up #{self.class.english_name} '#{target.basename}' to '#{source}'"
         source.dirname.mkpath
 
-        # We need to preserve extended attributes between copies.
-        # This may fail and need sudo if the source has files with restricted permissions.
-        command.run!("/bin/cp", args: backup_copy_args(target, source), sudo: nil)
-
-        delete(target, force:, successor:, command:)
+        backup_dir = Pathname(Dir.mktmpdir(".homebrew-backup-", source.dirname.to_s))
+        # A read-only directory can only be renamed within the same parent without sudo.
+        backup = target.lstat.directory? ? backup_dir : backup_dir.join(target.basename)
+        copied = false
+        begin
+          command.run!("/bin/cp", args: backup_copy_args(target, backup), sudo: nil)
+          copied = true
+          delete(target, force:, successor:, command:)
+          source.unlink if linked
+          backup.rename(source.to_s)
+        rescue => e
+          begin
+            # A recursive removal can fail after deleting some files. Restore just the missing ones.
+            if copied && !target.symlink?
+              command.run!("/bin/cp", args: ["-n", *backup_copy_args(backup, target)], sudo: nil)
+            end
+            File.symlink(target, source) if linked && !Utils.path_occupied?(source)
+            Utils.gain_permissions_remove(backup_dir, command:)
+          rescue => rollback_error
+            opoo "Could not roll back the backup at '#{backup}': #{rollback_error}"
+          end
+          raise e
+        end
+        backup_dir.rmdir if backup != backup_dir
       end
 
       sig {
@@ -250,6 +271,16 @@ module Cask
         else
           Utils.gain_permissions_remove(target, command:)
         end
+      rescue Errno::EACCES, Errno::EPERM, ErrorDuringExecution => e
+        if e.is_a?(ErrorDuringExecution)
+          raise unless e.cmd.include?("/bin/rm")
+          raise unless e.stderr.match?(/^rm: .*: (?:Operation not permitted|Permission denied)$/)
+        end
+
+        if is_a?(App) && OnSystem.os_condition_met?(:ventura, :or_newer)
+          Quarantine.check_app_management_permissions!(app: target, command:, action: "remove")
+        end
+        raise
       end
 
       sig { params(target: Pathname).returns(T::Boolean) }

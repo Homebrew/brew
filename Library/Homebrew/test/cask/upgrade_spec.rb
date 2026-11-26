@@ -887,6 +887,18 @@ RSpec.describe Cask::Upgrade, :cask do
     end
   end
 
+  it "keeps the installed version of a :latest cask when the upgrade stops before staging" do
+    Cask::Installer.new(version_latest).install
+    version_latest.download_sha_path.write("changed")
+    installed_caskfile = version_latest.installed_caskfile
+    allow_any_instance_of(Cask::Installer).to receive(:start_upgrade).and_raise("App Management access denied")
+
+    expect { described_class.upgrade_casks!(version_latest, args:) }
+      .to output(/App Management access denied/).to_stderr
+    expect(installed_caskfile).to exist
+    expect(version_latest.staged_path/"Caffeine Mini.app").to be_a_symlink
+  end
+
   context "when an upgrade fails after installing artifacts" do
     before do
       Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install

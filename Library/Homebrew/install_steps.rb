@@ -1378,15 +1378,8 @@ module Homebrew
         return if paths.empty?
 
         paths.each do |path|
-          next if ::Cask::Quarantine.app_management_permissions_granted?(app: path, command: @command)
-
-          raise ::Cask::CaskError, <<~EOS
-            Cannot change the ownership of '#{path}' because your terminal does not have App Management permissions.
-            macOS prevents modifying apps without these permissions, even when using `sudo`.
-            To fix this, approve the permissions prompt (if one was just shown) or go to
-            System Settings → Privacy & Security → App Management and add or enable your terminal.
-            Then run this command again.
-          EOS
+          ::Cask::Quarantine.check_app_management_permissions!(app: path, command: @command,
+                                                               action: "change the ownership of")
         end
 
         ohai "Changing ownership of paths required by #{@context}..."

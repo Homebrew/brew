@@ -351,4 +351,7 @@ The performance work that does help is happening in Ruby: starting useful networ
 
 Homebrew has two possible strategies to update cask apps: uninstalling the old version and reinstalling the new one, or replacing the contents of the app with the new contents. With the uninstall/reinstall strategy, [macOS thinks the app is being deleted without any intent to reinstall it](https://github.com/Homebrew/brew/pull/15138), and so it removes some internal metadata for the old app, including where it appears in the Dock and Launchpad and which permissions it's been granted. The content replacement strategy works around this by treating the upgrade as an in-place upgrade. However, starting in macOS Ventura, these in-place upgrades are only allowed when the updater application (in this case, the terminal running Homebrew) has [certain permissions granted](https://github.com/Homebrew/brew/pull/15483). Either the "App Management" or "Full Disk Access" permission will suffice.
 
-Homebrew defaults to in-place upgrades when it has the necessary permissions. Otherwise, it will use the uninstall/reinstall strategy.
+Homebrew defaults to in-place upgrades when it has the necessary permissions.
+Otherwise, it uses the uninstall/reinstall strategy for apps you own.
+If another user owns the app (for example, an updater ran as `root`), Homebrew checks for App Management access before uninstalling anything.
+If prompted, grant your terminal access in System Settings → Privacy & Security → App Management and retry the upgrade.

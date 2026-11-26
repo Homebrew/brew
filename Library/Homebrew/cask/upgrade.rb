@@ -505,7 +505,10 @@ module Cask
       rescue => e
         begin
           new_cask_installer.uninstall_artifacts(successor: old_cask, quit:) if new_artifacts_installed
-          new_cask_installer.purge_versioned_files
+          # A :latest cask still owns the shared staging path until its backup succeeds.
+          if started_upgrade || old_cask.staged_path != new_cask.staged_path
+            new_cask_installer.purge_versioned_files
+          end
           old_cask_installer.revert_upgrade(predecessor: new_cask) if started_upgrade
         rescue => rollback_error
           opoo "Rolling back the failed upgrade of #{old_cask.token} also failed: " \
