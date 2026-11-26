@@ -1,0 +1,34 @@
+name: Check GHCR publishing access
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - .github/workflows/check-ghcr-access.yml
+      - .github/workflows/docker.yml
+
+permissions:
+  packages: write
+
+jobs:
+  verify:
+    if: github.repository == 'Homebrew/brew'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [brew, ubuntu24.04, ubuntu26.04]
+    steps:
+      - uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+
+      - name: Install ORAS
+        run: brew install oras
+
+      - name: Write an untagged blob
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          head -c 32 /dev/urandom > "$RUNNER_TEMP/probe"
+          oras blob push --username "$GITHUB_ACTOR" --password-stdin \
+            "ghcr.io/homebrew/$PACKAGE" "$RUNNER_TEMP/probe" <<< "$GH_TOKEN"
