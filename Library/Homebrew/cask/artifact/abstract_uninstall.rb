@@ -40,7 +40,7 @@ module Cask
 
       UPGRADE_REINSTALL_SKIP_DIRECTIVES = [:signal].freeze
 
-      LAUNCHCTL_SERVICE_NOT_FOUND = 113
+      LAUNCHCTL_SERVICE_NOT_FOUND_EXIT_CODE = 113
 
       sig { params(cask: Cask, directives: DirectivesType).returns(AbstractUninstall) }
       def self.from_args(cask, **directives)
@@ -306,7 +306,7 @@ module Cask
                  paths.all? { |path| path.dirname.readable? && path.dirname.executable? && !path.exist? }
                 result = command.run("/bin/launchctl", args: ["print", "system/#{service}"],
                                                        must_succeed: false, print_stderr: false)
-                next if result.exit_status == LAUNCHCTL_SERVICE_NOT_FOUND
+                next if result.exit_status == LAUNCHCTL_SERVICE_NOT_FOUND_EXIT_CODE
               end
               next unless SystemCommand.sudo_available?
             end
