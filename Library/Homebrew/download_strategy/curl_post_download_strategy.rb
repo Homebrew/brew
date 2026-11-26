@@ -17,12 +17,12 @@ class CurlPostDownloadStrategy < CurlDownloadStrategy
 
     args = if meta.key?(:data)
       escape_data = ->(d) { ["-d", URI.encode_www_form([d])] }
-      [url, *meta[:data].flat_map(&escape_data)]
+      meta[:data].flat_map(&escape_data)
     else
       url, query = url.split("?", 2)
-      query.nil? ? [url, "-X", "POST"] : [url, "-d", query]
+      query.nil? ? ["-X", "POST"] : ["-d", query]
     end
 
-    curl_download(*args, to: temporary_path, try_partial: @try_partial, timeout:)
+    curl_download(*args, url, to: temporary_path, try_partial: @try_partial, timeout:)
   end
 end

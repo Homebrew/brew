@@ -29,6 +29,23 @@ RSpec.describe CurlDownloadStrategy do
     expect(strategy._curl_args).to eq(["--user", "download:123456"])
   end
 
+  test_each([
+    "https://other.example.org/foo.tar.gz",
+    "https://example.com:8443/foo.tar.gz",
+    "http://example.com/foo.tar.gz",
+  ]) do |request_url|
+    it "does not send source credentials to #{request_url}" do
+      expect(strategy._curl_args(request_url)).not_to include("--user", "download:123456")
+    end
+  end
+
+  it "retains source credentials for same-origin requests after inspecting another origin" do
+    strategy._curl_args("https://other.example.org/foo.tar.gz")
+
+    expect(strategy._curl_args("https://EXAMPLE.com:443/redirected.tar.gz"))
+      .to include("--user", "download:123456")
+  end
+
   context "with an authorization header and no cached curl version" do
     subject(:strategy) do
       Class.new(described_class) do
@@ -313,6 +330,48 @@ RSpec.describe CurlDownloadStrategy do
         end.at_least(:once)
 
         strategy.fetch
+      end
+
+      context "with source authentication" do
+        let(:specs) { { user: "download:123456" } }
+
+        it "does not authenticate the fresh download request to the redirect destination" do
+          expect(strategy).to receive(:system_command)
+            .with(/curl/, hash_including(args: array_excluding("--user", "download:123456")))
+            .at_least(:once)
+            .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+          strategy.fetch
+        end
+      end
+    end
+
+    context "when redirecting caller-supplied headers" do
+      let(:specs) { { headers: ["PRIVATE-TOKEN: fixture-token"] } }
+
+      before do
+        allow(strategy).to receive(:_fetch)
+      end
+
+      it "does not forward headers to the same host on a different port" do
+        allow(strategy).to receive(:resolve_url_basename_time_file_size)
+          .and_return(["https://example.com:8443/foo.tar.gz", "foo.tar.gz", nil, 0, nil, true])
+
+        strategy.fetch
+
+        expect(strategy._curl_args).to be_empty
+      end
+
+      test_each(["authorization: Basic fixture", " \tauthorization: Basic fixture"]) do |authorization|
+        it "drops #{authorization.inspect} after a same-origin redirect and keeps other headers" do
+          specs[:headers].replace([authorization, "X-Fixture: keep"])
+          allow(strategy).to receive(:resolve_url_basename_time_file_size)
+            .and_return(["https://example.com/redirected.tar.gz", "redirected.tar.gz", nil, 0, nil, true])
+
+          strategy.fetch
+
+          expect(strategy._curl_args).to eq(["--header", "X-Fixture: keep"])
+        end
       end
     end
 
