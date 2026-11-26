@@ -316,6 +316,81 @@ RSpec.describe Homebrew::DevCmd::Bump do
       .to eq(["test-cask 1.1 (arm only)", updated, ["branch=bump-test-cask-1.1-20-arm-only", "pr=#{pr.to_json}"]])
   end
 
+  describe "--sign-pr" do
+    let(:tap) { CoreTap.instance }
+    let(:formula_path) { tap.new_formula_path("testball") }
+    let(:github_output) { mktmpdir/"output" }
+    let(:branch) { "bump-testball-2.0" }
+
+    def git(*args)
+      tap.path.cd { system("git", *args, exception: true) }
+    end
+
+    def prepare_branch(base)
+      ENV["GITHUB_SHA"] = base
+      git "switch", "--force-create", branch, base
+      formula_path.write(formula_path.read.sub("1.0", "2.0"))
+      git "commit", "--all", "--message=testball 2.0"
+    end
+
+    def sign
+      described_class.new(["--sign-pr"]).run
+      github_output.exist? ? github_output.read.lines(chomp: true) : []
+    end
+
+    before do
+      formula_path.dirname.mkpath
+      formula_path.write("class Testball < Formula\n  url \"https://example.org/testball-1.0.tar.gz\"\nend\n")
+      remote = mktmpdir/"remote.git"
+      git "init", "--initial-branch=main"
+      git "config", "user.name", "Homebrew Tests"
+      git "config", "user.email", "tests@brew.sh"
+      git "add", "."
+      git "commit", "--message=Initial"
+      git "init", "--bare", remote.to_s
+      git "remote", "add", "origin", remote.to_s
+      ENV["GITHUB_OUTPUT"] = github_output.to_s
+      allow(GitHub::API).to receive(:open_rest).and_return([])
+      allow(SystemCommand).to receive(:safe_system).and_call_original
+      allow(SystemCommand).to receive(:safe_system)
+        .with("git", "rebase", "--force-rebase", "--gpg-sign", anything) do |*args|
+          tap.path.cd { system("git", "rebase", "--force-rebase", args.last, exception: true) }
+        end
+      allow(SystemCommand).to receive(:quiet_system).and_call_original
+      allow(SystemCommand).to receive(:quiet_system).with("git", "verify-commit", any_args).and_return(true)
+    end
+
+    it "signs a new branch for pushing" do
+      prepare_branch(tap.git_repository.head_ref)
+      expect(sign).to eq(["push=true"])
+    end
+
+    it "reuses a matching push from an earlier attempt of the same run" do
+      prepare_branch(tap.git_repository.head_ref)
+      git "push", "origin", branch
+      expect(sign).to eq([])
+    end
+
+    context "when an earlier run pushed the branch from an older base" do
+      before do
+        prepare_branch(tap.git_repository.head_ref)
+        git "push", "origin", branch
+        git "switch", "main"
+        git "commit", "--allow-empty", "--message=Advance main"
+        prepare_branch(tap.git_repository.head_ref)
+      end
+
+      it "replaces the branch" do
+        expect(sign).to eq(["push=true", "force=true"])
+      end
+
+      it "keeps the branch when a pull request uses it" do
+        allow(GitHub::API).to receive(:open_rest).and_return([{ "number" => 1 }])
+        expect { sign }.to raise_error(SystemExit).and output(/A pull request already uses #{branch}/).to_stderr
+      end
+    end
+  end
+
   describe "formula and cask", :cask, :integration_test do
     it "prints messages for HEAD-only Formulae and latest Casks" do
       content = <<~RUBY

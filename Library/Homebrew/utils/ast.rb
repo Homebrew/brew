@@ -154,7 +154,7 @@ module Utils
       def stable_declarations
         nodes = children.dup
         declarations = []
-        independent_scopes = [:resource, :head, :patch, :livecheck, :bottle, :service, :test]
+        independent_scopes = [:resource, :head, :patch, :livecheck, :bottle, :service, :test, :fails_with]
         while (node = nodes.pop)
           next if node.class_type? || node.module_type? || node.def_type? || node.defs_type?
           next if node.is_a?(BlockNode) && !node.send_node.receiver && independent_scopes.include?(node.method_name)

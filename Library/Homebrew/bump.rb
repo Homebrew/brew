@@ -212,9 +212,7 @@ module Homebrew
         branch += "-#{architecture[1]}-only" if architecture[1]
       end
       SystemCommand.safe_system "git", "check-ref-format", "refs/heads/#{branch}"
-      url = GitHub.url_to("repos", tap.full_name, "pulls")
-      url.query = URI.encode_www_form(head: "Homebrew:#{branch}", base: "main", state: "all")
-      return if GitHub::API.open_rest(url).present?
+      return if pull_request_for_branch?(tap, branch)
 
       require "utils/ast"
 
@@ -246,30 +244,46 @@ module Homebrew
       File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "branch=#{branch}", "pr=#{pr.to_json}" }
     end
 
-    # A rerun can open the PR for a previous push after checking its commits.
+    # Reuse a matching signed push from an earlier attempt or replace a branch pushed without a pull request.
     sig { params(casks: T::Boolean).void }
     def self.sign_pr(casks: false)
-      (casks ? CoreCaskTap : CoreTap).instance.path.cd do
+      tap = casks ? CoreCaskTap.instance : CoreTap.instance
+      tap.path.cd do
         branch = Utils.safe_popen_read("git", "branch", "--show-current").chomp
         odie "Expected a bump branch." unless branch.start_with?("bump-")
         base = ENV.fetch("GITHUB_SHA")
         ref = "refs/heads/#{branch}"
-        if Utils.safe_popen_read("git", "ls-remote", "--refs", "origin", ref).empty?
-          Utils::Git.set_name_email!(author: false)
-          SystemCommand.safe_system "git", "rebase", "--force-rebase", "--gpg-sign", base
-          File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts "push=true" }
-        else
+        outputs = ["push=true"]
+        if Utils.safe_popen_read("git", "ls-remote", "--refs", "origin", ref).present?
           SystemCommand.safe_system "git", "fetch", "origin", ref
-          SystemCommand.safe_system "git", "merge-base", "--is-ancestor", base, "FETCH_HEAD"
           local, remote = %w[HEAD FETCH_HEAD].map do |head|
             Utils.safe_popen_read("git", "log", "--format=%T %s", "#{base}..#{head}")
           end
-          odie "The remote branch differs from the prepared bump." if local.blank? || remote != local
-
           commits = Utils.safe_popen_read("git", "rev-list", "#{base}..FETCH_HEAD").lines(chomp: true)
-          SystemCommand.safe_system "git", "verify-commit", *commits
+          if SystemCommand.quiet_system("git", "merge-base", "--is-ancestor", base, "FETCH_HEAD") &&
+             local.present? && remote == local && SystemCommand.quiet_system("git", "verify-commit", *commits)
+            return
+          end
+
+          odie "A pull request already uses #{branch}." if pull_request_for_branch?(tap, branch)
+
+          opoo "Replacing #{branch}, which was pushed without a pull request."
+          outputs << "force=true"
         end
+        Utils::Git.set_name_email!(author: false)
+        SystemCommand.safe_system "git", "rebase", "--force-rebase", "--gpg-sign", base
+        File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts(*outputs) }
       end
+    end
+
+    # Whether the tap has a pull request from this branch, open or closed.
+    sig { params(tap: Tap, branch: String).returns(T::Boolean) }
+    private_class_method def self.pull_request_for_branch?(tap, branch)
+      odie "Cannot check pull requests as `$HOMEBREW_NO_GITHUB_API` is set!" if Homebrew::EnvConfig.no_github_api?
+
+      url = GitHub.url_to("repos", tap.full_name, "pulls")
+      url.query = URI.encode_www_form(head: "Homebrew:#{branch}", base: "main", state: "all")
+      GitHub::API.open_rest(url).present?
     end
 
     sig { params(aliases: T::Array[String], new_formula_version: Version).returns(T.nilable(T::Array[String])) }
