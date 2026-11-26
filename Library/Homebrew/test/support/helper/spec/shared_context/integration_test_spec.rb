@@ -25,6 +25,12 @@ RSpec.describe Test::Helper::IntegrationTest do
       .to eq([false, true, HOMEBREW_BREW_FILE.read])
   end
 
+  it "writes a test formula without loading the package API" do
+    allow(Homebrew::API::Internal).to receive(:fetch_packages_api!).and_raise("unexpected API lookup")
+
+    expect(helper.setup_test_formula("testball")).to be_a_file
+  end
+
   it "disables Sorbet checking in Ruby integration commands" do
     captured_env = {}
     allow(Open3).to receive(:capture3) do |env, *_args|

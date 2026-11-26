@@ -281,6 +281,8 @@ jobs:
             load-only: false
             shard: 1
             shard-count: 2
+            runtime-cache: tests-macos-1-of-2
+            runtime-log: parallel_runtime_rspec${{ github.event_name == 'pull_request' && '.online' || '' }}.log.shard-1-of-2
           - name: tests (macOS, 2/2)
             test-flags: --coverage --profile 3
             runs-on: macos-26
@@ -288,6 +290,8 @@ jobs:
             load-only: false
             shard: 2
             shard-count: 2
+            runtime-cache: tests-macos-2-of-2
+            runtime-log: parallel_runtime_rspec${{ github.event_name == 'pull_request' && '.online' || '' }}.log.shard-2-of-2
           - name: tests (no Sorbet)
             test-flags: --coverage --profile 3
             runs-on: ubuntu-24.04
@@ -304,8 +308,6 @@ jobs:
             load-only: true
             shard: 0
             shard-count: 0
-            runtime-cache: unused
-            runtime-log: parallel_runtime_rspec.log
           - name: tests (load-only macOS)
             test-flags: --load-only
             runs-on: macos-26
@@ -313,8 +315,6 @@ jobs:
             load-only: true
             shard: 0
             shard-count: 0
-            runtime-cache: unused
-            runtime-log: parallel_runtime_rspec.log
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -359,21 +359,21 @@ jobs:
         run: mkdir tests
 
       - name: Restore parallel tests log
-        if: matrix.shard-count == 0 && matrix.load-only != true
+        if: matrix.runtime-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: tests/${{ matrix.runtime-log }}
+          path: tests/parallel_runtime_rspec.log
           key: ${{ matrix.runtime-cache }}-parallel-runtime-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ matrix.runtime-cache }}-parallel-runtime-
             ${{ runner.os }}-${{ matrix.test-flags }}-parallel_runtime_rspec-
 
       - name: Stage parallel tests log
-        if: matrix.shard-count == 0 && matrix.load-only != true
+        if: matrix.runtime-cache
         run: |
           mkdir -p "$TEST_RUNTIME_PATH"
-          if [[ -f "tests/$RUNTIME_LOG" ]]; then
-            cp "tests/$RUNTIME_LOG" "$TEST_RUNTIME_PATH/$RUNTIME_LOG"
+          if [[ -f tests/parallel_runtime_rspec.log ]]; then
+            cp tests/parallel_runtime_rspec.log "$TEST_RUNTIME_PATH/$RUNTIME_LOG"
           fi
         env:
           RUNTIME_LOG: ${{ matrix.runtime-log }}
@@ -404,23 +404,22 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # These cannot be queried at the macOS level on GitHub Actions.
           HOMEBREW_LANGUAGES: en-GB
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           TEST_FLAGS: ${{ matrix.test-flags }}
           SHARD_INDEX: ${{ matrix.shard }}
           SHARD_COUNT: ${{ matrix.shard-count }}
 
       - name: Collect parallel tests log
-        if: matrix.shard-count == 0 && matrix.load-only != true && success()
-        run: cp "$TEST_RUNTIME_PATH/$RUNTIME_LOG" "tests/$RUNTIME_LOG"
+        if: success() && matrix.runtime-cache
+        run: cp "$TEST_RUNTIME_PATH/$RUNTIME_LOG" tests/parallel_runtime_rspec.log
         env:
           RUNTIME_LOG: ${{ matrix.runtime-log }}
           TEST_RUNTIME_PATH: ${{ steps.set-up-homebrew.outputs.repository-path }}/Library/Homebrew/tests
 
       - name: Save parallel tests log
-        if: matrix.shard-count == 0 && matrix.load-only != true && success()
+        if: success() && matrix.runtime-cache
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: tests/${{ matrix.runtime-log }}
+          path: tests/parallel_runtime_rspec.log
           key: ${{ matrix.runtime-cache }}-parallel-runtime-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Get RSpec JUnit XML filenames
@@ -484,7 +483,7 @@ jobs:
           # Use older Ubuntu for testing Homebrew's glibc and gcc support.
           - name: test-bot (Linux Homebrew glibc)
             runs-on: ubuntu-latest
-            container: ubuntu:22.04
+            container: ghcr.io/homebrew/ubuntu22.04:6.0.22
           - name: test-bot (macOS arm64)
             runs-on: macos-26
           - name: test-bot (macOS arm64, padded prefix)
@@ -493,47 +492,14 @@ jobs:
     env:
       HOMEBREW_TEST_BOT_ANALYTICS: 1
     steps:
-      - name: Install Homebrew and Homebrew's dependencies
-        # All other images are built from our Homebrew Dockerfile.
-        # This is the only one that needs to be set up manually.
-        if: matrix.container == 'ubuntu:22.04'
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          # Slimmed down version from the Homebrew Dockerfile
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            bzip2 \
-            ca-certificates \
-            curl \
-            file \
-            g++ \
-            git-core \
-            jq \
-            less \
-            locales \
-            make \
-            netbase \
-            patch \
-            procps \
-            sudo \
-            uuid-runtime \
-            tzdata
-
-          # Install Homebrew
-          mkdir -p /home/linuxbrew/.linuxbrew/bin
-          # Don't do shallow clone or it's unshallowed by "Set up Homebrew"
-          git clone https://github.com/Homebrew/brew.git /home/linuxbrew/.linuxbrew/Homebrew
-          cd /home/linuxbrew/.linuxbrew/bin
-          ln -s ../Homebrew/bin/brew brew
-          echo "/home/linuxbrew/.linuxbrew/bin" >>"$GITHUB_PATH"
-
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
         with:
-          # The default formula audit compares revisions with brew audit --git.
-          core: true
+          # macOS runs `brew audit --git` on the tip and intentionally skips
+          # comparisons with older revisions. Linux covers those checks for
+          # the same default formulae using the full core history.
+          core: ${{ case(runner.os == 'macOS', 'shallow', 'true') }}
           cask: false
 
       - name: Set up padded bottle prefix

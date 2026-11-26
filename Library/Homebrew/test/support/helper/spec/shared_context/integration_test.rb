@@ -241,7 +241,7 @@ module Test
           RUBY
         end
 
-        formula_path = Formulary.find_formula_in_tap(name.downcase, tap).tap do |path|
+        formula_path = tap.new_formula_path(name.downcase).tap do |path|
           path.dirname.mkpath
           path.write <<~RUBY
             class #{Formulary.class_s(name)} < Formula

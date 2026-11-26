@@ -113,19 +113,8 @@ module Homebrew
 
           log_dir = ENV["CI"] ? "tests" : HOMEBREW_CACHE
           parallel_rspec_log_path = "#{log_dir}/#{parallel_rspec_log_name}"
-          # A run that may not record every file must not replace the log a full run
-          # reads: `--only`, `--changed` and `--shard` cover a subset by design, and
-          # `--fail-fast` stops its workers early.
-          ENV["PARALLEL_RSPEC_LOG_PATH"] = if only || args.changed? || args.shard || args.fail_fast?
-            "#{parallel_rspec_log_path}.partial"
-          else
-            parallel_rspec_log_path
-          end
-
+          worker_log_path = parallel_rspec_log_path
           parallel_args = ENV["CI"] ? %w[--combine-stderr --serialize-stdout] : %w[--nice]
-          # Group by recorded runtime rather than source file size, which barely
-          # correlates with how long a file takes.
-          parallel_args += ["--runtime-log", parallel_rspec_log_path]
 
           # Generate seed ourselves and output later to avoid multiple different
           # seeds being output when running parallel tests.
@@ -160,6 +149,10 @@ module Homebrew
             files = ParallelTests::RSpec::Runner.tests_in_groups(
               files, shard_count, runtime_log: parallel_rspec_log_path
             ).fetch(shard_index - 1)
+
+            # Each job can have different cached timings. Use its shard log only
+            # to balance workers after the shared file partition is fixed.
+            worker_log_path = "#{parallel_rspec_log_path}.shard-#{shard_index}-of-#{shard_count}"
           end
           if files.blank?
             raise UsageError, "No tests are available to run on this operating system." unless args.changed?
@@ -167,6 +160,10 @@ module Homebrew
             opoo "No tests are available to run on this operating system."
             return
           end
+
+          parallel_args += ["--runtime-log", File.file?(worker_log_path) ? worker_log_path : parallel_rspec_log_path]
+          worker_log_path += ".partial" if only || args.changed? || args.fail_fast?
+          ENV["PARALLEL_RSPEC_LOG_PATH"] = worker_log_path
 
           puts "Randomized with seed #{seed}"
 

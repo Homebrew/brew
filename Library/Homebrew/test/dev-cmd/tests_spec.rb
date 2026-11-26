@@ -158,13 +158,20 @@ RSpec.describe Homebrew::DevCmd::Tests do
 
         before do
           allow(ParallelTests::RSpec::Runner).to receive(:tests_in_groups)
+            .with(%w[test/a_spec.rb test/b_spec.rb], 2, runtime_log: log_path)
             .and_return([%w[test/a_spec.rb], %w[test/b_spec.rb]])
         end
 
-        it "does not replace the recorded runtimes" do
+        it "records timings for this shard separately from the full suite" do
           invoked_arguments
 
-          expect(ENV.fetch("PARALLEL_RSPEC_LOG_PATH")).to eq("#{log_path}.partial")
+          expect(ENV.fetch("PARALLEL_RSPEC_LOG_PATH")).to eq("#{log_path}.shard-1-of-2")
+        end
+
+        it "uses a previous shard run to balance its workers" do
+          Pathname("#{log_path}.shard-1-of-2").write("test/a_spec.rb:3.0\n")
+
+          expect(invoked_arguments).to array_including_cons("--runtime-log", "#{log_path}.shard-1-of-2")
         end
       end
 

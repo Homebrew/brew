@@ -51,15 +51,12 @@ RSpec.shared_context "Homebrew Cask" do # rubocop:disable RSpec/ContextWording
 
       CoreCaskTap.instance.tap do |tap|
         fixture_cask_dir = TEST_FIXTURE_DIR/"cask/Casks"
-        fixture_cask_dir.glob("**/*.rb").each do |fixture_cask_path|
-          relative_cask_path = fixture_cask_path.relative_path_from(fixture_cask_dir)
-
+        fixture_cask_dir.glob("**/*.rb").group_by(&:dirname).each do |dir, paths|
           # These are only used manually in tests since they
           # would otherwise conflict with other casks.
-          next if relative_cask_path.dirname.basename.to_s == "outdated"
+          next if dir.basename.to_s == "outdated"
 
-          cask_dir = (tap.cask_dir/relative_cask_path.dirname).tap(&:mkpath)
-          FileUtils.ln_sf fixture_cask_path, cask_dir
+          FileUtils.ln_sf paths, (tap.cask_dir/dir.relative_path_from(fixture_cask_dir)).tap(&:mkpath)
         end
 
         tap.clear_cache
