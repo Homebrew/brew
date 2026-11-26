@@ -181,6 +181,21 @@ RSpec.describe Dependency do
     expect { described_class.expand(f) }.not_to raise_error
   end
 
+  it "doesn't raise an error when a skipped dependency is cyclic" do
+    foo = build_dep(:foo)
+    baz = build_dep(:baz, [], [foo])
+    allow(foo).to receive(:to_formula).and_return \
+      instance_double(Formula, deps: [baz], name: foo.name, full_name: foo.name)
+    f = instance_double(Formula, name: "f", deps: [foo])
+    expect { described_class.expand(f) { next Dependable::SKIP } }.not_to raise_error
+  end
+
+  it "skips dependencies on the dependent itself" do
+    f = instance_double(Formula, name: "f", deps: [build_dep(:f), bar])
+    deps = described_class.expand(f) { next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS }
+    expect(deps).to eq([bar])
+  end
+
   it "cleans the expand stack" do
     foo = build_dep(:foo)
     allow(foo).to receive(:to_formula).and_raise(FormulaUnavailableError, foo.name)
