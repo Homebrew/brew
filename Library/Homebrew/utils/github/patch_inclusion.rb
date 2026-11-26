@@ -22,7 +22,7 @@ module GitHub
         .returns(T.nilable(String))
     }
     def removal_reason(patch_url, source_url:, tag: nil, revision: nil)
-      return if @unavailable || Homebrew::EnvConfig.no_github_api?
+      return unless available?
 
       patch = patch_url.match(%r{\Ahttps://github\.com/(?<repository>[\w.-]+/[\w.-]+)/commit/(?<sha>[a-fA-F0-9]{40})\.(?:patch|diff)(?:\?full_index=1)?\z})
       return unless patch
@@ -49,30 +49,44 @@ module GitHub
         ref = "refs/tags/#{label}"
       end
 
+      release_sha = included_in_ref(repository, patch_sha, ref:)
+      return unless release_sha
+
+      "Removed patch [`#{patch_sha}`](https://github.com/#{repository}/commit/#{patch_sha}): " \
+        "the commit is included in `#{label.delete("`")}` (`#{release_sha}`). " \
+        "[Compare commits](https://github.com/#{repository}/compare/#{patch_sha}...#{release_sha})."
+    rescue API::Error, ErrorDuringExecution => e
+      opoo "Retaining patch because GitHub inclusion could not be checked:\n#{patch_url}\n#{e.message}"
+      nil
+    end
+
+    sig { returns(T::Boolean) }
+    def available? = !@unavailable && !Homebrew::EnvConfig.no_github_api?
+
+    # Returns the resolved commit of ref if it contains the given commit.
+    sig { params(repository: String, commit: String, ref: String).returns(T.nilable(String)) }
+    def included_in_ref(repository, commit, ref:)
+      return unless available?
+
       commit_url = "#{API_URL}/repos/#{repository}/commits/#{URI.encode_www_form_component(ref)}"
       unless @commits.key?(commit_url)
         @commits[commit_url] = nil
-        @commits[commit_url] = API.open_rest(commit_url).fetch("sha").downcase
+        sha = API.open_rest(commit_url)["sha"]
+        @commits[commit_url] = sha.downcase if sha.is_a?(String) && sha.match?(/\A\h{40}\z/)
       end
       release_sha = @commits[commit_url]
       return unless release_sha
 
-      comparison = "#{repository}/compare/#{patch_sha}...#{release_sha}"
+      comparison = "#{repository}/compare/#{commit}...#{release_sha}"
       unless @comparisons.key?(comparison)
         @comparisons[comparison] = false
         @comparisons[comparison] =
-          %w[ahead identical].include?(API.open_rest("#{API_URL}/repos/#{comparison}")["status"])
+          %w[ahead identical].include?(API.open_rest("#{API_URL}/repos/#{comparison}?per_page=1")["status"])
       end
-      return unless @comparisons[comparison]
-
-      "Removed patch [`#{patch_sha}`](https://github.com/#{repository}/commit/#{patch_sha}): " \
-        "the commit is included in `#{label.delete("`")}` (`#{release_sha}`). " \
-        "[Compare commits](https://github.com/#{comparison})."
-    rescue API::Error, ErrorDuringExecution => e
-      @unavailable = e.is_a?(API::RateLimitExceededError) || e.is_a?(API::AuthenticationFailedError) ||
-                     e.is_a?(API::MissingAuthenticationError)
-      opoo "Retaining patch because GitHub inclusion could not be checked:\n#{patch_url}\n#{e.message}"
-      nil
+      release_sha if @comparisons[comparison]
+    rescue API::RateLimitExceededError, API::AuthenticationFailedError, API::MissingAuthenticationError
+      @unavailable = true
+      raise
     end
   end
 end

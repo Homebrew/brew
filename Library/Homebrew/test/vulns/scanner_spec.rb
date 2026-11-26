@@ -302,6 +302,137 @@ RSpec.describe Homebrew::Vulns::Scanner do
       expect(results.findings).to eq []
     end
 
+    context "with commit-only fixes for an installed release" do
+      let(:ffmpeg) do
+        formula("ffmpeg") do
+          T.bind(self, T.class_of(Formula))
+          url "https://ffmpeg.org/releases/ffmpeg-9.2.tar.xz"
+          head "https://github.com/FFmpeg/FFmpeg.git"
+        end
+      end
+      let(:repository) { "https://github.com/ffmpeg/ffmpeg" }
+      let(:api) { "https://api.github.com/repos/ffmpeg/ffmpeg" }
+      let(:release) { "f" * 40 }
+      let(:fix) { "a" * 40 }
+      let(:comparison) { "#{api}/compare/#{fix}...#{release}?per_page=1" }
+      let(:versions) { ["n9.1-dev"] }
+      let(:fix_commits) { { "CVE-TEST" => fix } }
+
+      before do
+        allow(ffmpeg).to receive_messages(any_installed_prefix:  Pathname("/nonexistent"),
+                                          any_installed_version: PkgVersion.parse("9.1"))
+        allow(described_class).to receive(:source_from_sbom)
+          .and_return(["https://ffmpeg.org/ffmpeg-9.1.tar.xz", "9.1"])
+        allow(Homebrew::Vulns::OSV).to receive(:query_batch) { [fix_commits.keys.map { |id| { "id" => id } }] }
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability) do |id|
+          osv_record(id, "affected" => [{
+            "versions" => versions,
+            "ranges"   => [{ "type" => "GIT", "repo" => repository,
+                             "events" => [{ "introduced" => "0" }, { "fixed" => fix_commits.fetch(id) }] }],
+          }])
+        end
+        allow(Homebrew::Livecheck::Strategy::Git).to receive(:ls_remote_tags)
+          .with(repository)
+          .and_return(content: "#{release}\trefs/tags/n9.1\n")
+        allow(GitHub::API).to receive(:open_rest).with("#{api}/commits/refs%2Ftags%2Fn9.1")
+                                                 .and_return("sha" => release)
+      end
+
+      it "drops a finding only when the release tag contains its fix" do
+        expect(%w[ahead identical behind diverged].map do |status|
+          allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => status)
+          described_class.new([ffmpeg]).scan.any_open?
+        end).to eq [false, false, true, true]
+      end
+
+      it "keeps findings for installed Git sources unless the source identifies the release" do
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        expect([repository, "#{repository}.git", "#{repository}/archive/refs/tags/n9.1.tar.gz"].map do |url|
+          allow(described_class).to receive(:source_from_sbom).and_return([url, "9.1"])
+          described_class.new([ffmpeg]).scan.any_open?
+        end).to eq [true, true, false]
+      end
+
+      it "keeps the finding when the comparison fails" do
+        allow(GitHub::API).to receive(:open_rest).with(comparison)
+                                                 .and_raise(GitHub::API::HTTPNotFoundError, "Not Found")
+        expect(described_class.new([ffmpeg]).scan.any_open?).to be true
+      end
+
+      it "warns once and keeps the remaining findings when GitHub reaches its rate limit" do
+        limited_fix = "b" * 40
+        fix_commits.merge!("CVE-LIMITED" => limited_fix, "CVE-UNCHECKED" => "c" * 40)
+        allow(GitHub::API).to receive(:credentials).and_return(nil)
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        allow(GitHub::API).to receive(:open_rest).with("#{api}/compare/#{limited_fix}...#{release}?per_page=1") do
+          raise GitHub::API::RateLimitExceededError.new("Rate limit exceeded", reset: 0, resource: "core", limit: 60)
+        end
+
+        scanner = described_class.new([ffmpeg])
+        expect(scanner).to receive(:opoo).with(/unverified fixes remain open.*Rate limit exceeded/m).once
+        expect(scanner.scan.findings.fetch(0).open.map(&:id)).to eq %w[CVE-LIMITED CVE-UNCHECKED]
+      end
+
+      it "keeps the finding when multiple tags match the installed version" do
+        allow(Homebrew::Livecheck::Strategy::Git).to receive(:ls_remote_tags).and_return(
+          content: "#{release}\trefs/tags/n9.1\n#{fix}\trefs/tags/v9.1\n",
+        )
+        expect(described_class.new([ffmpeg]).scan.any_open?).to be true
+      end
+
+      it "keeps the finding when only the recipe identifies a release" do
+        allow(described_class).to receive(:source_from_sbom).and_return(nil)
+        expect(Homebrew::Livecheck::Strategy::Git).not_to receive(:ls_remote_tags)
+        described_class.new([ffmpeg]).scan
+        allow(ffmpeg).to receive(:any_installed_version).and_return(ffmpeg.pkg_version)
+        described_class.new([ffmpeg]).scan
+      end
+
+      it "keeps a version explicitly listed as affected under either spelling" do
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        expect(%w[n9.1 9.1 v9.1].map do |version|
+          versions.replace([version])
+          described_class.new([ffmpeg]).scan.any_open?
+        end).to all(be true)
+      end
+
+      it "keeps a tagged source when OSV explicitly lists the installed version" do
+        allow(described_class).to receive(:source_from_sbom)
+          .and_return(["#{repository}/archive/refs/tags/n9.1.tar.gz", "9.1"])
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        versions.replace(["9.1"])
+        expect(described_class.new([ffmpeg]).scan.any_open?).to be true
+      end
+
+      it "checks the pinned source revision when the release tag has moved" do
+        pinned = "b" * 40
+        formula = formula("pinned") do
+          T.bind(self, T.class_of(Formula))
+          url "https://github.com/ffmpeg/ffmpeg.git", tag: "n9.1", revision: pinned
+        end
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        allow(GitHub::API).to receive(:open_rest).with("#{api}/commits/#{pinned}").and_return("sha" => pinned)
+        allow(GitHub::API).to receive(:open_rest).with("#{api}/compare/#{fix}...#{pinned}?per_page=1")
+                                                 .and_return("status" => "behind")
+        expect(described_class.new([formula]).scan.any_open?).to be true
+      end
+
+      it "keeps findings when only the current recipe supplies a Git pin for the installed version" do
+        formula = formula("pinned") do
+          T.bind(self, T.class_of(Formula))
+          url "https://github.com/ffmpeg/ffmpeg.git", tag: "n9.1", revision: "f" * 40
+        end
+        allow(formula).to receive_messages(any_installed_prefix:  Pathname("/nonexistent"),
+                                           any_installed_version: formula.pkg_version)
+        allow(GitHub::API).to receive(:open_rest).with("#{api}/commits/#{release}").and_return("sha" => release)
+        allow(GitHub::API).to receive(:open_rest).with(comparison).and_return("status" => "ahead")
+        expect([["#{repository}.git", "9.1"], nil].map do |sbom|
+          allow(described_class).to receive(:source_from_sbom).and_return(sbom)
+          described_class.new([formula]).scan.any_open?
+        end).to all(be true)
+      end
+    end
+
     it "filters below the minimum severity" do
       allow(Homebrew::Vulns::OSV).to receive(:query_batch)
         .and_return([[{ "id" => "CVE-LOW" }, { "id" => "CVE-CRIT" }]])
