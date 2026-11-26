@@ -437,7 +437,6 @@ jobs:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: ${{ steps.junit_xml.outputs.filenames }}
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
@@ -446,7 +445,6 @@ jobs:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: Library/Homebrew/test/coverage/coverage.xml
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-bot:
     name: ${{ matrix.name }}
