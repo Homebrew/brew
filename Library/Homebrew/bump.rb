@@ -143,27 +143,30 @@ module Homebrew
       SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose", "--message=#{message}", "--", args: paths
     end
 
-    # Formulae or casks selected in a manual autobump run, including core aliases.
-    sig { params(casks: T::Boolean).returns(T::Array[String]) }
-    private_class_method def self.requested_packages(casks:)
+    # Formulae or casks selected in a manual autobump run, including aliases.
+    sig { params(tap: Tap, casks: T::Boolean).returns(T::Array[String]) }
+    private_class_method def self.requested_packages(tap, casks:)
       require "shellwords"
 
-      type, tap = casks ? %w[casks cask] : %w[formulae core]
-      input = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH"))).dig("inputs", type).to_s
+      input = JSON.parse(File.read(ENV.fetch("GITHUB_EVENT_PATH"))).dig("inputs", casks ? "casks" : "formulae").to_s
       Shellwords.split(input).map do |arg|
-        name = arg.sub(%r{\Ahomebrew/#{tap}/}i, "")
-        raise ArgumentError, "Expected a homebrew/#{tap} name." unless name.match?(/\A[a-z0-9][a-z0-9+._@-]*\z/)
+        name = arg.sub(%r{\A#{Regexp.escape(tap.name)}/}i, "")
+        raise ArgumentError, "Expected a #{tap.name} name." unless name.match?(/\A[a-z0-9][a-z0-9+._@-]*\z/)
 
         name
       end
     end
 
     # Collect completed bumps even when another formula or cask failed.
-    sig { params(file: String, casks: T::Boolean).void }
-    def self.prepare_prs(file, casks: false)
-      names = requested_packages(casks:)
-      type, tap, *options = casks ? %w[casks Homebrew/cask] : %w[formulae Homebrew/core --bump-synced]
-      selection = names.empty? ? ["--auto", "--tap=#{tap}"] : ["--", *names]
+    sig { params(file: String, tap: Tap, casks: T::Boolean).void }
+    def self.prepare_prs(file, tap, casks: false)
+      names = requested_packages(tap, casks:)
+      type, *options = casks ? %w[casks] : %w[formulae --bump-synced]
+      selection = if names.empty?
+        tap.official? ? ["--auto", "--tap=#{tap.name}"] : ["--tap=#{tap.name}"]
+      else
+        ["--", *names.map { "#{tap.name}/#{it}" }]
+      end
       Dir.mktmpdir do |directory|
         success = system HOMEBREW_BREW_FILE, "bump", "--#{type}", *options, "--write-pr-to=#{directory}",
                          *selection
@@ -180,15 +183,19 @@ module Homebrew
     end
 
     # Apply a prepared bump using the checked-out formulae or casks and workflow inputs as the reference.
-    sig { params(file: String, name: String, casks: T::Boolean).void }
-    def self.commit_prepared_pr(file, name, casks: false)
-      tap = casks ? CoreCaskTap.instance : CoreTap.instance
+    sig { params(file: String, name: String, tap: Tap, casks: T::Boolean).void }
+    def self.commit_prepared_pr(file, name, tap, casks: false)
       type = casks ? "casks" : "formulae"
-      requested = requested_packages(casks:)
-      allowed = if requested.empty?
+      requested = requested_packages(tap, casks:)
+      alias_prefix = tap.core_tap? ? "" : "#{tap.name}/"
+      allowed = if requested.present? && casks
+        requested
+      elsif requested.present?
+        requested.map { |arg| Utils.name_from_full_name(tap.alias_table.fetch("#{alias_prefix}#{arg}", arg)) }
+      elsif tap.official?
         tap.autobump
       else
-        requested.map { |arg| tap.alias_table.fetch(arg, arg) }
+        (casks ? tap.cask_files_by_name : tap.formula_files_by_name).keys
       end
       odie "Unexpected #{type} in the prepared bump." unless allowed.include?(name)
 
@@ -222,7 +229,9 @@ module Homebrew
         unless (casks ? Utils::AST::CaskAST : Utils::AST::FormulaAST).valid_bump?(path.read, contents, version:)
           odie "Unexpected changes in the prepared bump for #{package_name}."
         end
-        aliases = tap.alias_reverse_table.fetch(package_name, [])
+        aliases = tap.alias_reverse_table
+                     .fetch("#{alias_prefix}#{package_name}", [])
+                     .map { Utils.name_from_full_name(it) }
         rename = Array(alias_update_pair(aliases, Version.new(version))).map { |a| tap.alias_dir/a }
         destination = rename.last
         if destination && (destination.exist? || destination.symlink? || !destinations.add?(destination))
@@ -245,15 +254,15 @@ module Homebrew
     end
 
     # Reuse a matching signed push from an earlier attempt or replace a branch pushed without a pull request.
-    sig { params(casks: T::Boolean).void }
-    def self.sign_pr(casks: false)
-      tap = casks ? CoreCaskTap.instance : CoreTap.instance
+    sig { params(tap: Tap).void }
+    def self.sign_pr(tap)
       tap.path.cd do
         branch = Utils.safe_popen_read("git", "branch", "--show-current").chomp
         odie "Expected a bump branch." unless branch.start_with?("bump-")
         base = ENV.fetch("GITHUB_SHA")
         ref = "refs/heads/#{branch}"
         outputs = ["push=true"]
+        sign = tap.official? || Utils.popen_read("git", "config", "--get", "user.signingkey").present?
         if Utils.safe_popen_read("git", "ls-remote", "--refs", "origin", ref).present?
           SystemCommand.safe_system "git", "fetch", "origin", ref
           local, remote = %w[HEAD FETCH_HEAD].map do |head|
@@ -261,7 +270,8 @@ module Homebrew
           end
           commits = Utils.safe_popen_read("git", "rev-list", "#{base}..FETCH_HEAD").lines(chomp: true)
           if SystemCommand.quiet_system("git", "merge-base", "--is-ancestor", base, "FETCH_HEAD") &&
-             local.present? && remote == local && SystemCommand.quiet_system("git", "verify-commit", *commits)
+             local.present? && remote == local &&
+             (!sign || SystemCommand.quiet_system("git", "verify-commit", *commits))
             return
           end
 
@@ -270,8 +280,10 @@ module Homebrew
           opoo "Replacing #{branch}, which was pushed without a pull request."
           outputs << "force=true"
         end
-        Utils::Git.set_name_email!(author: false)
-        SystemCommand.safe_system "git", "rebase", "--force-rebase", "--gpg-sign", base
+        if sign
+          Utils::Git.set_name_email!(author: false)
+          SystemCommand.safe_system "git", "rebase", "--force-rebase", "--gpg-sign", base
+        end
         File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |io| io.puts(*outputs) }
       end
     end
@@ -282,7 +294,7 @@ module Homebrew
       odie "Cannot check pull requests as `$HOMEBREW_NO_GITHUB_API` is set!" if Homebrew::EnvConfig.no_github_api?
 
       url = GitHub.url_to("repos", tap.full_name, "pulls")
-      url.query = URI.encode_www_form(head: "Homebrew:#{branch}", base: "main", state: "all")
+      url.query = URI.encode_www_form(head: "#{tap.user}:#{branch}", state: "all")
       GitHub::API.open_rest(url).present?
     end
 

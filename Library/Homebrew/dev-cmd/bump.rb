@@ -131,17 +131,20 @@ module Homebrew
           raise UsageError, "`--write-pr-to` requires `--formula` or `--cask`."
         end
 
-        if (file = args.prepare_prs)
-          return Homebrew::Bump.prepare_prs(file, casks: args.cask?)
-        elsif (file = args.commit_pr_from)
-          raise UsageError, "Specify one prepared formula or cask." if args.named.size != 1
+        if args.prepare_prs || args.commit_pr_from || args.sign_pr?
+          autobump_tap = Tap.fetch(args.tap || (args.cask? ? "Homebrew/cask" : "Homebrew/core"))
+          if (file = args.prepare_prs)
+            return Homebrew::Bump.prepare_prs(file, autobump_tap, casks: args.cask?)
+          elsif (file = args.commit_pr_from)
+            raise UsageError, "Specify one prepared formula or cask." if args.named.size != 1
 
-          Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
-          return Homebrew::API.with_no_api_env do
-            Homebrew::Bump.commit_prepared_pr(file, args.named.fetch(0), casks: args.cask?)
+            Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
+            return Homebrew::API.with_no_api_env do
+              Homebrew::Bump.commit_prepared_pr(file, args.named.fetch(0), autobump_tap, casks: args.cask?)
+            end
           end
-        elsif args.sign_pr?
-          return Homebrew::Bump.sign_pr(casks: args.cask?)
+
+          return Homebrew::Bump.sign_pr(autobump_tap)
         end
 
         Utils::GemSetup.install_bundler_gems!(groups: ["livecheck"])
@@ -635,7 +638,7 @@ module Homebrew
 
         bump_pr_args = [
           "bump-#{version_info.type}-pr",
-          name,
+          formula_or_cask.full_name,
           *version_args,
           "--no-browse",
           "--message=Created by `brew bump`",
