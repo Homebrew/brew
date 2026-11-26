@@ -296,8 +296,8 @@ module Cask
               "/Library/LaunchAgents/#{service}.plist",
               "/Library/LaunchDaemons/#{service}.plist",
             ]
-            paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
-            paths = paths.map { |elt| Pathname(elt) }
+            paths.each { |path| path.prepend(Dir.home).freeze } unless sudo
+            paths = paths.map { |path| Pathname(path) }
 
             if sudo
               next if Homebrew::EnvConfig.no_sudo?
