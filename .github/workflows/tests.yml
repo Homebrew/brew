@@ -404,7 +404,6 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # These cannot be queried at the macOS level on GitHub Actions.
           HOMEBREW_LANGUAGES: en-GB
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           TEST_FLAGS: ${{ matrix.test-flags }}
           SHARD_INDEX: ${{ matrix.shard }}
           SHARD_COUNT: ${{ matrix.shard-count }}
@@ -438,7 +437,6 @@ jobs:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: ${{ steps.junit_xml.outputs.filenames }}
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
@@ -447,7 +445,6 @@ jobs:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: Library/Homebrew/test/coverage/coverage.xml
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-bot:
     name: ${{ matrix.name }}
