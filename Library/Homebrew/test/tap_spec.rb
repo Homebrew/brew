@@ -1249,6 +1249,18 @@ RSpec.describe Tap do
     expect(homebrew_foo_tap.git_last_commit).to match(/\A\d+ .+ ago\Z/)
   end
 
+  describe "#clear_cache" do
+    it "forgets the Git HEAD" do
+      touch path/"README"
+      setup_git_repo
+      homebrew_foo_tap.git_head
+      FileUtils.rm_r path/".git"
+      homebrew_foo_tap.clear_cache
+
+      expect(homebrew_foo_tap.git_head).to be_nil
+    end
+  end
+
   specify "#private?", :needs_network do
     expect(homebrew_foo_tap).to be_private
   end
