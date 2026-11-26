@@ -123,6 +123,22 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       expect(described_class.new("foo", "baz").to_formulae_and_casks).to eq [foo, baz]
     end
 
+    it "reports a matching cask without loading it when resolving a qualified formula", :trust_store do
+      tap = Tap.fetch("thirdparty", "packages")
+      name = "#{tap.name}/testball"
+      tap.formula_dir.mkpath
+      FileUtils.cp TEST_FIXTURE_DIR/"testball.rb", tap.formula_dir
+      tap.cask_dir.mkpath
+      FileUtils.touch tap.cask_dir/"testball.rb"
+      Homebrew::Trust.trust!(:formula, name)
+      expect(Cask::CaskLoader).not_to receive(:load)
+
+      expect { expect(described_class.new(name).to_formulae_and_casks).to contain_exactly(be_a(Formula)) }
+        .to output(/Treating .* as a formula.*--cask/).to_stderr
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
     context "when both formula and cask are present" do
       before do
         stub_formula_loader foo
