@@ -82,22 +82,27 @@ module Test
 
       requires_ancestor { RSpec::Core::Pending }
 
-      # Missing prerequisites skip locally and fail on CI.
+      # Missing prerequisites skip locally and fail on CI. `brew test-bot`'s
+      # portable-ruby validation runs this suite in homebrew-core build
+      # containers that intentionally lack some tools, so skip there too.
       def ensure_test_dependency!(available, message)
         return if available
 
-        raise message if ENV["CI"]
+        raise message if ENV["CI"] && !ENV["HOMEBREW_TEST_BOT"]
 
+        RSpec.current_example.metadata[:missing_test_dependency] = true
         skip message
       end
 
       # Returns diagnostics for pending or filtered examples assigned to this CI worker.
-      # Only unmet :needs_macos, :needs_linux or :needs_network requirements permit a skip.
+      # Only unmet :needs_macos, :needs_linux or :needs_network requirements
+      # and prerequisites missing under `brew test-bot` permit a skip.
       def self.unexpected_ci_skips(examples)
         examples.filter_map do |example|
           metadata = example.metadata
           result = example.execution_result
           next if [:passed, :failed].include?(result.status)
+          next if metadata[:missing_test_dependency]
 
           next if metadata[:needs_network] && !ENV["HOMEBREW_TEST_ONLINE"]
           # An example requiring both operating systems can never run.
