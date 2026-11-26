@@ -1006,8 +1006,6 @@ done
 
 A job ID may contain a `*` wildcard, which removes every currently running `launchd` job whose ID matches.
 
-Homebrew checks the system domain without `sudo` first and requests privileges when the service or a system plist exists, or when their absence cannot be confirmed.
-
 #### `uninstall` *quit*
 
 `quit:` sends the standard macOS quit Apple Event to the application (equivalent to Cmd+Q), which allows the app to present save dialogs before closing. It runs during both `brew uninstall` and `brew upgrade`/`brew reinstall`.
