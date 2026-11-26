@@ -260,6 +260,7 @@ RSpec.describe Cask::Cask, :cask do
       let(:artifacts) { ['app "MyFancyApp.app"'] }
 
       before do
+        InstallHelper.stub_cask_installation(write_auto_updates_cask(cask_file, version: "2.57", artifacts:))
         allow(Homebrew::EnvConfig).to receive(:upgrade_auto_updates_casks?).and_return(true)
       end
 
@@ -282,13 +283,20 @@ RSpec.describe Cask::Cask, :cask do
         expect(cask.outdated_version).to be_nil
       end
 
-      it "is not outdated when the short version matches and the bundle version is lower than a CSV candidate" do
-        tap_version = "2.61,3000"
-        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
+      it "is outdated when the short version matches but the installed build is older" do
+        cask = write_auto_updates_cask(cask_file, version: "2.61,3000", artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2061")
 
-        expect(cask.outdated_version).to be_nil
+        expect(cask.outdated_version).to eq("2.57")
+      end
+
+      it "uses the recorded app target when the current cask renames the app" do
+        cask = write_auto_updates_cask(cask_file, version: "2.61", artifacts: ['app "App.app", target: "New.app"'])
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.60")
+        stub_cask_bundle_version(cask.config.appdir/"New.app", short_version: "3.0")
+
+        expect(cask.outdated_version).to eq("2.57")
       end
 
       it "is not outdated when the short version matches and the bundle version matches any CSV candidate" do
@@ -309,13 +317,13 @@ RSpec.describe Cask::Cask, :cask do
         expect(cask.outdated_version).to be_nil
       end
 
-      it "is not outdated when the installed cask version already matches the tap version" do
+      it "is outdated when the bundle is older even if the receipt matches the tap" do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.61")
         stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
 
-        expect(cask.outdated_version).to be_nil
+        expect(cask.outdated_version).to eq("2.61")
       end
 
       it "is not outdated when the installed short version directly matches the tap version" do
@@ -498,14 +506,14 @@ RSpec.describe Cask::Cask, :cask do
         expect(cask.outdated_version).to be_nil
       end
 
-      it "is outdated when the unchanged short version is higher than a tap version with fewer segments" do
+      it "skips a tap version older than the unchanged short version" do
         tap_version = "158.0"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("158.0.1")
         stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "158.0.1",
                                                                       bundle_version: "15826.10.20")
 
-        expect(cask.outdated_version).to eq("158.0.1")
+        expect(cask.outdated_version).to be_nil
       end
 
       it "is outdated when the unchanged short and bundle versions match a CSV installation record" do
@@ -517,21 +525,36 @@ RSpec.describe Cask::Cask, :cask do
         expect(cask.outdated_version).to eq("2.61,2057")
       end
 
-      it "follows a tap build rollback when the app still matches the CSV installation record" do
+      test_each([
+        ["2.61,2058", "2.61,2057.0"],
+        ["2.61,2058,2057.0", nil],
+        ["2.61,2058,2056.0", nil],
+      ]) do |tap, expected|
+        it "compares the recorded build 2057.0 with the builds in #{tap}" do
+          cask = write_auto_updates_cask(cask_file, version: tap, artifacts:)
+          allow(cask).to receive(:installed_version).and_return("2.61,2057.0")
+          stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "2.61",
+                                                                        bundle_version: "2057.0")
+
+          expect(cask.outdated_version).to eq(expected)
+        end
+      end
+
+      it "skips a tap build rollback when the app still matches the CSV installation record" do
         cask = write_auto_updates_cask(cask_file, version: "2.61,2056", artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.61,2057")
         stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
-        expect(cask.outdated_version).to eq("2.61,2057")
+        expect(cask.outdated_version).to be_nil
       end
 
-      it "is not outdated when a self-updated bundle version no longer matches a CSV installation record" do
+      it "is outdated when the app has updated past the recorded build but is still behind the tap" do
         tap_version = "2.61,2058"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.61,2056")
         stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
-        expect(cask.outdated_version).to be_nil
+        expect(cask.outdated_version).to eq("2.61,2056")
       end
     end
 

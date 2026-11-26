@@ -35,12 +35,14 @@ module Cask
         greedy_auto_updates: T.nilable(T::Boolean),
         summary_pinned:      T.nilable(T::Array[VersionChange]),
         summary_disabled:    T.nilable(T::Array[String]),
+        refresh_metadata:    T::Boolean,
       ).returns(T::Array[Cask])
     }
     def self.outdated_casks(casks, args:, force:, quiet:,
                             greedy: false, greedy_latest: false, greedy_auto_updates: false,
-                            summary_pinned: nil, summary_disabled: nil)
+                            summary_pinned: nil, summary_disabled: nil, refresh_metadata: false)
       greedy = true if Homebrew::EnvConfig.upgrade_greedy?
+      on_self_update = ->(cask, installed) { Installer.new(cask).refresh_self_update(installed) } if refresh_metadata
 
       outdated_casks = if casks.empty?
         Caskroom.casks(config: Config.from_args(args)).select do |cask|
@@ -51,8 +53,7 @@ module Cask
           end
 
           cask_greedy = greedy || greedy_casks.include?(cask.token)
-          cask.outdated?(greedy: cask_greedy, greedy_latest:,
-                         greedy_auto_updates:)
+          cask.outdated_version(greedy: cask_greedy, greedy_latest:, greedy_auto_updates:, &on_self_update)
         end
       else
         casks.select do |cask|
@@ -68,8 +69,11 @@ module Cask
           if version.nil?
             opoo "Not upgrading #{cask.token}, no version is available for the current platform" unless quiet
             false
-          elsif cask.outdated?(greedy: true)
+          elsif cask.outdated_version(greedy: true, &on_self_update)
             true
+          elsif cask.auto_updates_app?
+            opoo "Not upgrading #{cask.token}, no newer app version was detected" unless quiet
+            false
           elsif version.latest?
             opoo "Not upgrading #{cask.token}, the downloaded artifact has not changed" unless quiet
             false
@@ -164,7 +168,7 @@ module Cask
     )
       outdated_casks =
         self.outdated_casks(casks, args:, greedy:, greedy_latest:, greedy_auto_updates:, force:, quiet:,
-                                   summary_pinned:, summary_disabled:)
+                                   summary_pinned:, summary_disabled:, refresh_metadata: !dry_run)
 
       manual_installer_casks = outdated_casks.select do |cask|
         cask.artifacts.any? do |artifact|
@@ -208,7 +212,7 @@ module Cask
         loaded_cask = if c.installed? && (installed_caskfile = c.installed_caskfile)
           begin
             CaskLoader.load_from_installed_caskfile(installed_caskfile)
-          rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError
+          rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError, JSON::ParserError
             CaskLoader.recover_from_installed_caskfile(installed_caskfile, fallback_cask: c)
           end
         end

@@ -73,6 +73,91 @@ RSpec.describe Cask::Upgrade, :cask do
     end.to output(/Not upgrading macos-only, no version is available for the current platform/).to_stderr
   end
 
+  context "when the app has updated itself" do
+    let(:old_cask) { Cask::CaskLoader.from_path(cask_path("outdated/auto-updates")) }
+    let(:binary) { auto_updates.config.binarydir/"fancy" }
+
+    before do
+      [old_cask, auto_updates].each do |cask|
+        cask.binary Pathname("bin/fancy")
+        cask.pkg "helper.pkg"
+      end
+      auto_updates.zap trash: "~/Library/Caches/fancy"
+      InstallHelper.stub_cask_installation(old_cask)
+      (old_cask.staged_path/"bin").mkpath
+      (old_cask.staged_path/"bin/fancy").write("installed binary")
+      binary.make_relative_symlink(old_cask.staged_path/"bin/fancy")
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+      allow(Cask::Caskroom).to receive(:casks).and_return([auto_updates])
+    end
+
+    it "updates the installed definition, receipt and Caskroom paths without reinstalling" do
+      install_time = old_cask.install_time
+      receipt = JSON.parse(old_cask.tab.tabfile.read)
+      described_class.upgrade_casks!(args:)
+
+      installed = Cask::CaskLoader.load_from_installed_caskfile(auto_updates.installed_caskfile, api_fallback: false)
+      expect(installed.artifacts.grep(Cask::Artifact::Zap).map(&:to_args))
+        .to eq([[{ trash: "~/Library/Caches/fancy" }]])
+      receipt.fetch("source").merge!("version" => "2.61", "path" => auto_updates.sourcefile_path.to_s,
+                                     "tap" => auto_updates.tap&.name, "tap_git_head" => auto_updates.tap_git_head)
+      receipt["uninstall_artifacts"] = JSON.parse(auto_updates.artifacts_list(uninstall_only: true).to_json)
+      expect(JSON.parse(auto_updates.tab.tabfile.read)).to eq(receipt)
+      expect(auto_updates.install_time).to eq(install_time)
+      expect(auto_updates.installed_version).to eq("2.61")
+      expect(old_cask.metadata_versioned_path).not_to exist
+      expect(old_cask.staged_path).not_to exist
+      expect(binary.realpath).to eq((auto_updates.staged_path/"bin/fancy").realpath)
+    end
+
+    it "keeps the installed definition when an install artifact changes" do
+      auto_updates.pkg "new.pkg"
+      described_class.upgrade_casks!(args:)
+
+      expect(old_cask.installed_version).to eq("2.57")
+    end
+
+    it "keeps the installed definition when only the short version matches a multi-part cask version" do
+      allow(auto_updates).to receive(:version).and_return(Cask::DSL::Version.new("2.61,3000"))
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.61")
+
+      expect { described_class.upgrade_casks!(args:) }.not_to change(auto_updates, :installed_version)
+    end
+
+    test_each(["2.62", "0.0"]) do |app_version|
+      it "skips a named cask when the bundle reports #{app_version}" do
+        stub_cask_bundle_version(auto_updates_path, short_version: app_version)
+
+        expect(described_class.upgrade_casks!(auto_updates, dry_run: true, args:)).to be(false)
+      end
+    end
+
+    it "keeps a newer installed caskfile when the bundle matches a tap rollback" do
+      allow(auto_updates).to receive(:version).and_return(Cask::DSL::Version.new("2.55"))
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.55")
+
+      expect { described_class.upgrade_casks!(args:) }.not_to change(auto_updates, :installed_version)
+    end
+
+    it "rechecks the app version after an upgrade preview" do
+      described_class.upgrade_casks!(args:, dry_run: true)
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.62", bundle_version: "2062")
+
+      expect { described_class.upgrade_casks!(args:) }.not_to change(auto_updates, :installed_version)
+    end
+
+    it "restores the staged files and links if writing the receipt fails" do
+      allow(auto_updates.tab.tabfile).to receive(:atomic_write).and_raise(Errno::ENOSPC)
+
+      expect { described_class.upgrade_casks!(args:) }.to output(/No space left/).to_stderr
+      expect(auto_updates.installed_version).to eq("2.57")
+      expect(auto_updates.tab.version).to eq("2.57")
+      expect(binary.realpath).to eq((old_cask.staged_path/"bin/fancy").realpath)
+    ensure
+      Homebrew.failed = false
+    end
+  end
+
   context "when the upgrade is a dry run" do
     # Use stub installation for dry-run tests since they mock upgrade_cask
     # and only need to verify installation state, not perform real upgrades.
@@ -437,20 +522,17 @@ RSpec.describe Cask::Upgrade, :cask do
       allow(Cask::CaskLoader).to receive(:recover_from_installed_caskfile).and_return(nil)
     end
 
-    it "recovers when the installed caskfile raises CaskInvalidError" do
-      allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
-      allow(Cask::CaskLoader)
-        .to receive(:load_from_installed_caskfile)
-        .with(auto_updates.installed_caskfile)
-        .and_raise(Cask::CaskInvalidError.new(auto_updates.token, "broken DSL"))
-      expect(Cask::CaskLoader)
-        .to receive(:recover_from_installed_caskfile)
-        .with(auto_updates.installed_caskfile, fallback_cask: auto_updates)
-        .and_return(auto_updates)
+    test_each([["2.60", "2.61"], ["2.61", "2.57"], ["2.62", "2.57"]]) do |app_version, recorded_version|
+      it "compares bundle version #{app_version} after recovering the installed definition" do
+        stub_cask_bundle_version(auto_updates_path, short_version: app_version)
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile)
+          .with(auto_updates.installed_caskfile, any_args)
+          .and_raise(Cask::CaskInvalidError.new(auto_updates.token, "broken DSL"))
+        expect(Cask::CaskLoader).to receive(:recover_from_installed_caskfile).at_least(:once).and_call_original
 
-      expect do
-        described_class.upgrade_casks!(auto_updates, dry_run: true, args:)
-      end.not_to output(/The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
+        described_class.upgrade_casks!(auto_updates, args:)
+        expect(auto_updates.installed_version).to eq(recorded_version)
+      end
     end
 
     it "warns and skips when the installed caskfile raises CaskUnreadableError" do
@@ -532,6 +614,7 @@ RSpec.describe Cask::Upgrade, :cask do
       ].each do |cask_name|
         InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.57")
     end
 
     it 'prefetches "auto_updates true" casks with quarantine until signed identity is checked' do

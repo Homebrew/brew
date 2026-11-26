@@ -599,31 +599,84 @@ module Cask
       self.class.record_caveats(@cask)
     end
 
-    sig { returns(Pathname) }
-    def metadata_subdir
+    sig { params(timestamp: T.any(Symbol, String)).returns(Pathname) }
+    def metadata_subdir(timestamp: :now)
       @metadata_subdir ||= begin
-        msd = @cask.metadata_subdir("Casks", timestamp: :now, create: true)
+        msd = @cask.metadata_subdir("Casks", timestamp:, create: true)
         raise "unexpected nil metadata_subdir" unless msd
 
         msd
       end
     end
 
-    sig { void }
-    def save_caskfile
+    sig { params(timestamp: T.any(Symbol, String)).void }
+    def save_caskfile(timestamp: :now)
       old_savedir = @cask.metadata_timestamped_path
 
       return if @cask.source.blank?
 
+      directory = metadata_subdir(timestamp:)
       if @cask.uninstall_flight_blocks?
-        (metadata_subdir/"#{@cask.token}.rb").write @cask.source.to_s
+        (directory/"#{@cask.token}.rb").write @cask.source.to_s
       else
-        installed_json = @cask.to_installed_json_hash
-        installed_json["artifacts"] = [] if @cask.artifacts_list(uninstall_only: true).empty?
-        (metadata_subdir/"#{@cask.token}.json").write JSON.pretty_generate(installed_json)
+        (directory/"#{@cask.token}.json").write JSON.pretty_generate(@cask.to_installed_json_hash)
       end
 
       FileUtils.rm_r(old_savedir) if old_savedir
+    end
+
+    # Record an app's self-update without running any install or uninstall artifacts.
+    sig { params(installed: Cask).void }
+    def refresh_self_update(installed)
+      caskfile = installed.sourcefile_path
+      return if caskfile.nil? || cask.source.blank?
+      return if Utils.path_occupied?(cask.staged_path) || Utils.path_occupied?(cask.metadata_versioned_path)
+
+      return if installed.token != cask.token || !installed.staged_path.directory?
+      return if installed.metadata_versioned_path != caskfile.dirname.dirname.dirname
+      return if installed.url&.only_path != cask.url&.only_path
+
+      install_artifacts = cask.artifacts_list(install_only: true)
+      # Ruby flight blocks have no serialisable body to compare.
+      return if install_artifacts.any? { |artifact| artifact.value?(nil) }
+      return unless Caskroom.artifacts_equivalent?(installed.artifacts_list(install_only: true), install_artifacts)
+
+      tab = cask.tab.dup
+      return if tab.tap && tab.tap != cask.tap
+
+      tab.installed_on_request = true unless tab.tabfile
+      tab.update_caskfile(cask)
+      previous_metadata = cask.metadata_versioned_path/".previous"
+      links = T.let({}, T::Hash[Pathname, Pathname])
+      ::Utils::Interrupts.ignore do
+        installed.staged_path.rename(cask.staged_path)
+        begin
+          installed.artifacts.grep(Artifact::Symlinked).each do |artifact|
+            target = artifact.target
+            next unless target.symlink?
+
+            link = target.readlink
+            source = (target.dirname/link).cleanpath
+            next if source != artifact.source || source.ascend.exclude?(installed.staged_path)
+
+            links[target] = link
+            FileUtils.ln_sf(cask.staged_path/source.relative_path_from(installed.staged_path), target)
+          end
+          save_caskfile(timestamp: caskfile.dirname.dirname.basename.to_s)
+          installed.metadata_versioned_path.rename(previous_metadata.to_s)
+          tab.write
+        rescue
+          Tab.clear_cache
+          previous_metadata.rename(installed.metadata_versioned_path.to_s) if previous_metadata.exist?
+          FileUtils.rm_rf(cask.metadata_versioned_path)
+          cask.staged_path.rename(installed.staged_path)
+          links.each { |target, link| FileUtils.ln_sf(link, target) }
+          raise
+        end
+        FileUtils.rm_r(previous_metadata)
+      end
+    rescue => e
+      ofail "Could not refresh the installed caskfile for #{cask.full_name}: #{e}"
     end
 
     sig { void }

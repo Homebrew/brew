@@ -568,6 +568,18 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     expect(Homebrew).to have_failed
   end
 
+  it "records a named self-updated cask after the dry run", :cask do
+    cask = Cask::CaskLoader.load("auto-updates")
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/auto-updates")))
+    stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2061")
+
+    expect(Homebrew::Install).not_to receive(:enqueue_cask_installers)
+    expect { described_class.new(["--cask", "--dry-run", cask.token]).run }.not_to change(cask, :installed_version)
+    expect { described_class.new(["--cask", "--yes", cask.token]).run }.to change(cask, :installed_version)
+      .from("2.57")
+      .to("2.61")
+  end
+
   it "does not rescan casks when prefetch finds no outdated casks" do
     cmd = described_class.new(["--cask", "--yes"])
     download_queue = instance_double(

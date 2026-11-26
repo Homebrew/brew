@@ -494,11 +494,18 @@ module Cask
                         greedy_auto_updates:).nil?
     end
 
+    # Whether the cask has a version that can be checked against a single self-updating app.
+    sig { returns(T::Boolean) }
+    def auto_updates_app?
+      auto_updates == true && version.present? && !version.latest? && artifacts.one?(Artifact::App)
+    end
+
+    # Upgrade callers can handle an exact bundle match without reinstalling the app.
     sig {
-      params(greedy: T::Boolean, greedy_latest: T.nilable(T::Boolean), greedy_auto_updates: T.nilable(T::Boolean))
-        .returns(T.nilable(String))
+      params(greedy: T::Boolean, greedy_latest: T.nilable(T::Boolean), greedy_auto_updates: T.nilable(T::Boolean),
+             on_self_update: T.nilable(T.proc.params(cask: Cask, installed: Cask).void)).returns(T.nilable(String))
     }
-    def outdated_version(greedy: false, greedy_latest: false, greedy_auto_updates: false)
+    def outdated_version(greedy: false, greedy_latest: false, greedy_auto_updates: false, &on_self_update)
       # special case: tap version is not available
       return if version.nil?
 
@@ -508,17 +515,17 @@ module Cask
         return
       end
 
-      return if installed_version == version
+      installed = installed_version
+      return if installed.nil?
 
-      if auto_updates && !greedy && !greedy_auto_updates
-        return unless Homebrew::EnvConfig.upgrade_auto_updates_casks?
-
-        return installed_version if auto_updates_bundle_outdated?
-
-        return
+      if auto_updates_app?
+        return if !greedy && !greedy_auto_updates && !Homebrew::EnvConfig.upgrade_auto_updates_casks?
+        return installed if auto_updates_bundle_outdated?(installed, &on_self_update)
+      elsif installed != version && (!auto_updates || greedy || greedy_auto_updates)
+        return installed
       end
 
-      installed_version
+      nil
     end
 
     sig {
@@ -773,24 +780,34 @@ module Cask
 
     sig { returns(T::Hash[String, T.untyped]) }
     def to_installed_json_hash
-      cask_url = url
-      return {} if cask_url.nil? || cask_url.only_path.blank?
-
-      { "url_specs" => { "only_path" => cask_url.only_path } }
+      json = {}
+      only_path = url&.only_path
+      json["url_specs"] = { "only_path" => only_path } if only_path.present?
+      uninstall_artifacts = artifacts_list(uninstall_only: true)
+      if uninstall_artifacts.size < artifacts.size && auto_updates_app?
+        # The receipt omits install-only stanzas such as pkg. Keep them for the next self-update comparison.
+        json["artifacts"] = artifacts_list
+      elsif uninstall_artifacts.empty?
+        json["artifacts"] = []
+      end
+      json
     end
 
-    sig { params(uninstall_only: T::Boolean).returns(T::Array[T::Hash[Symbol, T.untyped]]) }
-    def artifacts_list(uninstall_only: false)
+    sig { params(install_only: T::Boolean, uninstall_only: T::Boolean).returns(T::Array[T::Hash[Symbol, T.untyped]]) }
+    def artifacts_list(install_only: false, uninstall_only: false)
       artifacts.filter_map do |artifact|
         case artifact
         when Artifact::AbstractFlightBlock
           uninstall_flight_block = artifact.directives.key?(:uninstall_preflight) ||
                                    artifact.directives.key?(:uninstall_postflight)
+          next if install_only && uninstall_flight_block
           next if uninstall_only && !uninstall_flight_block
 
           # Only indicate whether this block is used as we don't load it from the API
           { artifact.summarize.to_sym => nil }
         else
+          next if install_only && !artifact.respond_to?(:install_phase)
+
           zap_artifact = artifact.is_a?(Artifact::Zap)
           uninstall_artifact = artifact.respond_to?(:uninstall_phase) || artifact.respond_to?(:post_uninstall_phase)
           next if uninstall_only && !zap_artifact && !uninstall_artifact
@@ -854,22 +871,6 @@ module Cask
       @dsl || raise("unexpected nil @dsl")
     end
 
-    sig { returns(T.nilable(Artifact::App)) }
-    def single_app_artifact
-      app_artifacts = artifacts.grep(Artifact::App)
-      return unless app_artifacts.one?
-
-      app_artifacts.first
-    end
-
-    sig { returns(T.nilable(Pathname)) }
-    def installed_app_info_plist
-      return unless (app_artifact = single_app_artifact)
-
-      info_plist = app_artifact.target/"Contents/Info.plist"
-      info_plist if info_plist.exist? && info_plist.readable?
-    end
-
     sig { params(first: T.nilable(String), second: T.nilable(String)).returns(T.nilable(Integer)) }
     def compare_version_strings(first, second)
       return if first.blank? || second.blank?
@@ -880,32 +881,57 @@ module Cask
       nil
     end
 
-    sig { returns(T::Boolean) }
-    def auto_updates_bundle_outdated?
-      return false if !auto_updates || version.latest?
-      return false unless installed_app_info_plist
+    sig {
+      params(installed_version: String, on_self_update: T.nilable(T.proc.params(cask: Cask, installed: Cask).void))
+        .returns(T::Boolean)
+    }
+    def auto_updates_bundle_outdated?(installed_version, &on_self_update)
+      caskfile = installed_caskfile
+      return false unless caskfile
 
-      tap_short_version = version.csv.first.to_s.presence || version.to_s
+      installed_cask = begin
+        CaskLoader.load_from_installed_caskfile(caskfile, api_fallback: false)
+      rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError, JSON::ParserError
+        # The receipt identifies the app but can omit installation artifacts such as pkg.
+        on_self_update = nil
+        receipt = CaskLoader.load_installed_tab(CaskLoader.token_from_path(caskfile))
+        CaskLoader.recover_from_installed_caskfile(caskfile, tab: receipt) if receipt.uninstall_artifacts.present?
+      end
+      return false if installed_cask.nil? || !installed_cask.artifacts.one?(Artifact::App)
 
-      begin
-        installed_short_version = bundle_short_version
-        installed_bundle_version = bundle_long_version
-      rescue ErrorDuringExecution
+      installed_short_version = installed_cask.bundle_short_version
+      installed_bundle_version = installed_cask.bundle_long_version
+      installed_short_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_short_version)
+      installed_bundle_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_bundle_version)
+      bundle_versions = [installed_short_version, installed_bundle_version].compact
+      return false if bundle_versions.empty?
+
+      if [*bundle_versions, bundle_versions.join(","), bundle_versions.join("-")].include?(version)
+        return false if !on_self_update || installed_version == version || pinned?
+
+        yield self, installed_cask if Version.new(installed_version) < Version.new(version)
         return false
       end
-      installed_bundle_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_bundle_version)
-      installed_short_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_short_version)
-      return false if installed_short_version.nil? && installed_bundle_version.nil?
 
-      # Self-updates change the bundle version, so an app whose short and bundle versions
-      # still match a CSV installation record is the build Homebrew installed and a
-      # different tap version is outdated, as for casks without `auto_updates`.
-      return true if installed_version.to_s.split(",").first(2) == [installed_short_version, installed_bundle_version]
+      tap_versions = version.csv
+      tap_short_version = tap_versions.first.to_s.presence || version.to_s
+
+      short_comparison = compare_version_strings(installed_short_version, tap_short_version)
+      if tap_versions.size > 1 && short_comparison&.zero?
+        comparisons = tap_versions.drop(1).map { |build| compare_version_strings(installed_bundle_version, build) }
+        return false if comparisons.intersect?([0, 1])
+        return true if comparisons.all?(-1)
+      end
+
+      # An exact match with the recorded short version and build identifies the cask's version scheme.
+      if installed_version.split(",").first(2) == [installed_short_version, installed_bundle_version]
+        return Version.new(installed_version) < Version.new(version)
+      end
 
       # Some apps split a cask version like 2.61-2057 across the short
       # version and bundle version fields.
       if installed_short_version && installed_bundle_version
-        combined_version_comparisons = version.csv.filter_map do |candidate|
+        combined_version_comparisons = tap_versions.filter_map do |candidate|
           compare_version_strings("#{installed_short_version}-#{installed_bundle_version}", candidate.to_s)
         end
         return false if combined_version_comparisons.include?(0)
@@ -916,14 +942,13 @@ module Cask
 
       return false if compare_version_strings(installed_bundle_version, tap_short_version)&.zero?
 
-      short_comparison = compare_version_strings(installed_short_version, tap_short_version)
       return short_comparison.negative? if short_comparison
 
-      # A short version still matching Homebrew's installation record means a
-      # different non-CSV tap version is outdated, as for casks without `auto_updates`.
-      return true if version.csv.one? && installed_short_version && installed_short_version == installed_version
+      if tap_versions.one? && installed_short_version == installed_version
+        return Version.new(installed_version) < Version.new(tap_short_version)
+      end
 
-      build_comparisons = version.csv.filter_map do |candidate|
+      build_comparisons = tap_versions.filter_map do |candidate|
         compare_version_strings(installed_bundle_version, candidate.to_s)
       end
       return false if build_comparisons.include?(0)
@@ -942,6 +967,8 @@ module Cask
       end
 
       build_comparisons.include?(-1)
+    rescue ErrorDuringExecution
+      false
     end
 
     sig { returns(T.nilable(T::Hash[Symbol, T.untyped])) }
