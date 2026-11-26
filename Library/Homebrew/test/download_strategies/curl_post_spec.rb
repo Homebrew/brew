@@ -97,4 +97,26 @@ RSpec.describe CurlPostDownloadStrategy do
       end
     end
   end
+
+  test_each([["", {}], ["?form=data", {}], ["", { data: { form: "data" } }]]) do |query, options|
+    context "with authentication, query #{query.inspect} and #{options}" do
+      let(:url) { "https://example.com/foo.tar.gz#{query}" }
+      let(:specs) { { using: :post, user: "user:password", **options } }
+
+      it "preserves credentials for the POST target" do
+        allow(strategy).to receive_messages(curl_version:                        Version.new("8.6.0"),
+                                            resolve_url_basename_time_file_size: [
+                                              url, "foo.tar.gz", nil, nil, nil, false
+                                            ])
+
+        expect(strategy).to receive(:system_command)
+          .with(/curl/, hash_including(args: array_including("--user", "user:password", "--output"))) do
+            FileUtils.touch strategy.temporary_path
+            instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+          end
+
+        strategy.fetch
+      end
+    end
+  end
 end

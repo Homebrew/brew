@@ -95,12 +95,12 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         @last_modified = last_modified
 
         # Caller-supplied headers (e.g. tokens) are no longer valid after a
-        # redirect to another host, and `Authorization` after any redirect.
+        # redirect to another origin, and `Authorization` after any redirect.
         if is_redirection
-          if resolved_url && URI(url).host != URI(resolved_url).host
+          if resolved_url && !same_origin?(url, resolved_url)
             meta.delete(:headers)
           else
-            meta[:headers]&.delete_if { |header| header.start_with?("Authorization") }
+            meta[:headers]&.delete_if { |header| header.match?(/\A\s*Authorization:/i) }
           end
         end
 
@@ -179,15 +179,17 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
   # Curl options to be always passed to curl,
   # with raw head calls (`curl --head`) or with actual `fetch`.
-  sig { returns(T::Array[String]) }
-  def _curl_args
+  sig { params(request_url: T.nilable(String)).returns(T::Array[String]) }
+  def _curl_args(request_url = url)
     args = []
 
     args += ["-b", meta.fetch(:cookies).map { |k, v| "#{k}=#{v}" }.join(";")] if meta.key?(:cookies)
 
     args += ["-e", meta.fetch(:referer)] if meta.key?(:referer)
 
-    args += ["--user", meta.fetch(:user)] if meta.key?(:user)
+    if meta.key?(:user) && request_url && same_origin?(request_url, url)
+      args += ["--user", meta.fetch(:user)]
+    end
 
     if meta.fetch(:headers, []).any? { |header| header.include?(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX) }
       args += ["--max-redirs", "0"]
@@ -199,6 +201,11 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 
   private
+
+  sig { params(first_url: String, second_url: String).returns(T::Boolean) }
+  def same_origin?(first_url, second_url)
+    URI(first_url).normalize.select(:scheme, :host, :port) == URI(second_url).normalize.select(:scheme, :host, :port)
+  end
 
   sig { params(timeout: T.nilable(T.any(Float, Integer))).returns([String, String]) }
   def resolved_url_and_basename(timeout: nil)
@@ -376,7 +383,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     retry_max_time: nil, show_error: true, cookies: nil, header: nil, referer: nil, user_agent: nil
   )
     super(
-      *_curl_args, *expand_deferred_environment_args(args),
+      *_curl_args(args.last), *expand_deferred_environment_args(args),
       secrets:, print_stdout:, print_stderr:, debug:, verbose:, timeout:, use_homebrew_curl:, connect_timeout:,
       max_time:, retries:, retry_max_time:, show_error:, cookies:, header:, referer:,
       user_agent: user_agent || _curl_user_agent
@@ -411,7 +418,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     cookies: nil, header: nil, referer: nil, user_agent: nil
   )
     super(
-      *_curl_args, *expand_deferred_environment_args(args),
+      *_curl_args(args.last), *expand_deferred_environment_args(args),
       # `print_stdout:` is accepted for the parent signature. Strategy output follows `quiet?`.
       secrets:, print_stdout: command_output_options[:print_stdout], print_stderr:, debug:, verbose:, timeout:,
       use_homebrew_curl:, connect_timeout: mirrors.empty? ? connect_timeout : 15, max_time:, retries:,
