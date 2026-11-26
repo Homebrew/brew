@@ -238,22 +238,6 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     EOS
   end
 
-  it "prompts again for return ask input" do
-    ["\r", "\n"].each do |input|
-      allow($stdin).to receive(:tty?).and_return(true)
-      allow($stdin).to receive(:getch).and_return(input, "n")
-      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
-
-      expect do
-        Homebrew::Install.ask(action: "upgrade")
-      end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
-        .and output(<<~EOS).to_stdout
-          ==> Do you want to proceed with the upgrade? [y/n]
-          Invalid input. Please press 'y' to proceed, or 'n' to abort.
-        EOS
-    end
-  end
-
   it "accepts single character ask input" do
     %w[y Y].each do |input|
       allow($stdin).to receive_messages(getch: input, tty?: true)
@@ -261,7 +245,18 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
       expect do
         Homebrew::Install.ask(action: "upgrade")
-      end.to output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+      end.to output("==> Do you want to proceed with the upgrade? [Y/n]\n").to_stdout
+    end
+  end
+
+  it "accepts default ask input" do
+    ["\n", "\r"].each do |input|
+      allow($stdin).to receive_messages(getch: input, tty?: true)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        Homebrew::Install.ask(action: "upgrade")
+      end.to output("==> Do you want to proceed with the upgrade? [Y/n]\n").to_stdout
     end
   end
 
@@ -273,8 +268,22 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       expect do
         Homebrew::Install.ask(action: "upgrade")
       end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
-        .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+        .and output("==> Do you want to proceed with the upgrade? [Y/n]\n").to_stdout
     end
+  end
+
+  it "prompts again for invalid ask input" do
+    allow($stdin).to receive(:tty?).and_return(true)
+    allow($stdin).to receive(:getch).and_return("x", "n")
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    expect do
+      Homebrew::Install.ask(action: "upgrade")
+    end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+      .and output(<<~EOS).to_stdout
+        ==> Do you want to proceed with the upgrade? [Y/n]
+        Invalid input. Please press 'y' to proceed, or 'n' to abort.
+      EOS
   end
 
   it "terminates on ask cancellation input" do
@@ -285,7 +294,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       expect do
         Homebrew::Install.ask(action: "upgrade")
       end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
-        .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+        .and output("==> Do you want to proceed with the upgrade? [Y/n]\n").to_stdout
     end
   end
 
@@ -297,7 +306,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect do
       Homebrew::Install.ask(action: "upgrade")
     end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
-      .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+      .and output("==> Do you want to proceed with the upgrade? [Y/n]\n").to_stdout
   end
 
   it "skips ask input without a TTY" do

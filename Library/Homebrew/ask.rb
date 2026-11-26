@@ -12,7 +12,7 @@ module Homebrew
     def self.confirm?(action:)
       return false if !$stdin.tty? || !$stdout.tty?
 
-      ohai "Do you want to proceed with the #{action}? [y/n]"
+      ohai "Do you want to proceed with the #{action}? [Y/n]"
       loop do
         result = begin
           $stdin.getch
@@ -21,11 +21,12 @@ module Homebrew
         end
         exit 1 unless result
 
-        result = result.chomp.strip.downcase
-        if result == "y"
+        clean_result = result.chomp.strip.downcase
+        # Y, Enter
+        if (clean_result == "y") || ["\n", "\r"].include?(result)
           return true
         # N, Escape, Ctrl-C and Ctrl-D.
-        elsif ["n", "\e", "\u0003", "\u0004"].include?(result)
+        elsif ["n", "\e", "\u0003", "\u0004"].include?(clean_result)
           exit 1
         else
           puts "Invalid input. Please press 'y' to proceed, or 'n' to abort."
