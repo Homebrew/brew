@@ -25,7 +25,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
     }
   end
   let(:reviews) do
-    [{ "user"         => { "login" => "copilot-pull-request-reviewer[bot]", "type" => "Bot" },
+    [{ "user"         => { "login" => "coderabbitai[bot]", "type" => "Bot" },
        "state"        => "COMMENTED",
        "submitted_at" => (now - 3600).iso8601,
        "commit_id"    => "head-sha" }]
@@ -252,8 +252,16 @@ RSpec.describe StaleLeadMaintainerPrApproval do
     expect(approvals).to be_empty
   end
 
-  it "requires a Copilot bot review" do
+  it "requires a CodeRabbit review" do
     reviews.clear
+    approval.run
+
+    expect(approvals).to be_empty
+  end
+
+  it "does not count another bot's review" do
+    reviews.replace([reviews.first.merge("user" => { "login" => "copilot-pull-request-reviewer[bot]",
+                                                     "type"  => "Bot" })])
     approval.run
 
     expect(approvals).to be_empty

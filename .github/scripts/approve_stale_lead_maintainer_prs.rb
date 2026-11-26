@@ -61,7 +61,7 @@ class StaleLeadMaintainerPrApproval
     prop :no_human_review_since_creation, T::Boolean, default: false
     prop :reviews_checked, T::Boolean, default: false
     prop :human_reviews_since_creation, T::Array[String], default: []
-    prop :copilot_reviewed, T::Boolean, default: false
+    prop :coderabbit_reviewed, T::Boolean, default: false
     prop :already_approved, T::Boolean, default: false
     prop :sensitive_files_unchanged, T::Boolean, default: false
     prop :sensitive_files_checked, T::Boolean, default: false
@@ -153,7 +153,7 @@ class StaleLeadMaintainerPrApproval
             - [@#{data.author}](#{data.author_url}) is listed as a lead maintainer in [README.md](#{@server_url}/#{@repository}/blob/HEAD/README.md).
             - [@#{data.author}](#{data.author_url}) approved Homebrew/brew PR [##{data.approved_pr_number}](#{data.approved_pr_url}) in the last 7 days.
             - [##{data.number}](#{data.pr_url}) was created at least #{HUMAN_REVIEW_WINDOW_HOURS} hours ago and has had no human review since creation.
-            - Copilot has already reviewed [##{data.number}](#{data.pr_url}).
+            - CodeRabbit has already reviewed [##{data.number}](#{data.pr_url}).
             - [##{data.number}](#{data.pr_url}) does not modify `.github/` or other sensitive files.
             - All [CI jobs](#{data.checks_url}) are passing, including non-required jobs.
           MARKDOWN
@@ -300,10 +300,10 @@ class StaleLeadMaintainerPrApproval
       "@#{login} #{state} at #{submitted_at.utc.iso8601}"
     end
     data.no_human_review_since_creation = data.human_reviews_since_creation.empty?
-    data.copilot_reviewed = reviews.any? do |review|
+    data.coderabbit_reviewed = reviews.any? do |review|
       review_user = T.cast(review.fetch("user"), GitHubPayload)
       T.cast(review_user.fetch("type"), String) == "Bot" &&
-        T.cast(review_user.fetch("login"), String).downcase.include?("copilot")
+        T.cast(review_user.fetch("login"), String) == "coderabbitai[bot]"
     end
     data.already_approved = reviews.any? do |review|
       review_user = T.cast(review.fetch("user"), GitHubPayload)
@@ -312,7 +312,7 @@ class StaleLeadMaintainerPrApproval
         T.cast(review.fetch("commit_id"), String) == data.head_sha
     end
     if !exhaustive &&
-       (!data.old_enough_for_approval || !data.no_human_review_since_creation || !data.copilot_reviewed ||
+       (!data.old_enough_for_approval || !data.no_human_review_since_creation || !data.coderabbit_reviewed ||
         data.already_approved)
       return finish(data, failures_for(data, include_ci: false))
     end
@@ -375,7 +375,7 @@ class StaleLeadMaintainerPrApproval
                             data.approved_another_pr &&
                             data.old_enough_for_approval &&
                             data.no_human_review_since_creation &&
-                            data.copilot_reviewed &&
+                            data.coderabbit_reviewed &&
                             data.sensitive_files_unchanged &&
                             data.ci_passing
     data.should_approve = data.requirements_met && !data.already_approved
@@ -414,8 +414,8 @@ class StaleLeadMaintainerPrApproval
     else
       puts "- Human reviews since creation: not checked"
     end
-    copilot_reviewed = data.copilot_reviewed if data.reviews_checked
-    puts "- Copilot reviewed: #{status_label(copilot_reviewed)}"
+    coderabbit_reviewed = data.coderabbit_reviewed if data.reviews_checked
+    puts "- CodeRabbit reviewed: #{status_label(coderabbit_reviewed)}"
     sensitive_files_unchanged = data.sensitive_files_unchanged if data.sensitive_files_checked
     puts "- .github/ and sensitive files unchanged: #{status_label(sensitive_files_unchanged)}"
     if data.sensitive_files_checked && !data.changed_sensitive_files.empty?
@@ -465,7 +465,7 @@ class StaleLeadMaintainerPrApproval
     unless data.no_human_review_since_creation
       failures << "Pull request ##{data.number} has a human review since creation."
     end
-    failures << "Copilot has not reviewed pull request ##{data.number}." unless data.copilot_reviewed
+    failures << "CodeRabbit has not reviewed pull request ##{data.number}." unless data.coderabbit_reviewed
     unless data.sensitive_files_unchanged
       failures << "Pull request ##{data.number} changes .github/ or other sensitive files: " \
                   "#{data.changed_sensitive_files.join(", ")}."
@@ -504,8 +504,8 @@ class StaleLeadMaintainerPrApproval
                      "#{data.approved_another_pr} (#{approved_pr_link(data)})"
         summary.puts "- No human review on [##{data.number}](#{data.pr_url}) since creation: " \
                      "#{data.no_human_review_since_creation}"
-        summary.puts "- Copilot has reviewed [##{data.number}](#{data.pr_url}): " \
-                     "#{data.copilot_reviewed}"
+        summary.puts "- CodeRabbit has reviewed [##{data.number}](#{data.pr_url}): " \
+                     "#{data.coderabbit_reviewed}"
         summary.puts "- `.github/` and sensitive files are unchanged in " \
                      "[##{data.number}](#{data.pr_url}): " \
                      "#{data.sensitive_files_unchanged}"
