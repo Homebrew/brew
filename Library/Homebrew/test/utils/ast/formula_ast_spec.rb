@@ -118,6 +118,16 @@ RSpec.describe Utils::AST::FormulaAST do
       end).to all(be_nil)
     end
 
+    it "ignores compiler versions in `fails_with` blocks" do
+      fails_with = "fails_with :gcc do\nversion '12'\nend\n"
+      releases = ["url 'https://example.org/foo-2.0.tar.gz'\n#{fails_with}",
+                  "url 'https://example.org/foo.tar.gz'\nversion '2.0'\non_arm do\n#{fails_with}end\n"]
+      expect(releases.map do |release|
+        source = "class Foo < Formula\n#{release}end\n"
+        described_class.valid_bump?(source.sub("2.0", "1.0"), source, version: "2.0")
+      end).to all(be(true))
+    end
+
     it "limits mirror removal to the stable download" do
       source = <<~RUBY
         class Foo < Formula
