@@ -226,6 +226,15 @@ module Homebrew
           ENV.delete(env)
         end
 
+        # Keep in sync with `Library/Homebrew/brew.sh`.
+        if ENV["HOMEBREW_TESTS_NO_SORBET_RUNTIME"]
+          ENV.delete("HOMEBREW_SORBET_RUNTIME")
+          ENV.delete("HOMEBREW_SORBET_RECURSIVE")
+        else
+          ENV["HOMEBREW_SORBET_RUNTIME"] = "1"
+          ENV["HOMEBREW_SORBET_RECURSIVE"] = "1"
+        end
+
         # Fetch JSON API files if needed.
         require "api"
         Homebrew::API.fetch_api_files!
@@ -245,14 +254,6 @@ module Homebrew
         ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "1"
         ENV["HOMEBREW_TEST_GENERIC_OS"] = "1" if args.generic?
         ENV["HOMEBREW_TEST_ONLINE"] = "1" if args.online?
-        # Keep in sync with `Library/Homebrew/brew.sh`.
-        if ENV["HOMEBREW_TESTS_NO_SORBET_RUNTIME"]
-          ENV.delete("HOMEBREW_SORBET_RUNTIME")
-          ENV.delete("HOMEBREW_SORBET_RECURSIVE")
-        else
-          ENV["HOMEBREW_SORBET_RUNTIME"] = "1"
-          ENV["HOMEBREW_SORBET_RECURSIVE"] = "1"
-        end
 
         ENV["USER"] ||= system_command!("id", args: ["-nu"]).stdout.chomp
 
