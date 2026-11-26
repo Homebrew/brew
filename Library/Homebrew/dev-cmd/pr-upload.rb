@@ -143,7 +143,9 @@ module Homebrew
 
           if args.upload_only?
             # No image is built for a formula whose upload is skipped, e.g. as it is already uploaded.
-            pinned_sha256 = Formulary.from_path(path).bottle_specification.manifest_sha256
+            pinned_sha256 = Utils::Bottles.formula_from_bottle_metadata(
+              formula_name, bottle_hash.fetch("formula").fetch("path")
+            ).bottle_specification.manifest_sha256
             next if pinned_sha256.nil? || manifest_sha256.nil? || pinned_sha256 == manifest_sha256
 
             odie "#{formula_name}: bottle block pins manifest #{pinned_sha256} " \
@@ -190,8 +192,8 @@ module Homebrew
         # Reload the bottle block written by `brew bottle --merge`.
         Formulary.clear_cache
         transition = BottleTransition.new
-        bottles_hash.each_value do |bottle_hash|
-          formula = Formulary.from_path(HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"))
+        bottles_hash.each do |name, bottle_hash|
+          formula = Utils::Bottles.formula_from_bottle_metadata(name, bottle_hash.fetch("formula").fetch("path"))
           next unless transition.required?(formula)
 
           spec = formula.bottle_specification
@@ -224,8 +226,8 @@ module Homebrew
       sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
       def check_bottled_formulae!(bottles_hash)
         bottles_hash.each do |name, bottle_hash|
-          formula_version = Formulary.from_path(
-            HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"),
+          formula_version = Utils::Bottles.formula_from_bottle_metadata(
+            name, bottle_hash.fetch("formula").fetch("path")
           ).pkg_version
           bottle_version = PkgVersion.parse bottle_hash["formula"]["pkg_version"]
           next if formula_version == bottle_version

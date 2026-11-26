@@ -9,6 +9,28 @@ module Utils
   # @api internal
   module Bottles
     class << self
+      # Load only the installed tap formula named by bottle metadata.
+      sig { params(name: String, path: String).returns(Formula) }
+      def formula_from_bottle_metadata(name, path)
+        tap, formula_name = Tap.with_formula_name(name) || [CoreTap.instance, name]
+        metadata_path = Pathname(path)
+        error = "Bottle metadata for #{name} must reference its installed tap formula."
+        raise UsageError, error if metadata_path.each_filename.include?("..")
+
+        formula_path = Utils::Path.tap_package_path(HOMEBREW_REPOSITORY/metadata_path, :formula)
+        raise UsageError, error if !formula_path || Tap.from_path(formula_path) != tap
+
+        real_path = formula_path.realpath
+        if formula_path.basename(".rb").to_s != formula_name || real_path.basename(".rb").to_s != formula_name ||
+           real_path.ascend.exclude?(tap.path.realpath)
+          raise UsageError, error
+        end
+
+        Formulary.from_path(formula_path)
+      rescue Errno::ENOENT, Errno::ELOOP
+        raise UsageError, error
+      end
+
       # Gets the tag for the running OS.
       #
       # @api internal

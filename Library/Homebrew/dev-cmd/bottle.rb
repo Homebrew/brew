@@ -832,7 +832,8 @@ module Homebrew
           bottle.root_url bottle_hash["bottle"]["root_url"]
           bottle.rebuild bottle_hash["bottle"]["rebuild"]
 
-          formula = Formulary.from_path(HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"))
+          formula = Utils::Bottles.formula_from_bottle_metadata(formula_name,
+                                                                bottle_hash.fetch("formula").fetch("path"))
           path = formula.path
 
           old_bottle_spec = formula.bottle_specification

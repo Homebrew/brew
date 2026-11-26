@@ -4,6 +4,38 @@
 require "utils/bottles"
 
 RSpec.describe Utils::Bottles do
+  describe ".formula_from_bottle_metadata" do
+    sig { returns(Pathname) }
+    let(:path) { CoreTap.instance.new_formula_path("metadata-test") }
+
+    before do
+      path.dirname.mkpath
+      path.write <<~RUBY
+        class MetadataTest < Formula
+          url "https://example.com/metadata-test-1.0.tar.gz"
+        end
+      RUBY
+    end
+
+    test_each([[false, "relative"], [true, "absolute"]]) do |absolute, path_type|
+      it "loads a named installed formula from its #{path_type} path" do
+        metadata_path = absolute ? path : path.relative_path_from(HOMEBREW_REPOSITORY)
+
+        expect(described_class.formula_from_bottle_metadata("metadata-test", metadata_path.to_s).full_name)
+          .to eq("metadata-test")
+      end
+    end
+
+    it "rejects a different tap identity even when both taps share a checkout" do
+      alias_tap = Tap.fetch("homebrew", "foo")
+      alias_tap.path.make_symlink(CoreTap.instance.path)
+      alias_path = alias_tap.path/path.relative_path_from(CoreTap.instance.path)
+
+      expect { described_class.formula_from_bottle_metadata("metadata-test", alias_path.to_s) }
+        .to raise_error(UsageError, /installed tap formula/)
+    end
+  end
+
   describe "#tag", :needs_macos do
     it "returns :big_sur or :arm64_big_sur on Big Sur" do
       allow(MacOS).to receive(:version).and_return(MacOSVersion.new("11.0"))

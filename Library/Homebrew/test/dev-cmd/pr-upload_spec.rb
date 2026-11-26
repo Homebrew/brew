@@ -235,10 +235,19 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
 
         expect(formula_path.read).to eq(formula_source)
       end
+
+      it "rejects a source outside its installed tap before evaluating Ruby" do
+        path = mktmpdir/"untrusted.rb"
+        path.write('raise "Untrusted formula evaluated"')
+        bottles.fetch("transition-test").fetch("formula")["path"] = path.to_s
+
+        expect { PrUploadForTesting.new(["--upload-only"]).write_manifest_pins!(bottles, {}) }
+          .to raise_error(UsageError, /installed tap formula/)
+      end
     end
   end
 
-  context "when a local source shares a core formula name" do
+  context "when metadata selects a source outside its installed tap" do
     before do
       path = mktmpdir/"transition-test.rb"
       path.write(formula_source)
@@ -247,17 +256,40 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
       Formulary.clear_cache
     end
 
-    it "checks the version of the recorded source" do
-      expect { PrUploadForTesting.new([]).validate_bottled_formulae!(bottles) }.not_to raise_error
+    it "rejects the source before checking its version" do
+      expect { PrUploadForTesting.new([]).validate_bottled_formulae!(bottles) }
+        .to raise_error(UsageError, /installed tap formula/)
     end
 
-    it "checks transition coverage of the recorded source in upload-only mode" do
+    it "rejects the source before checking transition coverage in upload-only mode" do
       allow_any_instance_of(BottleTransition).to receive(:required?) { |_, formula| formula.path != formula_path }
       bottles.fetch("transition-test").fetch("bottle")["tags"] = { "arm64_tahoe" => { "sha256" => "a" * 64 } }
 
       expect { PrUploadForTesting.new(["--upload-only"]).validate_transition_bottles!(bottles) }
-        .to raise_error(UsageError, /upload set is missing/)
+        .to raise_error(UsageError, /installed tap formula/)
     end
+  end
+
+  it "rejects an absolute artifact path before evaluating Ruby" do
+    metadata = bottles
+    path = mktmpdir/"untrusted.rb"
+    path.write('raise "Untrusted formula evaluated"')
+    metadata.fetch("transition-test").fetch("formula")["path"] = path.to_s
+
+    expect { PrUploadForTesting.new([]).validate_bottled_formulae!(metadata) }
+      .to raise_error(UsageError, /installed tap formula/)
+  end
+
+  it "rejects a formula symlink escaping its tap before evaluating Ruby" do
+    metadata = bottles
+    path = mktmpdir/"transition-test.rb"
+    path.write('raise "Untrusted formula evaluated"')
+    formula_path.unlink
+    formula_path.make_symlink(path)
+    Formulary.clear_cache
+
+    expect { PrUploadForTesting.new([]).validate_bottled_formulae!(metadata) }
+      .to raise_error(UsageError, /installed tap formula/)
   end
 
   describe "#bottles_hash_from_json_files" do
