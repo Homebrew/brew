@@ -318,6 +318,7 @@ class Tap # rubocop:disable Metrics/ClassLength
   sig { void }
   def clear_cache
     @remote = nil
+    @git_head = nil
     @repository_var_suffix = T.let(nil, T.nilable(String))
     remove_instance_variable(:@private) if instance_variable_defined?(:@private)
 
