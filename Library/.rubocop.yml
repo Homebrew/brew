@@ -32,6 +32,7 @@ AllCops:
     - "Homebrew/sorbet/rbi/parser*.rbi"
     - "Homebrew/bin/*"
     - "Homebrew/vendor/**/*"
+    - "Taps/*/*/Aliases/*"
     - "Taps/*/*/vendor/**/*"
     - "**/.github/copilot-instructions.md" # This should be treated the same as the `docs/` files.
   SuggestExtensions: false

@@ -21,6 +21,65 @@ RSpec.describe Homebrew::Style do
   describe ".check_style_json" do
     let(:dir) { mktmpdir }
 
+    context "with a symlinked tap checkout" do
+      let(:tap) { Tap.fetch("homebrew", "checkout") }
+      let(:config) { HOMEBREW_LIBRARY/"tap_rubocop_style.yml" }
+      let(:script) { dir.realpath/"command.rb" }
+      let(:command_cops) { %w[Homebrew/SingleUseMethod Style/TopLevelMethodDefinition] }
+
+      before do
+        tap.path.make_relative_symlink(dir)
+        config.make_symlink(HOMEBREW_LIBRARY_PATH.parent/config.basename)
+        script.write <<~RUBY
+          def top_level_helper = 1
+
+          class CheckoutCommand
+            def run = checkout_message
+
+            private
+
+            def checkout_message = "hello"
+          end
+        RUBY
+      end
+
+      after { FileUtils.rm_f [tap.path, config] }
+
+      it "reports a single-use method when checking a whole symlinked tap and honours tap exclusions" do
+        offenses = described_class.check_style_json([tap.path], only_cops: command_cops)
+        expect(offenses.for_path(script).map(&:cop_name)).to eq(["Homebrew/SingleUseMethod"])
+      end
+
+      it "counts a caller once when given both an installed path and a path through a checkout alias" do
+        checkout_alias = mktmpdir/"checkout"
+        checkout_alias.make_symlink(dir)
+        paths = [tap.path/script.basename, checkout_alias/script.basename]
+        offenses = described_class.check_style_json(paths, only_cops: command_cops)
+        expect(offenses.for_path(script).map(&:cop_name)).to eq(["Homebrew/SingleUseMethod"])
+      end
+
+      it "checks the formula once when given its Ruby alias" do
+        formula = tap.path/"Formula/foo.rb"
+        formula.dirname.mkpath
+        formula.write <<~RUBY
+          class Foo < Formula
+            class Worker
+              def run = message
+
+              private
+
+              def message = "hello"
+            end
+          end
+        RUBY
+        alias_path = tap.alias_dir/"bar.rb"
+        alias_path.make_relative_symlink(formula)
+
+        offenses = described_class.check_style_json([alias_path], only_cops: ["Homebrew/SingleUseMethod"])
+        expect(offenses.for_path(formula.realpath).map(&:cop_name)).to eq(["Homebrew/SingleUseMethod"])
+      end
+    end
+
     it "requires test resources outside test blocks in homebrew/core without strict audits" do
       formula = dir/"Taps/homebrew/homebrew-core/Formula/foo.rb"
       formula.dirname.mkpath
