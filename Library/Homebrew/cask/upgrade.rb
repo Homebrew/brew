@@ -35,11 +35,12 @@ module Cask
         greedy_auto_updates: T.nilable(T::Boolean),
         summary_pinned:      T.nilable(T::Array[VersionChange]),
         summary_disabled:    T.nilable(T::Array[String]),
+        refresh_installed:   T::Boolean,
       ).returns(T::Array[Cask])
     }
     def self.outdated_casks(casks, args:, force:, quiet:,
                             greedy: false, greedy_latest: false, greedy_auto_updates: false,
-                            summary_pinned: nil, summary_disabled: nil)
+                            summary_pinned: nil, summary_disabled: nil, refresh_installed: false)
       greedy = true if Homebrew::EnvConfig.upgrade_greedy?
 
       outdated_casks = if casks.empty?
@@ -51,8 +52,10 @@ module Cask
           end
 
           cask_greedy = greedy || greedy_casks.include?(cask.token)
-          cask.outdated?(greedy: cask_greedy, greedy_latest:,
-                         greedy_auto_updates:)
+          outdated = cask.outdated?(greedy: cask_greedy, greedy_latest:,
+                                    greedy_auto_updates:)
+          Installer.new(cask).refresh_installed_caskfile if refresh_installed && !outdated
+          outdated
         end
       else
         casks.select do |cask|
@@ -164,7 +167,7 @@ module Cask
     )
       outdated_casks =
         self.outdated_casks(casks, args:, greedy:, greedy_latest:, greedy_auto_updates:, force:, quiet:,
-                                   summary_pinned:, summary_disabled:)
+                                   summary_pinned:, summary_disabled:, refresh_installed: !dry_run)
 
       manual_installer_casks = outdated_casks.select do |cask|
         cask.artifacts.any? do |artifact|

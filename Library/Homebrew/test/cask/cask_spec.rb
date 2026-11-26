@@ -263,6 +263,26 @@ RSpec.describe Cask::Cask, :cask do
         allow(Homebrew::EnvConfig).to receive(:upgrade_auto_updates_casks?).and_return(true)
       end
 
+      it "is current when the app's versions match the tap version" do
+        cask = write_auto_updates_cask(cask_file, version: "2.61,2061", artifacts:)
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2061")
+
+        expect(cask.auto_updates_bundle_current?).to be true
+      end
+
+      it "is not current when the app's bundle version differs from the tap version's build" do
+        cask = write_auto_updates_cask(cask_file, version: "2.61,2061", artifacts:)
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+
+        expect(cask.auto_updates_bundle_current?).to be false
+      end
+
+      it "is not current when the cask has no version for the current platform" do
+        cask = Cask::Cask.new("auto-updates-without-version") { auto_updates true }
+
+        expect(cask.auto_updates_bundle_current?).to be false
+      end
+
       it "is outdated when the installed short version is lower than the tap version" do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)

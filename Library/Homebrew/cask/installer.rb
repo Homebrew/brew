@@ -8,6 +8,7 @@ require "unpack_strategy"
 require "utils/topological_hash"
 require "utils/analytics"
 require "utils/output"
+require "utils/interrupts"
 require "utils/path"
 
 require "api/cask_download"
@@ -1098,6 +1099,46 @@ module Cask
         @cask.temp = previous_cask.temp
         previous_cask.temp = nil if !reinstall? && !upgrade? && !@cask.equal?(previous_cask)
       end
+    end
+
+    # Record an `auto_updates` app that updated itself to this cask's version as
+    # installed at that version, so `uninstall` and `zap` use this cask's stanzas.
+    sig { void }
+    def refresh_installed_caskfile
+      return if !@cask.auto_updates || @cask.source.blank? || @cask.installed_version == @cask.version.to_s
+      return if @cask.pinned? || @cask.staged_path.exist? || !@cask.auto_updates_bundle_current?
+      # Flight blocks are saved as Ruby source and can't be compared.
+      return if @cask.uninstall_flight_blocks?
+      return unless (installed_caskfile = @cask.installed_caskfile)
+
+      installed_cask = CaskLoader.load_from_installed_caskfile(installed_caskfile)
+      return if installed_cask.caskroom_path != @cask.caskroom_path
+      return if [installed_cask, @cask].map do |cask|
+        cask.artifacts_list(uninstall_only: true).reject { it.key?(:uninstall) || it.key?(:zap) }
+      end.uniq.count > 1
+      # Symlinks into the staged path would break when it is renamed.
+      return if installed_cask.artifacts.grep(Artifact::Symlinked).any? do |artifact|
+        artifact.source.to_s.start_with?("#{installed_cask.staged_path}/")
+      end
+
+      old_tab = installed_cask.tab
+      tab = Tab.create(@cask)
+      tab.installed_on_request = old_tab.tabfile.nil? || old_tab.installed_on_request
+      ::Utils::Interrupts.ignore do
+        FileUtils.mv(installed_cask.staged_path, @cask.staged_path) if installed_cask.staged_path.exist?
+        begin
+          save_caskfile
+          tab.write
+        rescue
+          Tab.clear_cache
+          FileUtils.rm_r(@cask.metadata_versioned_path) if @cask.metadata_versioned_path.exist?
+          FileUtils.mv(@cask.staged_path, installed_cask.staged_path) if @cask.staged_path.exist?
+          raise
+        end
+      end
+      FileUtils.rm_rf(installed_cask.metadata_versioned_path)
+    rescue SystemCallError, CaskError, JSON::ParserError => e
+      opoo "Could not update the installed caskfile of #{@cask}: #{e}"
     end
 
     private
