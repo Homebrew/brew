@@ -355,7 +355,7 @@ module Homebrew
         sig { params(formula: String).returns(T.nilable(Formula)) }
         private_class_method def self.lookup_formula(formula)
           Formulary.factory(formula)
-        rescue TapFormulaUnavailableError
+        rescue FormulaUnavailableError
           # ignore these as an unavailable formula implies there is no tap to worry about
           nil
         end

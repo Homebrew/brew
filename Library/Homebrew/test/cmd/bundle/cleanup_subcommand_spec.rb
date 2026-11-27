@@ -255,6 +255,18 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       expect(described_class.taps_to_untap).to eql(%w[z homebrew/tap])
     end
 
+    it "ignores formulae deleted from homebrew/core when computing which taps to keep" do
+      allow_any_instance_of(Pathname).to receive(:read).and_return <<~RUBY
+        brew "foo"
+      RUBY
+      described_class.read_dsl_from_brewfile!
+
+      allow(Formulary).to receive(:factory).and_raise(FormulaUnavailableError.new("foo"))
+      allow(Homebrew::Bundle::Tap).to \
+        receive(:tap_names).and_return(%w[z homebrew/core homebrew/tap])
+      expect(described_class.taps_to_untap).to eql(%w[z homebrew/tap])
+    end
+
     it "ignores formulae with .keepme references when computing which formulae to uninstall" do
       name = full_name ="c"
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([{ name:, full_name: }])
