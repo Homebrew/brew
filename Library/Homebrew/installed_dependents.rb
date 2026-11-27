@@ -250,4 +250,66 @@ module InstalledDependents
       ["brew", command, *dependents.map(&:full_name).uniq.sort].join(" ") if dependents.any?
     end
   end
+
+  # Removes the dependencies from the install receipts of `formulae` that
+  # installing them again would no longer list. A receipt lists all runtime
+  # dependencies from install time, so it goes stale when a dependency drops
+  # one of its own and the dependent is not rebuilt. An installed dependency
+  # goes when none of `formulae` that list it still declares it, the
+  # dependent's dependency tree no longer has it and its keg does not link to it.
+  sig { params(formulae: T::Array[Formula], dry_run: T::Boolean).void }
+  def prune_stale_dependencies(formulae, dry_run: false)
+    declared_names = formulae.to_h { |f| [f.name, f.deps.map { |dep| Utils.name_from_full_name(dep.name) }] }
+    receipt_name = ->(dep) { Utils.name_from_full_name(dep["full_name"]) if dep.is_a?(Hash) && dep["full_name"] }
+    receipts = formulae.filter_map do |dependent|
+      keg = dependent.any_installed_keg
+      tab_dependencies = keg&.runtime_dependencies
+      next if keg.nil? || tab_dependencies.nil?
+
+      tab_names = tab_dependencies.filter_map(&receipt_name)
+      # The dependent or one of its dependencies declares nearly every dependency.
+      undeclared_names = tab_names - declared_names.values_at(dependent.name, *tab_names).flatten
+      [dependent, keg, tab_dependencies, tab_names - undeclared_names, undeclared_names]
+    end
+    # A dependency that a formula still declares stays installed, whatever the other receipts list.
+    declared_somewhere = receipts.flat_map { |_, _, _, names, _| names }.to_set
+    # A receipt can list a formula under the name it had before it was renamed.
+    possible_names = T.let({}, T::Hash[String, T::Array[String]])
+    current_names = ->(deps) { deps.flat_map { |dep| possible_names[dep.name] ||= dep.to_formula.possible_names } }
+    pruned = T.let(false, T::Boolean)
+
+    # Every keg's linkage comes from the same cache, which is only read when a receipt gets this far.
+    CacheStoreDatabase.use(:linkage) do
+      receipts.each do |dependent, keg, tab_dependencies, _, undeclared_names|
+        stale_names = undeclared_names.reject { |name| declared_somewhere.include?(name) }
+                                      .select { |name| (HOMEBREW_PREFIX/"opt"/name).directory? }
+        next if stale_names.empty?
+        # An upgrade writes a new receipt.
+        next if keg.version != dependent.pkg_version
+        # An alias may have moved on to another formula while the keg still uses the one in the receipt.
+        next if dependent.deps.any? { |dep| dep.to_formula.name != Utils.name_from_full_name(dep.name) }
+
+        stale_names -= current_names.call(dependent.recursive_dependencies)
+        next if stale_names.empty?
+
+        # Installing again keeps the keg, so the receipt would still list what the keg links to.
+        stale_names -= current_names.call(dependent.runtime_dependencies(read_from_tab: false))
+        next if stale_names.empty?
+
+        tab_dependencies.delete_if { |dep| stale_names.include?(receipt_name.call(dep)) }
+        tab = keg.tab
+        tab.runtime_dependencies = tab_dependencies
+        tab.write unless dry_run
+        pruned = true
+      rescue FormulaUnavailableError, TapFormulaAmbiguityError, FormulaSpecificationError, Homebrew::UntrustedTapError
+        # The dependency tree cannot be read, so the receipt stays as it is.
+        next
+      end
+    end
+    return unless pruned
+
+    # What was read from the receipts before now is cached.
+    [:runtime_dependencies, :runtime_formula_dependencies, :installed_runtime_formula_dependencies,
+     :runtime_installed_formula_dependents].each { |key| Formula.cache.delete(key) }
+  end
 end

@@ -330,12 +330,36 @@ RSpec.describe Homebrew::Diagnostic::Checks do
                                            full_name: "dependent", pinned?: false, outdated?: true)
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
       allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+      allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).and_return([])
 
       expect(checks.check_deprecated_disabled&.to_s).to include(
         "The following formulae are installed as dependencies:\n\n  testball",
         "To stop the listed dependents from requiring the formulae above, run:\n  " \
         "brew upgrade dependent",
       )
+    end
+
+    it "says to run `brew autoremove` for a deprecated formula that nothing requires any more" do
+      tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
+      keg = instance_double(Keg, tab:)
+      deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
+                                            full_name: "testball", possible_names: ["testball"],
+                                            installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
+      dependent = instance_double(Formula, deprecated?: false, disabled?: false, full_name: "dependent",
+                                           runtime_dependencies: [instance_double(Dependency, name: "testball")])
+      # Finding what `brew autoremove` removes drops the stale dependency from the install receipt in memory.
+      allow(dependent).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([])
+      allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+      allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([deprecated])
+
+      expect(checks.check_deprecated_disabled&.to_s).to end_with <<~EOS.chomp
+        The following formulae are installed as dependencies:
+
+          testball
+
+        Nothing requires testball any more. To remove it, run:
+          brew autoremove
+      EOS
     end
 
     it "skips a formula removed from its tap whose keg kept a deprecated copy" do
@@ -457,6 +481,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
     allow(Keg).to receive(:all).and_return([keg])
     allow(Formula).to receive(:installed).and_return(dependents)
+    allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).and_return([])
 
     expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
       Some installed kegs have no formulae!

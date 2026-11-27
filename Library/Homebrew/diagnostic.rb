@@ -14,6 +14,7 @@ require "utils/shell"
 require "utils/output"
 require "cask/caskroom"
 require "cask/quarantine"
+require "cleanup"
 require "diagnostic/finding"
 require "git_repository"
 require "installed_dependents"
@@ -1955,13 +1956,29 @@ module Homebrew
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
+        # This also drops stale dependencies from the install receipts in memory, as `brew uninstall` does.
+        unneeded_names = Cleanup.autoremovable_formulae(dry_run: true)
+                                .flat_map(&:possible_names)
+                                .filter_map { |name| dependency_names[name] }
+                                .uniq
+                                .sort
         commands = InstalledDependents.commands_to_drop_dependencies(dependency_names, installed_formulae)
-        return "" if commands.empty?
 
-        [
-          "To stop the listed dependents from requiring the formulae above, run:",
-          commands.map { |command| "  #{command}" }.join("\n"),
-        ].join("\n")
+        guidance = []
+        if unneeded_names.present?
+          it_or_them = unneeded_names.one? ? "it" : "them"
+          guidance << <<~EOS.chomp
+            Nothing requires #{Utils::Text.to_sentence(unneeded_names)} any more. To remove #{it_or_them}, run:
+              brew autoremove
+          EOS
+        end
+        if commands.present?
+          guidance << [
+            "To stop the listed dependents from requiring the formulae above, run:",
+            commands.map { |command| "  #{command}" }.join("\n"),
+          ].join("\n")
+        end
+        guidance.join("\n\n")
       end
 
       sig { params(path: String).returns(Finding::Remediation) }

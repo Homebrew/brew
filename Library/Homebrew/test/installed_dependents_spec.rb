@@ -634,4 +634,125 @@ RSpec.describe InstalledDependents do
       expect(commands_for_dependent(others: [other])).to eq([])
     end
   end
+
+  describe "::prune_stale_dependencies" do
+    let(:dependent_keg) do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "baz"
+      end
+    end
+    let(:dependent) { Formulary.factory("bar") }
+    let(:receipt_dependencies) do
+      JSON.parse((dependent_keg/AbstractTab::FILENAME).read).fetch("runtime_dependencies").map { it["full_name"] }
+    end
+
+    def write_receipt(keg, *dependencies)
+      tab = Tab.empty
+      tab.tabfile = keg/AbstractTab::FILENAME
+      tab.runtime_dependencies = dependencies.map { |full_name| { "full_name" => full_name } }
+      tab.write
+    end
+
+    before do
+      keg.optlink
+      write_receipt(setup_test_keg("baz", "1.0"))
+      # `foo` was a dependency of `baz` when `bar` was installed.
+      write_receipt(dependent_keg, "baz", "foo")
+    end
+
+    it "removes a dependency that the dependent's dependency tree no longer declares" do
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz"])
+    end
+
+    it "stops counting the dependent without writing its receipt in a dry run" do
+      described_class.prune_stale_dependencies(Formula.installed, dry_run: true)
+      dependents = described_class.find_some_installed_dependents([keg])
+
+      expect([dependents, receipt_dependencies]).to eq([nil, ["baz", "foo"]])
+    end
+
+    it "stops counting a dependent whose dependencies were read before" do
+      described_class.find_some_installed_dependents([keg])
+      described_class.prune_stale_dependencies(Formula.installed, dry_run: true)
+
+      expect(described_class.find_some_installed_dependents([keg])).to be_nil
+    end
+
+    it "skips the dependency tree when one of the dependent's dependencies declares the dependency" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      expect(dependent).not_to receive(:recursive_dependencies)
+
+      described_class.prune_stale_dependencies([dependent, Formulary.factory("baz")])
+    end
+
+    it "keeps a dependency that the receipt lists under the name it had before it was renamed" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      allow(Formulary.factory("foo")).to receive(:possible_names).and_return(%w[foo foo-old])
+      (HOMEBREW_PREFIX/"opt/foo-old").make_relative_symlink(HOMEBREW_CELLAR/"foo/1.0")
+      write_receipt(dependent_keg, "baz", "foo-old")
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo-old"])
+    end
+
+    it "keeps a dependency that the dependent's keg links to" do
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false)
+                                                        .and_return([Dependency.new("foo")])
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps a dependency that is not installed" do
+      keg.remove_opt_record
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps a dependency that another installed formula still declares" do
+      other_keg = setup_test_keg("qux", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      write_receipt(other_keg, "foo")
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent that is not the latest version" do
+      allow(dependent).to receive(:pkg_version).and_return(PkgVersion.parse("1.1"))
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent that declares a dependency through an alias" do
+      stub_formula_loader Formulary.factory("baz"), "baz-alias"
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "baz-alias"
+      end
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent whose dependency tree cannot be loaded" do
+      allow(dependent).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError.new("baz"))
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+  end
 end

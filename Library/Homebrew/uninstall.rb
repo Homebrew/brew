@@ -28,7 +28,8 @@ module Homebrew
       handle_unsatisfied_dependents(kegs_by_rack,
                                     casks:,
                                     ignore_dependencies:,
-                                    named_args:)
+                                    named_args:,
+                                    dry_run:)
       return if Homebrew.failed?
 
       kegs_by_rack.each do |rack, kegs|
@@ -157,12 +158,18 @@ module Homebrew
         casks:               T::Array[Cask::Cask],
         ignore_dependencies: T::Boolean,
         named_args:          T::Array[String],
+        dry_run:             T::Boolean,
       ).void
     }
-    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
+    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [],
+                                           dry_run: false)
       return if ignore_dependencies
 
       all_kegs = kegs_by_rack.values.flatten(1)
+      # A formula that is uninstalled too does not keep the dependencies it declares.
+      keg_names = all_kegs.map(&:name)
+      remaining_formulae = Formula.installed.reject { |f| keg_names.intersect?(f.possible_names) }
+      InstalledDependents.prune_stale_dependencies(remaining_formulae, dry_run:)
       check_for_dependents!(all_kegs, casks:, named_args:)
     rescue MethodDeprecatedError
       # Silently ignore deprecations when uninstalling.
