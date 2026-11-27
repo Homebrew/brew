@@ -59,7 +59,7 @@ homebrew-trusted-items() {
       (($store.trustedtaps // []) | (index($tap) or index($tap_reference))) or
       (($store[$trust_key] // []) | (index($item) or index($remote_item)))
     ) |
-    $item
+    (if $tap == $official_tap then .name else $item end)
   '
   # shellcheck disable=SC2016
   local untrusted_tap_filter='

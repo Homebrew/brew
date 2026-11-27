@@ -4,6 +4,8 @@
 require "open3"
 
 RSpec.describe "Bash" do
+  include Test::Helper::Dependencies
+
   matcher :have_valid_bash_syntax do
     T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
     match do |file|
@@ -124,6 +126,37 @@ RSpec.describe "Bash" do
                   .map { |env| Open3.capture3(env, "/bin/bash", "-c", script, "bash", command).first(2) }
 
         expect(outputs).to eq([["item1\nitem2\n", ""], ["item1\nitem2\n", ""], ["", ""]])
+      end
+
+      it "lists official tap items by name only" do
+        ensure_test_dependency!(which("jq"), "jq is not installed.")
+        repository = mktmpdir
+        config_home = mktmpdir
+        ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+        ENV["HOMEBREW_REPOSITORY"] = repository.to_s
+        ENV["HOMEBREW_USER_CONFIG_HOME"] = config_home.to_s
+        ENV["HOMEBREW_MACOS"] = "1" if OS.mac?
+        official_tap, item_dir = if command == "formulae"
+          ["homebrew-core", "Formula"]
+        else
+          ["homebrew-cask", "Casks/i"]
+        end
+        { "homebrew/#{official_tap}" => "item1", "user/homebrew-tap" => "item2" }.each do |tap, item|
+          path = repository/"Library/Taps/#{tap}/#{item_dir}/#{item}.rb"
+          path.dirname.mkpath
+          FileUtils.touch path
+        end
+        (config_home/"trust.json").write('{"trustedtaps":["user/tap"]}')
+
+        stdout, stderr, status = Open3.capture3(
+          "/bin/bash", "-c", <<~BASH, "bash", command
+            source "${HOMEBREW_LIBRARY}/Homebrew/cmd/$1.sh"
+            HOMEBREW_BREW_FILE=/bin/echo
+            "homebrew-$1"
+          BASH
+        )
+
+        expect([stdout, stderr, status.success?]).to eq(["item1\nitem2\nuser/tap/item2\n", "", true])
       end
     end
   end
