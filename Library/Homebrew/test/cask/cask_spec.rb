@@ -326,6 +326,34 @@ RSpec.describe Cask::Cask, :cask do
         expect(cask.outdated_version).to eq("2.61")
       end
 
+      test_each([
+        ["2026.3.0.2,263.7307.351", "2026.3.0.2", "PY-263.7307.351", false],
+        ["90.0-82050,vHbjDs9q4X", "17.2.5", "90.0.82050", false],
+        ["8.8.0,7044145585217083655,540056698", "8.8.0", "014320", false],
+        ["8.8.0,7044145585217083655,540056698", "8.7.0", "014319", true],
+      ]) do |version, short_version, bundle_version, outdated|
+        it "checks the current receipt #{version} against app version #{short_version} and build #{bundle_version}" do
+          cask = write_auto_updates_cask(cask_file, version:, artifacts:)
+          allow(cask).to receive(:installed_version).and_return(version)
+          stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:, bundle_version:)
+
+          expect(cask.outdated?).to be(outdated)
+        end
+      end
+
+      test_each([
+        ["PS-263.7307.351", true],
+        ["PS-263.7307.352", false],
+        ["PS-263.7307.353", false],
+      ]) do |bundle_version, outdated|
+        it "compares the product-prefixed build #{bundle_version} with the cask build" do
+          cask = write_auto_updates_cask(cask_file, version: "2026.3.0.1,263.7307.352", artifacts:)
+          stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2026.3.0.1", bundle_version:)
+
+          expect(cask.outdated?).to be(outdated)
+        end
+      end
+
       it "is not outdated when the installed short version directly matches the tap version" do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
@@ -546,6 +574,17 @@ RSpec.describe Cask::Cask, :cask do
         stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
+      end
+
+      test_each(["2.61,PS-2057.0", "2.61,2057.0"]) do |recorded_version|
+        it "recognises the installed build PS-2057.0 recorded as #{recorded_version}" do
+          cask = write_auto_updates_cask(cask_file, version: "2.61,2058", artifacts:)
+          allow(cask).to receive(:installed_version).and_return(recorded_version)
+          stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "2.61",
+                                                                        bundle_version: "PS-2057.0")
+
+          expect(cask.outdated_version).to eq(recorded_version)
+        end
       end
 
       it "is outdated when the app has updated past the recorded build but is still behind the tap" do
