@@ -224,13 +224,14 @@ module Homebrew
           phase = event.fetch("phase")
           phase_totals[phase] = phase_totals.fetch(phase, 0) + event.fetch("duration")
         end
+        result = JSON.parse(hyperfine_output.read).fetch("results").fetch(0)
 
         Sample.new(
           iteration:,
           operation:                 scenario.operation,
           workload:                  scenario.workload,
           batch_size:                scenario.formulae.length,
-          wall_time_seconds:         JSON.parse(hyperfine_output.read).fetch("results").fetch(0).fetch("mean"),
+          wall_time_seconds:         result.dig("summary", "time_wall_clock", "mean") || result.fetch("mean"),
           phase_totals_microseconds: phase_totals,
         )
       end
