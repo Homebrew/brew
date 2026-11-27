@@ -247,6 +247,10 @@ export HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK=1
 export HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN="$(printf 'anonymous:' | base64)"
 ```
 
+Registry authentication with `HOMEBREW_DOCKER_REGISTRY_TOKEN` or `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN` requires curl 7.55.0 or newer.
+With older curl, Homebrew omits private registry credentials and can still download public bottles anonymously.
+Other local users may be able to see credentials passed directly as curl arguments, such as tokens in download URLs, cookies or custom headers, while a transfer runs.
+
 It's also possible to use an internal mirror of `Homebrew/brew`
 by setting an environment variable before running the Homebrew installer:
 

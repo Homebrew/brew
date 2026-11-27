@@ -11,6 +11,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
     before do
       %w[GH_TOKEN GITHUB_TOKEN HOMEBREW_GITHUB_API_TOKEN].each { ENV.delete(it) }
+      stub_const("HOMEBREW_GITHUB_PACKAGES_AUTH", "")
       allow(Utils::Curl).to receive(:curl_version).and_return(Version.new("7.54.1"))
     end
 
@@ -18,12 +19,18 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       ENV["HOMEBREW_GITHUB_API_TOKEN"] = "test-token"
 
       expect(checks.check_github_api_tokens&.to_s).to eq <<~EOS.rstrip
-        GitHub API tokens are set, but curl 7.54.1 is older than 7.55.0.
-        Homebrew does not pass these tokens to curl. Requests use unauthenticated
-        rate limits and cannot access private repositories or write to GitHub.
+        Homebrew omits GitHub API and Docker registry tokens with curl 7.54.1.
+        GitHub API requests use unauthenticated rate limits and requests to
+        private repositories or registries may fail.
 
-        Upgrade curl to 7.55.0 or newer to use GitHub API tokens.
+        Upgrade curl to 7.55.0 or newer to use these tokens.
       EOS
+    end
+
+    it "also warns when only a private registry token is configured" do
+      stub_const("HOMEBREW_GITHUB_PACKAGES_AUTH", "Bearer private-token")
+
+      expect(checks.check_github_api_tokens).to be_present
     end
 
     it "does not warn when HOMEBREW_GITHUB_API_TOKEN is empty" do

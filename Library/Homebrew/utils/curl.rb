@@ -281,7 +281,7 @@ module Utils
           # odeprecated "Remove this version check and the older-curl branches when the minimum curl is 7.55."
           header_input_supported =
             curl_version(use_homebrew_curl:) >= Version.new(HOMEBREW_CURL_HEADER_FILE_MIN_VERSION)
-          if header_input_supported || arg.match?(/\AAuthorization:\s*token /i)
+          if header_input_supported || arg != "Authorization: #{HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_AUTH}"
             filtered_args.pop
             input << "#{arg}\n" if header_input_supported
             next

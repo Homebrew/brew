@@ -122,6 +122,16 @@ RSpec.describe Sandbox do
       expect(result.stdout).to eq("a\x00b\n")
     end
 
+    it "passes the exported anonymous registry value to workers while filtering private credentials" do
+      ENV["HOMEBREW_GITHUB_PACKAGES_AUTH"] = "Basic private"
+      result = sandbox.capture(RbConfig.ruby, args: [
+        "-I", $LOAD_PATH.join(File::PATH_SEPARATOR), "-rglobal", "-e",
+        "puts HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_AUTH, HOMEBREW_GITHUB_PACKAGES_AUTH"
+      ])
+
+      expect(result.stdout.lines.map(&:chomp)).to eq([ENV.fetch("HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_BEARER"), ""])
+    end
+
     it "passes sandbox inheritance to children through a descriptor, not the environment" do
       [false, true].each do |apply_before_exec|
         allow(sandbox).to receive(:apply_before_exec?).and_return(apply_before_exec)

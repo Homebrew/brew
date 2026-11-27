@@ -784,9 +784,10 @@ RSpec.describe "Utils::Curl" do
     test_each([
       ["7.41.0", [], ""],
       ["7.54.1", [], ""],
-      ["7.55.0", %w[--header @-], "Authorization: token test-token\n"],
+      ["7.55.0", %w[--header @-], "Authorization: token test-token\nAuthorization: Bearer test-bearer\n" \
+                                  "Authorization: Basic test-basic\n"],
     ]) do |version, header_args, input|
-      it "only passes GitHub tokens with curl 7.55 or newer (#{version})" do
+      it "only passes private authorisation headers with curl 7.55 or newer (#{version})" do
         allow(self).to receive(:curl_version).and_return(Version.new(version))
         expect(self).to receive(:system_command).with(
           /curl/,
@@ -797,7 +798,9 @@ RSpec.describe "Utils::Curl" do
           ),
         ).and_return(instance_double(SystemCommand::Result, success?: true))
 
-        curl_output("https://example.com/", "--header", "Authorization: token test-token", secrets: ["test-token"])
+        curl_output("https://example.com/", "--header", "Authorization: token test-token",
+                    "--header", "Authorization: Bearer test-bearer", "--header", "Authorization: Basic test-basic",
+                    secrets: ["test-token"])
       end
     end
 
@@ -884,13 +887,14 @@ RSpec.describe "Utils::Curl" do
     end
 
     test_each([
-      ["7.41.0", [], ""],
-      ["7.54.1", [], ""],
-      ["7.55.0", %w[--header @-], 'Authorization: token "test\\token'],
-    ]) do |version, header_args, input|
-      it "only passes GitHub tokens in Bash with curl 7.55 or newer (#{version})" do
+      ["7.41.0", "Authorization: token test-token", [], ""],
+      ["7.54.1", "Authorization: Basic test-token", [], ""],
+      ["7.54.1", "Authorization: Bearer QQ==", ["--header", "Authorization: Bearer QQ=="], ""],
+      ["7.55.0", 'Authorization: token "test\\token', %w[--header @-], 'Authorization: token "test\\token'],
+    ]) do |version, header, header_args, input|
+      it "selects the Bash header input for #{header.inspect} with curl #{version}" do
         ENV["HOMEBREW_CURL_VERSION"] = version
-        ENV["TEST_CURL_HEADER"] = 'Authorization: token "test\\token'
+        ENV["TEST_CURL_HEADER"] = header
 
         expect(SystemCommand.run!("/bin/bash", args: [
           "-c", 'source "$1"; source "$2"; setup_curl_header "$TEST_CURL_HEADER"; ' \

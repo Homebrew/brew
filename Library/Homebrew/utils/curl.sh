@@ -9,6 +9,7 @@
 HOMEBREW_MINIMUM_CURL_VERSION="7.41.0"
 # odeprecated "Raise the minimum curl to 7.55 at the next major/minor release; remove this variable, export and check."
 HOMEBREW_CURL_HEADER_FILE_MIN_VERSION="7.55.0"
+export HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_BEARER="Bearer QQ=="
 
 # Timeout values to check for dead connections
 # We don't use --max-time to support slow connections
@@ -25,6 +26,9 @@ setup_curl_header() {
   then
     CURL_HEADER_ARGS=(--header @-)
     CURL_HEADER_INPUT="$1"
+  elif [[ "$1" == "Authorization: ${HOMEBREW_GITHUB_PACKAGES_ANONYMOUS_BEARER}" ]]
+  then
+    CURL_HEADER_ARGS=(--header "$1")
   fi
 }
 

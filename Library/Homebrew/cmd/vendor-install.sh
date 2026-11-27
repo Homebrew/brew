@@ -125,11 +125,8 @@ fetch() {
     --user-agent "${HOMEBREW_USER_AGENT_CURL}"
   )
 
-  if [[ -n "${HOMEBREW_GITHUB_PACKAGES_AUTH}" ]]
-  then
-    curl_args[${#curl_args[*]}]="--header"
-    curl_args[${#curl_args[*]}]="Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}"
-  fi
+  setup_curl_header "${HOMEBREW_GITHUB_PACKAGES_AUTH:+Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}}"
+  curl_args+=("${CURL_HEADER_ARGS[@]}")
 
   if [[ -n "${HOMEBREW_QUIET}" ]]
   then
@@ -155,17 +152,17 @@ fetch() {
       then
         # HOMEBREW_CURL is set by brew.sh (and isn't misspelt here)
         # shellcheck disable=SC2153
-        "${HOMEBREW_CURL}" "${curl_args[@]}" -C - "${url}" -o "${temporary_path}"
+        "${HOMEBREW_CURL}" "${curl_args[@]}" -C - "${url}" -o "${temporary_path}" <<<"${CURL_HEADER_INPUT}"
         curl_exit_code="$?"
         if [[ "${curl_exit_code}" -eq 33 ]]
         then
           [[ -n "${HOMEBREW_QUIET}" ]] || echo "Trying a full download" >&2
           rm -f "${temporary_path}"
-          "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}"
+          "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}" <<<"${CURL_HEADER_INPUT}"
           curl_exit_code="$?"
         fi
       else
-        "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}"
+        "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}" <<<"${CURL_HEADER_INPUT}"
         curl_exit_code="$?"
       fi
 
