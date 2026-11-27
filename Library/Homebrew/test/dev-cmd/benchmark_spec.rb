@@ -61,7 +61,7 @@ RSpec.describe Homebrew::DevCmd::Benchmark do
       if executable == hyperfine
         hyperfine_calls << args
         Pathname(args.fetch(args.index("--export-json") + 1))
-          .write(JSON.generate("results" => [{ "mean" => 0.25 }]))
+          .write(JSON.generate("results" => [{ "summary" => { "time_wall_clock" => { "mean" => 0.25 } } }]))
         command = Shellwords.split(args.last)
         timings_path = command.grep(/^HOMEBREW_PHASE_TIMINGS=/).fetch(0).delete_prefix("HOMEBREW_PHASE_TIMINGS=")
         Pathname(timings_path).write(JSON.generate("events" => [{ "phase" => "startup", "duration" => 250_000 }]))
