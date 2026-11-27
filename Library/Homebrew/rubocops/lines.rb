@@ -8,6 +8,7 @@ require "rubocops/shared/on_system_conditionals_helper"
 require "utils/shell_completion"
 
 require_relative "lines/class_inheritance"
+require_relative "lines/make_check"
 
 module RuboCop
   module Cop
@@ -1160,33 +1161,6 @@ module RuboCop
           {(dstr (begin (send nil? %1)) $(str _ ))
            (dstr _ (begin (send nil? %1)) $(str _ ))}
         EOS
-      end
-    end
-
-    module FormulaAuditStrict
-      # This cop makes sure that no build-time checks are performed.
-      class MakeCheck < FormulaCop
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          return if formula_tap != "homebrew-core"
-
-          # Avoid build-time checks in homebrew/core
-          find_every_method_call_by_name(formula_nodes.body_node, :system).each do |method|
-            next if @formula_name&.start_with?("lib")
-            next if tap_style_exception? :make_check_allowlist
-
-            params = parameters(method)
-            next unless node_equals?(params[0], "make")
-
-            params[1..]&.each do |arg|
-              next unless regex_match_group(arg, /^(?:checks?|tests?)$/)
-
-              @offensive_node = method
-              problem "Formulae in homebrew/core (except e.g. cryptography, libraries) " \
-                      "should not run build-time checks"
-            end
-          end
-        end
       end
     end
   end
