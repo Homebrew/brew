@@ -303,6 +303,8 @@ RuboCop::CLI::STATUS_OFFENSES = T.let(T.unsafe(nil), Integer)
 
 RuboCop::CLI::STATUS_SUCCESS = T.let(T.unsafe(nil), Integer)
 
+RuboCop::CacheConfig::SERVER_DIR = T.let(T.unsafe(nil), String)
+
 RuboCop::ChangedFiles::DEFAULT_REVISION = T.let(T.unsafe(nil), String)
 
 RuboCop::ChangedFiles::FILESYSTEM_ENCODING = T.let(T.unsafe(nil), Encoding)
@@ -353,6 +355,7 @@ class RuboCop::Config
   def make_excludes_absolute; end
   def map(*, **, &); end
   def merge(*, **, &); end
+  def missing_default_config_for?(badge); end
   def parser_engine; end
   def path_relative_to_config(path); end
   def path_sourced_gems_in_target; end
@@ -857,7 +860,7 @@ class RuboCop::Cop::Base
 
   def active_support_extensions_enabled?; end
   def add_global_offense(message = T.unsafe(nil), severity: T.unsafe(nil)); end
-  def add_offense(node_or_range, message: T.unsafe(nil), severity: T.unsafe(nil), &block); end
+  def add_offense(node_or_range, **options, &block); end
   def always_autocorrect?; end
   def begin_investigation(processed_source, offset: T.unsafe(nil), original: T.unsafe(nil)); end
   def callbacks_needed; end
@@ -1079,13 +1082,9 @@ end
 
 RuboCop::Cop::Corrector::NOOP_CONSUMER = T.let(T.unsafe(nil), Proc)
 
-RuboCop::Cop::EachToForCorrector::CORRECTION_WITHOUT_ARGUMENTS = T.let(T.unsafe(nil), String)
-
-RuboCop::Cop::EachToForCorrector::CORRECTION_WITH_ARGUMENTS = T.let(T.unsafe(nil), String)
-
 RuboCop::Cop::EndKeywordAlignment::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::ForToEachCorrector::CORRECTION = T.let(T.unsafe(nil), String)
+RuboCop::Cop::EndlessMethodBodyHelp::STATEMENT_BODY_PARENT_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::ForbiddenIdentifiers::SIGILS = T.let(T.unsafe(nil), String)
 
@@ -1314,6 +1313,8 @@ RuboCop::Cop::Layout::FirstParameterIndentation::MSG = T.let(T.unsafe(nil), Stri
 RuboCop::Cop::Layout::HashAlignment::MESSAGES = T.let(T.unsafe(nil), Hash)
 
 RuboCop::Cop::Layout::HashAlignment::SEPARATOR_ALIGNMENT_STYLES = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Layout::HeredocArgumentClosingParenthesis::CODE_THAT_CAN_START_A_LINE = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Layout::HeredocArgumentClosingParenthesis::MSG = T.let(T.unsafe(nil), String)
 
@@ -1933,6 +1934,8 @@ RuboCop::Cop::Lint::RedundantDirGlobSort::RESTRICT_ON_SEND = T.let(T.unsafe(nil)
 
 RuboCop::Cop::Lint::RedundantRegexpQuantifiers::MSG_REDUNDANT_QUANTIFIER = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Lint::RedundantRequireStatement::BODY_PARENT_TYPES = T.let(T.unsafe(nil), Array)
+
 RuboCop::Cop::Lint::RedundantRequireStatement::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::RedundantRequireStatement::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
@@ -2016,6 +2019,8 @@ RuboCop::Cop::Lint::RescueType::MSG = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Lint::ReturnInVoidContext::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::ReturnInVoidContext::SCOPE_CHANGING_METHODS = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Lint::SafeNavigationChain::BODY_PARENT_TYPES = T.let(T.unsafe(nil), Set)
 
 RuboCop::Cop::Lint::SafeNavigationChain::MSG = T.let(T.unsafe(nil), String)
 
@@ -2198,6 +2203,8 @@ RuboCop::Cop::Lint::Void::NONMUTATING_METHODS = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::Lint::Void::NONMUTATING_METHODS_WITH_BANG_VERSION = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Lint::Void::NONMUTATING_MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::Void::NON_VALUE_ARGUMENT_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Lint::Void::OPERATORS = T.let(T.unsafe(nil), Array)
 
@@ -2644,6 +2651,7 @@ module RuboCop::Cop::RangeHelp
   def move_pos_str(src, pos, step, condition, needle); end
   def range_between(start_pos, end_pos); end
   def range_by_whole_lines(range, include_final_newline: T.unsafe(nil), buffer: T.unsafe(nil)); end
+  def range_for_statement_removal(range); end
   def range_with_comments(node); end
   def range_with_comments_and_lines(node); end
   def range_with_surrounding_comma(range, side = T.unsafe(nil)); end
@@ -2767,6 +2775,8 @@ RuboCop::Cop::Severity::NAMES = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::SpaceAfterPunctuation::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::SpaceBeforePunctuation::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::SpaceBeforePunctuation::SPACE_INSIDE_PARENS_STYLES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::StatementModifier::SPACE_INSIDE_PARENS_STYLES = T.let(T.unsafe(nil), Array)
 
@@ -2998,6 +3008,8 @@ RuboCop::Cop::Style::DateTime::COERCION_MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::DefWithParentheses::MSG = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Style::DefWithParentheses::SPACES_BEFORE_ASSIGNMENT = T.let(T.unsafe(nil), Regexp)
+
 RuboCop::Cop::Style::DigChain::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::DigChain::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
@@ -3186,6 +3198,8 @@ RuboCop::Cop::Style::For::PREFER_EACH = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::For::PREFER_FOR = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Style::For::SCOPE_TYPES = T.let(T.unsafe(nil), Array)
+
 RuboCop::Cop::Style::FormatString::AUTOCORRECTABLE_METHODS = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::FormatString::MSG = T.let(T.unsafe(nil), String)
@@ -3211,6 +3225,8 @@ RuboCop::Cop::Style::GlobalVars::BUILT_IN_VARS = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::Style::GlobalVars::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::GuardClause::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::GuardClause::STATEMENT_PARENT_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::HashConversion::MSG_LITERAL_HASH_ARG = T.let(T.unsafe(nil), String)
 
@@ -3249,6 +3265,10 @@ RuboCop::Cop::Style::HashSyntax::MSG_NO_MIXED_KEYS = T.let(T.unsafe(nil), String
 RuboCop::Cop::Style::HashSyntax::NO_MIXED_KEYS_STYLES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::IdenticalConditionalBranches::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::IdenticalConditionalBranches::STATEMENT_BODY_TYPES = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Style::IdenticalConditionalBranches::VOID_VALUE_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::IfInsideElse::MSG = T.let(T.unsafe(nil), String)
 
@@ -3638,6 +3658,10 @@ RuboCop::Cop::Style::RedundantBegin::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantBegin::SPACE_INSIDE_PARENS_STYLES = T.let(T.unsafe(nil), Array)
 
+RuboCop::Cop::Style::RedundantBegin::STATEMENT_CONTAINER_TYPES = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Style::RedundantBegin::VALUE_PARENT_TYPES = T.let(T.unsafe(nil), Array)
+
 RuboCop::Cop::Style::RedundantCapitalW::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantCondition::ARGUMENT_WITH_OPERATOR_TYPES = T.let(T.unsafe(nil), Array)
@@ -3742,6 +3766,8 @@ RuboCop::Cop::Style::RedundantPercentQ::EMPTY = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantPercentQ::ESCAPED_NON_BACKSLASH = T.let(T.unsafe(nil), Regexp)
 
+RuboCop::Cop::Style::RedundantPercentQ::ESCAPED_QUOTE = T.let(T.unsafe(nil), Regexp)
+
 RuboCop::Cop::Style::RedundantPercentQ::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantPercentQ::PERCENT_CAPITAL_Q = T.let(T.unsafe(nil), String)
@@ -3753,6 +3779,8 @@ RuboCop::Cop::Style::RedundantPercentQ::QUOTE = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Style::RedundantPercentQ::SINGLE_QUOTE = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantPercentQ::STRING_INTERPOLATION_REGEXP = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Style::RedundantPercentQ::UNESCAPED_QUOTE = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Style::RedundantRegexpArgument::DETERMINISTIC_REGEX = T.let(T.unsafe(nil), Regexp)
 
@@ -4257,6 +4285,8 @@ RuboCop::Cop::VariableForce::BRANCH_NODES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::VariableForce::Branch::CLASSES_BY_TYPE = T.let(T.unsafe(nil), Hash)
 
+RuboCop::Cop::VariableForce::LOCAL_VARIABLE_NAME = T.let(T.unsafe(nil), Regexp)
+
 RuboCop::Cop::VariableForce::LOGICAL_OPERATOR_ASSIGNMENT_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::VariableForce::LOOP_TYPES = T.let(T.unsafe(nil), Array)
@@ -4274,6 +4304,8 @@ RuboCop::Cop::VariableForce::POST_CONDITION_LOOP_TYPES = T.let(T.unsafe(nil), Ar
 RuboCop::Cop::VariableForce::REGEXP_NAMED_CAPTURE_TYPE = T.let(T.unsafe(nil), Symbol)
 
 RuboCop::Cop::VariableForce::RESCUE_TYPE = T.let(T.unsafe(nil), Symbol)
+
+RuboCop::Cop::VariableForce::RESERVED_WORDS = T.let(T.unsafe(nil), Set)
 
 RuboCop::Cop::VariableForce::REST_ASSIGNMENT_TYPE = T.let(T.unsafe(nil), Symbol)
 
@@ -4718,7 +4750,6 @@ class RuboCop::Runner
   def aborting?; end
   def diffs; end
   def errors; end
-  def file_finished(file, offenses, *, **, &); end
   def file_offense_cache(file, *, **, &); end
   def get_processed_source(*, **, &); end
   def run(paths); end
@@ -4740,6 +4771,7 @@ class RuboCop::Runner
   def do_inspection_loop(file, source = T.unsafe(nil)); end
   def except_redundant_cop_disable_directive?; end
   def extract_ruby_sources(processed_source); end
+  def file_finished(file, offenses); end
   def file_iterator(files, &block); end
   def file_offenses(file); end
   def file_problems(file, errors, warnings); end
