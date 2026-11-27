@@ -237,6 +237,9 @@ module InstalledDependents
       kept_dependencies.concat(installed_dependency_names.to_a)
     end
 
+    # An uninstall stays refused while any of the dependencies is still required.
+    return [] if all_dependents && kept_dependencies.any?
+
     # A command only helps when no other dependent keeps requiring what it drops.
     outdated = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
     {

@@ -632,6 +632,26 @@ RSpec.describe InstalledDependents do
       expect(described_class.commands_to_drop_dependencies({ "foo" => "foo", "baz" => "baz" }, dependents)).to eq([])
     end
 
+    context "when an upgrade frees one of two dependencies" do
+      let(:dependents) do
+        [dependent_listing("foo", name: "bar"),
+         dependent_listing("baz", name: "qux", declares: ["baz"], outdated: false)]
+      end
+      let(:dependency_names) { { "foo" => "foo", "baz" => "baz" } }
+
+      it "suggests it to `brew doctor`" do
+        commands = described_class.commands_to_drop_dependencies(dependency_names, dependents)
+
+        expect(commands).to eq(["brew upgrade bar"])
+      end
+
+      it "suggests nothing to `brew uninstall`, which stays refused for the other one" do
+        commands = described_class.commands_to_drop_dependencies(dependency_names, dependents, all_dependents: true)
+
+        expect(commands).to eq([])
+      end
+    end
+
     it "suggests nothing while a dependent without a receipt list has a dependency from an untrusted tap" do
       other = instance_double(Formula, full_name: "baz")
       allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)
