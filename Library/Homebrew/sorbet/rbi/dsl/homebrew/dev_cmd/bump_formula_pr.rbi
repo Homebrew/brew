@@ -11,7 +11,7 @@ class Homebrew::DevCmd::BumpFormulaPr
 end
 
 class Homebrew::DevCmd::BumpFormulaPr::Args < Homebrew::CLI::Args
-  sig { returns(T.nilable(String)) }
+  sig { returns(T.nilable(T::Array[String])) }
   def bump_synced; end
 
   sig { returns(T::Boolean) }

@@ -340,6 +340,7 @@ module Homebrew
       sig { returns(T::Boolean) }
       def enqueue_api_cask_downloads?
         return false unless api_fetchable?
+        return false unless CoreCaskTap.instance.use_api?
         return false if args.only_formula_or_cask != :cask
 
         tokens = api_fetch_names(

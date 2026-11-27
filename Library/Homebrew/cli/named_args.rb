@@ -223,7 +223,7 @@ module Homebrew
                 paths << formula_path
               end
               if cask_path.exist? ||
-                 (!Homebrew::EnvConfig.no_install_from_api? &&
+                 (CoreCaskTap.instance.use_api? &&
                  !CoreCaskTap.instance.installed? &&
                  Homebrew::API.cask_token?(path.basename.to_s))
                 paths << cask_path
@@ -638,7 +638,7 @@ module Homebrew
         return if prefer_formula_to_tapped_cask?(ref)
 
         unless defined?(Cask::CaskLoader)
-          api_cask = !Homebrew::EnvConfig.no_install_from_api? &&
+          api_cask = CoreCaskTap.instance.use_api? &&
                      (Homebrew::API.cask_token?(ref) || Homebrew::API.cask_renames.key?(ref) ||
                       Homebrew::API.cask_tap_migrations.key?(ref))
           tapped_cask = Tap.any? do |tap|

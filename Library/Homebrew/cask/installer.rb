@@ -253,27 +253,17 @@ module Cask
       end
     end
 
+    # Installed casks to remove before exercising this cask in CI.
+    sig { returns(T::Array[String]) }
+    def installed_conflicts
+      @cask.conflicts_with&.dig(:cask).to_a.select { |token| installed_cask_conflict(token) }
+    end
+
     sig { void }
     def check_conflicts
-      return unless @cask.conflicts_with
-
-      @cask.conflicts_with[:cask].each do |conflicting_cask|
-        if (conflicting_cask_tap_with_token = Tap.with_cask_token(conflicting_cask))
-          conflicting_cask_tap, = conflicting_cask_tap_with_token
-          next unless conflicting_cask_tap.installed?
-        end
-
-        if (installed_caskfile = Caskroom.cask_installed_caskfile(conflicting_cask))
-          raise CaskConflictError.new(
-            @cask,
-            ::Cask::Cask.new(CaskLoader.token_from_path(installed_caskfile)),
-          )
-        end
-
-        conflicting_cask = CaskLoader.load(conflicting_cask)
-        raise CaskConflictError.new(@cask, conflicting_cask) if conflicting_cask.installed?
-      rescue CaskUnavailableError, Homebrew::UntrustedTapError
-        next # Ignore conflicting Casks that are unavailable or untrusted.
+      @cask.conflicts_with&.dig(:cask).to_a.each do |token|
+        conflict = installed_cask_conflict(token)
+        raise CaskConflictError.new(@cask, conflict) if conflict
       end
     end
 
@@ -1154,6 +1144,21 @@ module Cask
     end
 
     private
+
+    sig { params(token: String).returns(T.nilable(Cask)) }
+    def installed_cask_conflict(token)
+      tap, = Tap.with_cask_token(token)
+      return if tap && !tap.installed?
+
+      if (installed_caskfile = Caskroom.cask_installed_caskfile(token))
+        return Cask.new(CaskLoader.token_from_path(installed_caskfile))
+      end
+
+      conflict = CaskLoader.load(token)
+      conflict if conflict.installed?
+    rescue CaskUnavailableError, Homebrew::UntrustedTapError
+      nil # Ignore conflicting Casks that are unavailable or untrusted.
+    end
 
     # Remove Caskroom symlinks (e.g. from cask renames) that removing this cask's
     # directory has broken, whatever the symlink is named.

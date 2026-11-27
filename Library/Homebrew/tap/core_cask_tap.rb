@@ -43,21 +43,21 @@ class CoreCaskTap < AbstractCoreTap
 
   sig { override.returns(T::Array[Pathname]) }
   def cask_files
-    return super if Homebrew::EnvConfig.no_install_from_api?
+    return super unless use_api?
 
     cask_files_by_name.values
   end
 
   sig { override.returns(T::Array[String]) }
   def cask_tokens
-    return super if Homebrew::EnvConfig.no_install_from_api?
+    return super unless use_api?
 
     Homebrew::API.cask_tokens
   end
 
   sig { override.returns(T::Hash[String, Pathname]) }
   def cask_files_by_name
-    return super if Homebrew::EnvConfig.no_install_from_api?
+    return super unless use_api?
 
     @cask_files_by_name ||= begin
       cask_directory_path = cask_dir.to_s
@@ -73,19 +73,11 @@ class CoreCaskTap < AbstractCoreTap
 
   sig { override.returns(T::Hash[String, String]) }
   def cask_renames
-    @cask_renames ||= if Homebrew::EnvConfig.no_install_from_api?
-      super
-    else
-      Homebrew::API.cask_renames
-    end
+    use_api? ? Homebrew::API.cask_renames : super
   end
 
   sig { override.returns(T::Hash[String, T.untyped]) }
   def tap_migrations
-    @tap_migrations ||= if Homebrew::EnvConfig.no_install_from_api?
-      super
-    else
-      Homebrew::API.cask_tap_migrations
-    end
+    use_api? ? Homebrew::API.cask_tap_migrations : super
   end
 end

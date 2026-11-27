@@ -22,11 +22,17 @@ class AbstractCoreTap < Tap
     super
   end
 
+  # Cask CI reads the cask tap checkout while core formulae can still use the API.
+  sig { returns(T::Boolean) }
+  def use_api?
+    !Homebrew::EnvConfig.no_install_from_api? && !(core_cask_tap? && ENV["HOMEBREW_TEST_BOT_CASKS"].present?)
+  end
+
   # In API mode the formulae and casks come from the API rather than this tap's
   # Git remote, so the remote is irrelevant to what is loaded.
   sig { override.params(remote: T.nilable(String)).returns(T::Boolean) }
   def implicitly_trusted?(remote: self.remote)
-    return true unless Homebrew::EnvConfig.no_install_from_api?
+    return true if use_api?
 
     super
   end
@@ -38,7 +44,7 @@ class AbstractCoreTap < Tap
 
   sig { override.returns(T::Boolean) }
   def should_report_analytics?
-    return super if Homebrew::EnvConfig.no_install_from_api?
+    return super unless use_api?
 
     true
   end

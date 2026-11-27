@@ -37,18 +37,13 @@ RSpec.describe Homebrew::TestBot::Junit do
       end
     end
 
-    it "includes failure element when a step did not pass" do
+    it "reports failed steps as failures and ignored steps as skipped" do
       start_time = Time.utc(2024, 1, 15, 12, 0, 0)
-      step = instance_double(
-        Homebrew::TestBot::Step,
-        command_short: "test",
-        status:        :failed,
-        time:          2.0,
-        start_time:    start_time,
-        passed?:       false,
-        command:       ["brew", "test", "foo"],
-      )
-      test = instance_double(Homebrew::TestBot::Test, steps: [step])
+      steps = [:failed, :ignored].map do |status|
+        instance_double(Homebrew::TestBot::Step, command_short: "test", status:, time: 2.0, start_time:,
+                        passed?: false, ignored?: status == :ignored, command: %w[brew test foo])
+      end
+      test = instance_double(Homebrew::TestBot::Test, steps:)
 
       junit = described_class.new([test])
       junit.build(filters: ["test"])
@@ -57,9 +52,8 @@ RSpec.describe Homebrew::TestBot::Junit do
         path = "#{tmpdir}/junit.xml"
         junit.write(path)
 
-        content = File.read(path)
-        expect(content).to include("<failure ")
-        expect(content).to include("failed")
+        expect(REXML::XPath.match(REXML::Document.new(File.read(path)), "//testcase/*").map(&:name))
+          .to eq(%w[failure skipped])
       end
     end
   end

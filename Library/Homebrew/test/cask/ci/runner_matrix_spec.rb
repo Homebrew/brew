@@ -315,14 +315,18 @@ RSpec.describe Cask::CI::RunnerMatrix do
         )
       end
 
-      context "with a label skipping an audit" do
-        let(:labels) { ["ci-skip-homepage"] }
+      context "with labels skipping install and homepage audits" do
+        let(:labels) { %w[ci-skip-install ci-skip-homepage] }
 
         it "merges the label's exceptions on every runner" do
           expect(audit_args_by_runner).to eq(
             "macos-15" => ["--online", "--except", "homepage_https_availability,homepage_domain_age,signing"],
             "macos-26" => ["--online", "--except", "homepage_https_availability,homepage_domain_age"],
             "xcode-27" => ["--online", "--except", "homepage_https_availability,homepage_domain_age"],
+          )
+          sequoia = jobs.find { |row| row.fetch(:runner) == "macos-15" } || raise("missing macos-15 runner")
+          expect(sequoia.fetch(:test_bot_args)).to contain_exactly(
+            "--only-casks", "--skip-install", "--except=homepage_https_availability,homepage_domain_age,signing"
           )
         end
       end
@@ -335,6 +339,8 @@ RSpec.describe Cask::CI::RunnerMatrix do
 
       expect(jobs.to_h { |job| [job.fetch(:tap), Array(job.fetch(:audit_args)).include?("--new")] })
         .to eq("homebrew/cask" => true, "other/tap" => false, "another/tap" => true)
+      expect(jobs.map { |job| job.values_at(:testing_casks, :added_casks) }.uniq)
+        .to eq([%w[test test], ["other/tap/test", ""], %w[another/tap/test another/tap/test]])
     end
 
     context "when only macOS 15 downloads a cask's URL" do

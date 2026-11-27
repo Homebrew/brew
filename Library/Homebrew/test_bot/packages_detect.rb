@@ -41,9 +41,14 @@ module Homebrew
       def run!(args:)
         name = @argument
         if name == "HEAD"
+          raise UsageError, "Please specify a cask or a tap with --tap." if args.only_casks? && !tap
+
           detect_packages!(args:)
+        elsif args.only_casks?
+          name = "#{@tap.name}/#{name}" if @tap && name.exclude?("/")
+          @testing_casks = [name]
         else
-          only = :formula unless args.only_packages_detect?
+          only = :formula if args.only_formulae?
           package = CLI::NamedArgs.new(name, parent: args, without_api: true).to_formulae_and_casks(only:).fetch(0)
           case package
           when Formula
@@ -219,8 +224,8 @@ module Homebrew
         if diff_start_sha1 != diff_end_sha1 && (tap = self.tap.presence)
           packages = self.class.changed_packages(tap, "#{diff_start_sha1}..#{diff_end_sha1}",
                                                  check_cask_paths: tap.core_cask_tap?)
-          @added_formulae, modified_formulae, @deleted_formulae = packages.fetch(:formula)
-          if args.only_packages_detect?
+          @added_formulae, modified_formulae, @deleted_formulae = packages.fetch(:formula) unless args.only_casks?
+          unless args.only_formulae?
             @added_casks, modified_casks, @deleted_casks = packages.fetch(:cask)
             @testing_casks = @added_casks | modified_casks
           end
@@ -246,7 +251,7 @@ module Homebrew
 
         # TODO: Remove `GITHUB_EVENT_NAME` check when package detection
         #       is fixed for branch jobs.
-        if @testing_formulae.blank? && @testing_casks.blank? &&
+        if @testing_formulae.blank? && @testing_casks.blank? && !args.only_casks? &&
            @deleted_formulae.blank? && !args.only_packages_detect? &&
            diff_start_sha1 == diff_end_sha1 &&
            (ENV["GITHUB_EVENT_NAME"] != "push")
@@ -283,7 +288,7 @@ module Homebrew
           deleted_formulae:  @deleted_formulae,
           formulae_to_fetch: @formulae_to_fetch,
         }
-        if args.only_packages_detect?
+        if args.only_packages_detect? || @testing_casks.present? || @deleted_casks.present?
           summary.merge!(testing_casks: @testing_casks, added_casks: @added_casks,
                          modified_casks: modified_casks.to_a, deleted_casks: @deleted_casks)
         end

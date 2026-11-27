@@ -6,12 +6,13 @@ require "utils/output"
 
 module Cask
   module CI
-    # Selects GitHub Actions runners and audit options for each changed cask.
+    # Selects GitHub Actions runners and test-bot options for each changed cask.
     module RunnerMatrix
       extend ::Utils::Output::Mixin
 
       Runner = T.type_alias { T::Hash[Symbol, T.any(Symbol, String)] }
       MAX_JOBS = 256
+      LIVECHECK_AUDITS = %w[hosting_with_livecheck livecheck_https_availability livecheck_version min_os].freeze
 
       # Weight for each arch must add up to 1.0.
       MACOS_RUNNERS = T.let({
@@ -51,8 +52,7 @@ module Cask
         skip_install ||= labels.include?("ci-skip-install")
         audit_exceptions = {
           "ci-skip-homepage"         => %w[homepage_https_availability homepage_domain_age],
-          "ci-skip-livecheck"        => %w[hosting_with_livecheck livecheck_https_availability livecheck_version
-                                           min_os],
+          "ci-skip-livecheck"        => LIVECHECK_AUDITS,
           "ci-skip-livecheck-min-os" => %w[min_os],
           "ci-skip-repository"       => %w[github_repository github_prerelease_version
                                            gitlab_repository gitlab_prerelease_version
@@ -64,6 +64,7 @@ module Cask
           tap_name, _, cask_token = name.rpartition("/")
           tap = tap_name.empty? ? default_tap : Tap.fetch(tap_name)
           path = CaskLoader.find_cask_in_tap(cask_token, tap).relative_path_from(tap.path)
+          testing_cask = tap.core_cask_tap? ? cask_token : "#{tap.name}/#{cask_token}"
 
           audit_args = ["--online"]
           added = new_cask || added_casks.include?("#{tap.name}/#{cask_token}") ||
@@ -90,19 +91,29 @@ module Cask
             runner_audit_args = audit_args.dup
             runner_audit_args << "--except" << runner_audit_exceptions.join(",") if runner_audit_exceptions.any?
 
+            test_bot_args = ["--only-casks"]
+            test_bot_args << "--skip-install" if skip_install
+            if labels.include?("ci-skip-livecheck")
+              test_bot_args << "--skip-livecheck"
+              runner_audit_exceptions -= LIVECHECK_AUDITS
+            end
+            test_bot_args << "--except=#{runner_audit_exceptions.join(",")}" if runner_audit_exceptions.any?
+
             runner_output = {
-              name:         "test #{cask_token} (#{runner.fetch(:name)}, #{runner.fetch(:arch)})",
-              tap:          tap.name,
-              cask:         {
+              name:          "test #{cask_token} (#{runner.fetch(:name)}, #{runner.fetch(:arch)})",
+              tap:           tap.name,
+              testing_casks: testing_cask,
+              added_casks:   added ? testing_cask : "",
+              test_bot_args:,
+              cask:          {
                 token: cask_token,
                 path:  "./#{path}",
               },
-              audit_args:   runner_audit_args,
-              fetch_args:   [],
+              audit_args:    runner_audit_args,
+              fetch_args:    [],
               skip_install:,
-              runner:       runner.fetch(:name),
+              runner:        runner.fetch(:name),
             }
-
             if runner.fetch(:symbol) == :linux
               runner_output[:container] = {
                 image:   "ghcr.io/homebrew/brew:main",

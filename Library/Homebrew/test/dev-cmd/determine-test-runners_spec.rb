@@ -55,8 +55,8 @@ RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
     described_class.new(%w[--cask local-caffeine local-caffeine]).run
 
     rows = JSON.parse(File.open(github_output, &:readline).delete_prefix("runners="))
-    expect(rows.map { |row| [row.fetch("cask").fetch("token"), row.fetch("audit_args")] }.uniq)
-      .to eq([["local-caffeine", %w[--online --new]]])
+    expect(rows.map { |row| row.values_at("testing_casks", "added_casks", "test_bot_args") }.uniq)
+      .to eq([["local-caffeine", "local-caffeine", ["--only-casks"]]])
   end
 
   it "outputs no cask runners for a syntax-only pull request" do

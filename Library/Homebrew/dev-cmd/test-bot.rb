@@ -77,6 +77,9 @@ module Homebrew
                description: "Don't audit the stable version."
         switch "--skip-revision-audit",
                description: "Don't audit the revision."
+        comma_array "--except=",
+                    description: "Skip the listed audits for formulae and casks.",
+                    hidden:      true
         switch "--only-cleanup-before",
                description: "Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions."
         switch "--only-setup",
@@ -86,6 +89,13 @@ module Homebrew
         switch "--stable",
                depends_on:  "--only-tap-syntax",
                description: "Only run the tap syntax checks needed on stable brew."
+        switch "--only-casks",
+               description: "Only fetch, audit and test changed or named casks.",
+               hidden:      true
+        switch "--skip-install",
+               depends_on:  "--only-casks",
+               description: "Fetch and audit casks without installing them.",
+               hidden:      true
         switch "--only-formulae",
                description: "Only run the formulae steps."
         switch "--only-packages-detect", "--only-formulae-detect",
@@ -105,6 +115,12 @@ module Homebrew
                     description: "Use these added formulae rather than running package detection."
         comma_array "--deleted-formulae=",
                     description: "Use these deleted formulae rather than running package detection."
+        comma_array "--testing-casks=",
+                    description: "Use these testing casks rather than running package detection.",
+                    hidden:      true
+        comma_array "--added-casks=",
+                    description: "Treat these testing casks as newly added.",
+                    hidden:      true
         comma_array "--skipped-or-failed-formulae=",
                     description: "Use these skipped or failed formulae from formulae steps for a " \
                                  "formulae dependents step."
@@ -119,11 +135,14 @@ module Homebrew
         conflicts "--only-packages-detect", "--testing-formulae"
         conflicts "--only-packages-detect", "--added-formulae"
         conflicts "--only-packages-detect", "--deleted-formulae"
+        conflicts "--only-packages-detect", "--testing-casks"
+        conflicts "--only-packages-detect", "--added-casks"
         conflicts "--only-packages-detect", "--only-bottles-fetch"
+        conflicts "--only-casks", "--only-bottles-fetch"
         conflicts "--skip-dependents", "--only-formulae-dependents"
         conflicts "--only-cleanup-before", "--only-setup", "--only-tap-syntax",
-                  "--only-formulae", "--only-packages-detect", "--only-formulae-dependents",
-                  "--only-cleanup-after", "--skip-setup"
+                  "--only-casks", "--only-formulae", "--only-packages-detect",
+                  "--only-formulae-dependents", "--only-cleanup-after", "--skip-setup"
       end
 
       sig { override.void }
@@ -147,6 +166,7 @@ module Homebrew
           args.only_cleanup_before?,
           args.only_setup?,
           args.only_tap_syntax?,
+          args.only_casks?,
           args.only_packages_detect?,
           args.only_formulae_dependents?,
           args.only_bottles_fetch?,

@@ -5,31 +5,19 @@ require "dev-cmd/test-bot"
 
 RSpec.describe Homebrew::TestBot do
   describe "::run!" do
-    it "trusts a third-party tap before running test-bot", :trust_store do
+    it "trusts a third-party tap and preserves earlier failures when the tests pass", :trust_store do
       tap = Tap.fetch("thirdparty", "foo")
       tap.path.mkpath
-      args = double(
-        cleanup?:       false,
-        local?:         false,
-        tap:            tap.name,
-        only_formulae?: false,
-        git_name:       nil,
-        git_email:      nil,
-      )
-
-      allow(args).to receive_messages(only_cleanup_before?:  false,
-                                      only_setup?:           false,
-                                      only_tap_syntax?:      false,
-                                      only_packages_detect?: false,
-                                      only_bottles_fetch?:   false,
-                                      only_cleanup_after?:   false)
+      args = Homebrew::Cmd::TestBotCmd.new(["--tap=#{tap.name}"]).args
       allow(Utils).to receive(:safe_popen_read).and_return("revision")
       allow(Homebrew::TestBot::TestRunner).to receive(:run!).and_return(true)
+      Homebrew.failed = true
 
       mktmpdir do |workdir|
-        with_env(HOMEBREW_USER_CONFIG_HOME: "#{workdir}/.homebrew") do
+        workdir.cd do
           expect { described_class.run!(args) }.to output(%r{==> Trusted tap: thirdparty/foo}).to_stdout
           expect(Homebrew::Trust.trusted?(:tap, "thirdparty/foo")).to be(true)
+          expect(Homebrew).to have_failed
         end
       end
     ensure
@@ -42,26 +30,12 @@ RSpec.describe Homebrew::TestBot do
       tap.path.mkpath
       system "git", "-C", tap.path.to_s, "init"
       system "git", "-C", tap.path.to_s, "remote", "add", "origin", "https://gitlab.com/other/repo"
-      args = double(
-        cleanup?:       false,
-        local?:         false,
-        tap:            tap.name,
-        only_formulae?: false,
-        git_name:       nil,
-        git_email:      nil,
-      )
-
-      allow(args).to receive_messages(only_cleanup_before?:  false,
-                                      only_setup?:           false,
-                                      only_tap_syntax?:      false,
-                                      only_packages_detect?: false,
-                                      only_bottles_fetch?:   false,
-                                      only_cleanup_after?:   false)
+      args = Homebrew::Cmd::TestBotCmd.new(["--tap=#{tap.name}"]).args
       allow(Utils).to receive(:safe_popen_read).and_return("revision")
       allow(Homebrew::TestBot::TestRunner).to receive(:run!).and_return(true)
 
       mktmpdir do |workdir|
-        with_env(HOMEBREW_USER_CONFIG_HOME: "#{workdir}/.homebrew") do
+        workdir.cd do
           described_class.run!(args)
           expect(Homebrew::Trust.trusted_tap?(tap)).to be(true)
         end
@@ -75,21 +49,7 @@ RSpec.describe Homebrew::TestBot do
       old_umask = T.let(nil, T.nilable(Integer))
       tap = Tap.fetch("thirdparty", "foo")
       tap.path.mkpath
-      args = double(
-        cleanup?:       false,
-        local?:         true,
-        tap:            tap.name,
-        only_formulae?: false,
-        git_name:       nil,
-        git_email:      nil,
-      )
-
-      allow(args).to receive_messages(only_cleanup_before?:  false,
-                                      only_setup?:           false,
-                                      only_tap_syntax?:      false,
-                                      only_packages_detect?: false,
-                                      only_bottles_fetch?:   false,
-                                      only_cleanup_after?:   false)
+      args = Homebrew::Cmd::TestBotCmd.new(["--local", "--tap=#{tap.name}"]).args
       allow(Utils).to receive(:safe_popen_read).and_return("revision")
       allow(Homebrew::TestBot::TestRunner).to receive(:run!).and_return(true)
 

@@ -11,11 +11,15 @@ last_review_date: "2025-02-08"
 [`brew test-bot`](Manpage.md#test-bot-options-formula) is Homebrew's continuous-integration orchestration command, originally funded by [our Kickstarter in 2013](https://www.kickstarter.com/projects/homebrew/brew-test-bot).
 Homebrew's GitHub Actions workflows run it on macOS and Linux runners to build bottles and test the lifecycle of changes to Homebrew and its taps.
 The workflow definitions are the authoritative description of the current runner and job configuration.
+Run `brew test-bot --only-casks --tap=user/tap token` to fetch, audit, install and uninstall a checked-out cask on a supported platform.
+Core formula dependencies use the API by default. Core cask dependencies use the local `homebrew/cask` checkout when present and the API when it is absent.
 Use `brew test-bot --only-packages-detect` to report added, modified and deleted formulae and casks without installing them.
 In GitHub Actions it writes `testing_formulae`, `added_formulae`, `deleted_formulae` and the corresponding cask lists to `GITHUB_OUTPUT`.
 The older `--only-formulae-detect` spelling is an alias for `--only-packages-detect`.
 Homebrew/core passes its formula lists to `brew determine-test-runners`.
 Homebrew/cask runs `brew determine-test-runners --cask "$TESTING_CASKS" "$ADDED_CASKS"` and supplies the pull request URL with `--url` to apply CI labels.
+Each runner passes its `--testing-casks` and `--added-casks` lists to `brew test-bot --only-casks`. It fetches and audits each cask, tests installation and uninstallation and on macOS checks the zap stanza and looks for leftover files and services.
+The `ci-skip-install` label passes `--skip-install` to the selected jobs. These jobs run only the fetch and audit steps, skipping installation, uninstallation and the macOS post-install checks.
 
 ## Pull requests
 
