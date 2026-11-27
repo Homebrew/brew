@@ -219,6 +219,8 @@ module InstalledDependents
 
       declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
       dropped = installed_dependency_names - full_names.call(declared_dependencies)
+      # A disabled formula cannot be upgraded or reinstalled, so it keeps what its receipt lists.
+      dropped = [] if dropped.any? && dependent.disabled?
       # A reinstall keeps the keg, so the new install receipt still lists what the keg links to.
       if dropped.any? && !dependent.outdated?
         dropped -= full_names.call(dependent.runtime_dependencies(read_from_tab: false))

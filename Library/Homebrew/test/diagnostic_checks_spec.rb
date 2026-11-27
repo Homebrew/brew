@@ -450,7 +450,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       "dependent-two"    => false,
       "pinned-dependent" => true,
     }.map do |name, pinned|
-      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true,
+      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true, disabled?: false,
                                            runtime_dependencies: [dependency])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
       dependent

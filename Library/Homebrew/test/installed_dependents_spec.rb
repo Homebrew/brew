@@ -569,7 +569,7 @@ RSpec.describe InstalledDependents do
     let(:dependency) { instance_double(Dependency, name: "foo") }
 
     def commands_for_dependent(outdated: false, linked: [], others: [])
-      dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false,
+      dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false, disabled?: false,
                                            runtime_dependencies: [dependency])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false).and_return(linked)
@@ -586,6 +586,12 @@ RSpec.describe InstalledDependents do
       commands = commands_for_dependent { |dependent| allow(dependent).to receive(:pinned?).and_return(true) }
 
       expect(commands).to eq(["brew unpin bar", "brew reinstall bar"])
+    end
+
+    it "skips a disabled dependent, which cannot be installed again" do
+      commands = commands_for_dependent { |dependent| allow(dependent).to receive(:disabled?).and_return(true) }
+
+      expect(commands).to eq([])
     end
 
     it "skips an up-to-date dependent whose keg still links to the dependency" do
