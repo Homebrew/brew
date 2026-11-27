@@ -182,7 +182,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     ENV["GITHUB_OUTPUT"] = (dir/"output").to_s
     allow(Homebrew::Bump).to receive(:system)
       .with(HOMEBREW_BREW_FILE, "bump", "--formulae", "--bump-synced", start_with("--write-pr-to="),
-            "--auto", "--tap=Homebrew/core") do |_, _, _, _, flag|
+            "--auto", "--tap=homebrew/core") do |_, _, _, _, flag|
       (Pathname(flag.delete_prefix("--write-pr-to="))/"testball.json").write('{"version":"2.0"}')
       false
     end
@@ -252,13 +252,24 @@ RSpec.describe Homebrew::DevCmd::Bump do
     ENV["GITHUB_OUTPUT"] = (dir/"output").to_s
     allow(Homebrew::Bump).to receive(:system)
       .with(HOMEBREW_BREW_FILE, "bump", "--casks", start_with("--write-pr-to="),
-            "--auto", "--tap=Homebrew/cask") do |_, _, _, flag|
+            "--auto", "--tap=homebrew/cask") do |_, _, _, flag|
       (Pathname(flag.delete_prefix("--write-pr-to="))/"test-cask.json").write('{"version":"2.0"}')
       true
     end
     described_class.new(["--casks", "--prepare-prs=#{dir}/bumps.json"]).run
     expect([(dir/"output").read.chomp, JSON.parse((dir/"bumps.json").read)])
       .to eq(['casks=["test-cask"]', { "test-cask" => { "version" => "2.0" } }])
+  end
+
+  it "collects requested cask bumps from the given tap" do
+    dir = mktmpdir
+    (dir/"event").write(JSON.generate(inputs: { casks: "user/repo/foo bar" }))
+    ENV["GITHUB_EVENT_PATH"] = (dir/"event").to_s
+    expect(Homebrew::Bump).to receive(:system)
+      .with(HOMEBREW_BREW_FILE, "bump", "--casks", start_with("--write-pr-to="),
+            "--", "user/repo/foo", "user/repo/bar")
+      .and_return(true)
+    described_class.new(["--casks", "--tap=user/repo", "--prepare-prs=#{dir}/bumps.json"]).run
   end
 
   it "commits a prepared cask on the local bump branch" do
@@ -611,7 +622,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       expect(bump).to receive(:system).with(
         HOMEBREW_BREW_FILE,
         "bump-cask-pr",
-        "basic-cask",
+        "basic_cask",
         "--version-arm=1.2.5",
         "--version-intel=1.2.4",
         "--no-browse",
@@ -642,7 +653,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       expect(bump).to receive(:system).with(
         HOMEBREW_BREW_FILE,
         "bump-cask-pr",
-        "basic-cask",
+        "basic_cask",
         "--version-arm=1.2.4",
         "--version-intel=1.2.4",
         "--no-browse",
@@ -678,7 +689,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       expect(bump).to receive(:system).with(
         HOMEBREW_BREW_FILE,
         "bump-cask-pr",
-        "basic-cask",
+        "basic_cask",
         "--version-arm=2.0",
         "--version-intel=2.0",
         "--version-linux-intel=1.6",
@@ -687,6 +698,33 @@ RSpec.describe Homebrew::DevCmd::Bump do
       ).and_return(true)
 
       bump.retrieve_and_display_info_and_open_pr(c_basic, "basic-cask", [], ambiguous_cask: false)
+    end
+
+    it "passes the full name of a formula in a third-party tap to bump-formula-pr" do
+      tapped_formula = formula("basic_formula", tap: Tap.fetch("user", "repo")) do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/test-1.2.3.tgz"
+      end
+      version_info = Homebrew::DevCmd::Bump::VersionBumpInfo.new(
+        type:                    :formula,
+        deprecated:              { general: false },
+        multiple_versions:       { current: false, new: false },
+        version_name:            "formula version:",
+        current_version:         Homebrew::BumpVersionParser.new(general: Version.new("1.2.3")),
+        new_version:             Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")),
+        repology_latest:         "not found",
+        newer_than_upstream:     { general: false },
+        duplicate_pull_requests: nil,
+        open_bump_pull_requests: nil,
+      )
+      allow(bump).to receive(:retrieve_versions_by_arch).and_return(version_info)
+
+      expect(bump).to receive(:system)
+        .with(HOMEBREW_BREW_FILE, "bump-formula-pr", "user/repo/basic_formula", "--version=1.2.4",
+              "--no-browse", "--message=Created by `brew bump`")
+        .and_return(true)
+
+      bump.retrieve_and_display_info_and_open_pr(tapped_formula, "basic_formula", [], ambiguous_cask: false)
     end
 
     it "notes when a newer upstream version was skipped due to release cooldown" do
