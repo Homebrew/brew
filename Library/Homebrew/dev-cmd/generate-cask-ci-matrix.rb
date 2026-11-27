@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "api/env"
+require "cask/ci/runner_matrix"
 require "tap"
 require "utils/github/api"
 require "cli/parser"
@@ -10,21 +12,6 @@ require "system_command"
 module Homebrew
   module DevCmd
     class GenerateCaskCiMatrix < AbstractCommand
-      MAX_JOBS = 256
-
-      # Weight for each arch must add up to 1.0.
-      MACOS_RUNNERS = T.let({
-        { symbol: :sequoia,     name: "macos-15", arch: :arm } => 0.0,
-        { symbol: :tahoe,       name: "macos-26", arch: :arm } => 0.0,
-        { symbol: :golden_gate, name: "xcode-27", arch: :arm } => 1.0,
-      }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-      LINUX_RUNNERS = T.let({
-        { symbol: :linux, name: "ubuntu-latest", arch: :intel }       => 1.0,
-        { symbol: :linux, name: OS::LINUX_CI_ARM_RUNNER, arch: :arm } => 1.0,
-      }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-      RUNNERS = T.let(MACOS_RUNNERS.merge(LINUX_RUNNERS).freeze,
-                      T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-
       cmd_args do
         description <<~EOS
           Generate a GitHub Actions matrix for a given pull request URL or list of cask names.
@@ -69,14 +56,9 @@ module Homebrew
         end
         raise UsageError, "Only one `--url` can be specified." if pr_url&.count&.> 1
 
-        labels = if pr_url && (first_pr_url = pr_url.first)
-          pr = GitHub::API.open_rest(first_pr_url)
-          pr.fetch("labels").map { |l| l.fetch("name") }
-        else
-          []
-        end
+        labels = Cask::CI::RunnerMatrix.labels(pr_url&.first)
 
-        runner = random_runner[:name]
+        runner = Cask::CI::RunnerMatrix.random_runner.fetch(:name)
         syntax_job = {
           name:   "tap_syntax",
           tap:    tap.name,
@@ -87,7 +69,7 @@ module Homebrew
 
         matrix = [syntax_job, stable_syntax_job]
 
-        if !syntax_only && !labels&.include?("ci-syntax-only")
+        if !syntax_only && labels.exclude?("ci-syntax-only")
           cask_jobs = if casks&.any?
             generate_matrix(tap, labels:, cask_names: casks, skip_install:, new_cask:)
           else
@@ -107,8 +89,7 @@ module Homebrew
           matrix += cask_jobs
         end
 
-        jobs = matrix.count
-        odie "Maximum job matrix size exceeded: #{jobs}/#{MAX_JOBS}" if jobs > MAX_JOBS
+        Cask::CI::RunnerMatrix.check_size!(matrix.size)
 
         [syntax_job, stable_syntax_job].each do |job|
           job[:name] += " (#{job[:runner]})"
@@ -119,98 +100,12 @@ module Homebrew
         return unless github_output
 
         File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
+          f.puts "runners=#{JSON.generate(cask_jobs.to_a)}"
           f.puts "matrix=#{JSON.generate(matrix)}"
         end
       end
 
-      sig { params(cask: Cask::Cask).returns(T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float]) }
-      def filter_runners(cask)
-        filtered_runners = T.let({}, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-        if cask.supports_macos?
-          # Skip macOS if no runner satisfies the cask's min/max macOS requirements.
-          macos_requirements = [cask.depends_on.macos, cask.depends_on.maximum_macos]
-                               .compact
-                               .select(&:version_specified?)
-
-          filtered_runners = if macos_requirements.empty?
-            MACOS_RUNNERS.dup
-          else
-            MACOS_RUNNERS.select do |runner, _|
-              macos_version = MacOSVersion.from_symbol(runner.fetch(:symbol).to_sym)
-              macos_requirements.all? { |requirement| requirement.allows?(macos_version) }
-            end
-          end
-
-          if filtered_runners.any?
-            macos_archs = architectures(cask:, os: :macos)
-            filtered_runners.select! do |runner, _|
-              macos_archs.include?(runner.fetch(:arch))
-            end
-          end
-        end
-
-        if cask.supports_linux?
-          linux_archs = architectures(cask:, os: :linux)
-          filtered_runners.merge!(LINUX_RUNNERS.select do |runner, _|
-            linux_archs.include?(runner.fetch(:arch))
-          end)
-        end
-
-        # A cask that is disabled doesn't need to be tested
-        filtered_runners.reject do |runner, _|
-          tag = Utils::Bottles::Tag.new(system: runner.fetch(:symbol).to_sym, arch: runner.fetch(:arch).to_sym)
-          cask.refresh_for_tag(tag) { cask.disabled? }
-        end
-      end
-
-      sig { params(cask: Cask::Cask).returns(T::Array[T::Hash[Symbol, T.any(Symbol, String)]]) }
-      def runners(cask:)
-        filtered_runners = filter_runners(cask)
-
-        filtered_macos_found = filtered_runners.keys.any? do |runner|
-          cask.to_hash_with_variations["variations"].key?(runner.fetch(:symbol).to_sym)
-        end
-
-        # If the cask varies on a macOS version, test it on every possible macOS version.
-        return filtered_runners.keys if filtered_macos_found
-
-        macos_runners, linux_runners = filtered_runners.partition do |runner, _|
-          runner.fetch(:symbol) != :linux
-        end
-        selected_runners = macos_runners.any? ? [random_runner(macos_runners.to_h)] : []
-        selected_runners + linux_runners.map(&:first)
-      end
-
       private
-
-      sig { params(cask: Cask::Cask, os: Symbol).returns(T::Array[Symbol]) }
-      def architectures(cask:, os:)
-        architectures = T.let([], T::Array[Symbol])
-        [:arm, :intel].each do |arch|
-          tag = Utils::Bottles::Tag.new(system: os, arch:)
-          cask.refresh_for_tag(tag) do
-            if cask.depends_on.arch.blank?
-              architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
-              next
-            end
-
-            architectures = cask.depends_on.arch.map { |arch| arch[:type] }
-          end
-        end
-
-        architectures
-      end
-
-      sig {
-        params(available_runners: T::Hash[T::Hash[Symbol, T.any(Symbol, String)],
-                                          Float]).returns(T::Hash[Symbol, T.any(Symbol, String)])
-      }
-      def random_runner(available_runners = MACOS_RUNNERS)
-        max_runner = available_runners.max_by { |(_, weight)| rand ** (1.0 / weight) }
-        raise "unexpected nil max_runner" unless max_runner
-
-        max_runner.first
-      end
 
       sig {
         params(tap: T.nilable(Tap), labels: T::Array[String], cask_names: T::Array[String], skip_install: T::Boolean,
@@ -221,151 +116,28 @@ module Homebrew
       def generate_matrix(tap, labels: [], cask_names: [], skip_install: false, new_cask: false)
         odie "This command must be run from inside a tap directory." unless tap
 
-        changed_files = find_changed_files(tap)
+        git_diff = ["git", "-C", tap.path.to_s, "diff", "--name-only"]
+        files = Utils.safe_popen_read(*git_diff, "--diff-filter=AMR", "origin...HEAD", "--",
+                                      "*.rb").lines(chomp: true)
+        cask_files, other_files = files.partition { |file| tap.cask_file?(file) }
+        misplaced = other_files.reject { |file| file.start_with?("cmd/", ".github/actions/") }
+        if misplaced.any?
+          misplaced.each { |file| puts "::error file=#{file}::File is in wrong directory." }
+          odie "Found Ruby files in wrong directory:\n#{misplaced.join("\n")}"
+        end
 
-        ruby_files_in_wrong_directory =
-          changed_files[:modified_ruby_files] - (
-            changed_files[:modified_cask_files] +
-            changed_files[:modified_command_files] +
-            changed_files[:modified_github_actions_files]
+        cask_names = cask_files.map { |file| File.basename(file, ".rb") } if cask_names.empty?
+        added_casks = Utils.safe_popen_read(*git_diff, "--diff-filter=A", "origin...HEAD", "--", "*.rb")
+                           .lines(chomp: true)
+                           .select { |file| tap.cask_file?(file) }
+                           .map do |file|
+          File.basename(
+            file, ".rb"
           )
-
-        if ruby_files_in_wrong_directory.any?
-          ruby_files_in_wrong_directory.each do |path|
-            puts "::error file=#{path}::File is in wrong directory."
-          end
-
-          odie "Found Ruby files in wrong directory:\n#{ruby_files_in_wrong_directory.join("\n")}"
         end
-
-        require "cask/cask_loader"
-        cask_files_to_check = if cask_names.any?
-          cask_names.map do |cask_name|
-            Cask::CaskLoader.find_cask_in_tap(cask_name, tap).relative_path_from(tap.path)
-          end
-        else
-          changed_files[:modified_cask_files]
+        Homebrew::API.with_no_api_env do
+          Cask::CI::RunnerMatrix.generate(tap, cask_names, added_casks:, labels:, skip_install:, new_cask:)
         end
-
-        jobs = cask_files_to_check.count
-        odie "Maximum job matrix size exceeded: #{jobs}/#{MAX_JOBS}" if jobs > MAX_JOBS
-
-        cask_files_to_check.flat_map do |path|
-          cask_token = path.basename(".rb").to_s
-
-          audit_args = ["--online"]
-          audit_args << "--new" if changed_files.fetch(:added_files).include?(path) || new_cask
-
-          audit_exceptions = []
-
-          if labels.include?("ci-skip-homepage")
-            audit_exceptions << %w[homepage_https_availability homepage_domain_age]
-          end
-
-          if labels.include?("ci-skip-livecheck")
-            audit_exceptions << %w[hosting_with_livecheck livecheck_https_availability livecheck_version min_os]
-          end
-
-          audit_exceptions << "min_os" if labels.include?("ci-skip-livecheck-min-os")
-
-          if labels.include?("ci-skip-repository")
-            audit_exceptions << %w[github_repository github_prerelease_version
-                                   gitlab_repository gitlab_prerelease_version
-                                   forgejo_repository forgejo_prerelease_version
-                                   bitbucket_repository]
-          end
-
-          audit_exceptions << "self_submission" if labels.include?("ci-skip-self-submission")
-
-          audit_exceptions << %w[token_valid token_bad_words token_conflicts] if labels.include?("ci-skip-token")
-
-          cask = Cask::CaskLoader.from_tap_path(path.expand_path)
-
-          runners = runners(cask:)
-          puts "::warning file=#{path}::No CI runner supports this cask, so it will not be tested." if runners.empty?
-
-          # `macos-15` intermittently fails `signing` on notarized artifacts that other
-          # macOS runners accept, e.g. https://github.com/Homebrew/homebrew-cask/pull/294364,
-          # so skip it there when another macOS runner audits the same URL.
-          macos_urls = runners.reject { |runner| runner.fetch(:symbol) == :linux }.to_h do |runner|
-            tag = Utils::Bottles::Tag.new(system: runner.fetch(:symbol).to_sym, arch: runner.fetch(:arch).to_sym)
-            [runner.fetch(:symbol), cask.refresh_for_tag(tag) { cask.url.to_s }]
-          end
-          skip_sequoia_signing = macos_urls.except(:sequoia).value?(macos_urls[:sequoia])
-
-          runners.map do |runner|
-            runner_audit_exceptions = audit_exceptions.dup
-            runner_audit_exceptions << "signing" if skip_sequoia_signing && runner.fetch(:symbol) == :sequoia
-            runner_audit_args = audit_args.dup
-            runner_audit_args << "--except" << runner_audit_exceptions.join(",") if runner_audit_exceptions.any?
-
-            runner_output = {
-              name:         "test #{cask_token} (#{runner.fetch(:name)}, #{runner.fetch(:arch)})",
-              tap:          tap.name,
-              cask:         {
-                token: cask_token,
-                path:  "./#{path}",
-              },
-              audit_args:   runner_audit_args,
-              fetch_args:   [],
-              skip_install: labels.include?("ci-skip-install") || skip_install,
-              runner:       runner.fetch(:name),
-            }
-
-            if runner.fetch(:symbol) == :linux
-              runner_output[:container] = {
-                image:   "ghcr.io/homebrew/brew:main",
-                options: "--user=linuxbrew",
-              }
-            end
-
-            runner_output
-          end
-        end
-      end
-
-      sig {
-        params(tap: Tap).returns({
-          modified_files:                T::Array[Pathname],
-          added_files:                   T::Array[Pathname],
-          modified_ruby_files:           T::Array[Pathname],
-          modified_command_files:        T::Array[Pathname],
-          modified_github_actions_files: T::Array[Pathname],
-          modified_cask_files:           T::Array[Pathname],
-        })
-      }
-      def find_changed_files(tap)
-        commit_range_start = Utils.safe_popen_read("git", "rev-parse", "origin").chomp
-        commit_range_end = Utils.safe_popen_read("git", "rev-parse", "HEAD").chomp
-        commit_range = "#{commit_range_start}...#{commit_range_end}"
-
-        modified_files = Utils.safe_popen_read("git", "diff", "--name-only", "--diff-filter=AMR", commit_range)
-                              .split("\n")
-                              .map do |path|
-          Pathname(path)
-        end
-
-        added_files = Utils.safe_popen_read("git", "diff", "--name-only", "--diff-filter=A", commit_range)
-                           .split("\n")
-                           .map do |path|
-          Pathname(path)
-        end
-
-        modified_ruby_files = modified_files.select { |path| path.extname == ".rb" }
-        modified_command_files = modified_files.select { |path| path.ascend.to_a.last.to_s == "cmd" }
-        modified_github_actions_files = modified_files.select do |path|
-          path.to_s.start_with?(".github/actions/")
-        end
-        modified_cask_files = modified_files.select { |path| tap.cask_file?(path.to_s) }
-
-        {
-          modified_files:,
-          added_files:,
-          modified_ruby_files:,
-          modified_command_files:,
-          modified_github_actions_files:,
-          modified_cask_files:,
-        }
       end
     end
   end
