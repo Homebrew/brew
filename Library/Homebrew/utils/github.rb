@@ -186,8 +186,8 @@ module GitHub
             reviews(states: APPROVED, first: 100) {
               nodes {
                 author {
-                  ... on User { email login name databaseId }
-                  ... on Organization { email login name databaseId }
+                  ... on User { databaseId }
+                  ... on Organization { databaseId }
                 }
                 authorAssociation
                 commit { oid }
@@ -198,20 +198,24 @@ module GitHub
       }
     EOS
 
-    result = API.open_graphql(query, scopes: ["user:email"])
+    result = API.open_graphql(query)
     reviews = result["repository"]["pullRequest"]["reviews"]["nodes"]
 
     valid_associations = %w[MEMBER OWNER]
+    profiles = {}
     reviews.filter_map do |r|
       next if commit.present? && commit != r["commit"]["oid"]
       next unless valid_associations.include? r["authorAssociation"]
 
-      author = r["author"]
-      login = author["login"]
-      email = author["email"].presence || "#{author["databaseId"]}+#{login}@users.noreply.github.com"
+      id = r.dig("author", "databaseId")
+      next unless id
+
+      # The public profile exposes the email without a GraphQL user:email scope.
+      author = profiles[id] ||= API.open_rest(url_to("user", id))
+      login = author.fetch("login")
 
       {
-        "email" => email,
+        "email" => author["email"].presence || "#{id}+#{login}@users.noreply.github.com",
         "name"  => author["name"].presence || login,
         "login" => login,
       }

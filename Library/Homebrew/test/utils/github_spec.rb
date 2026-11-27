@@ -157,8 +157,30 @@ RSpec.describe GitHub do
     end
   end
 
-  describe "::repository_approved_reviews", :needs_network do
-    it "can get reviews for a pull request" do
+  describe "::repository_approved_reviews" do
+    test_each(["alice@example.org", nil]) do |email|
+      it "uses the reviewer's public profile when the email is #{email.inspect}" do
+        allow(GitHub::API).to receive(:open_graphql).with(
+          a_string_including("... on User { databaseId }", "... on Organization { databaseId }"),
+        ).and_return("repository" => { "pullRequest" => { "reviews" => { "nodes" => [
+          { "author" => { "databaseId" => 123 }, "authorAssociation" => "MEMBER" },
+        ] } } })
+        allow(GitHub::API).to receive(:open_rest).with(
+          described_class.url_to("user", 123),
+        ).and_return("login" => "alice", "name" => "Alice", "email" => email)
+
+        expect(described_class.repository_approved_reviews("Homebrew", "homebrew-core", 1)).to eq([
+          { "login" => "alice", "name" => "Alice", "email" => email || "123+alice@users.noreply.github.com" },
+        ])
+      end
+    end
+
+    it "reads an approved reviewer's public profile", :needs_network do
+      reviews = described_class.repository_approved_reviews("Homebrew", "brew", 24789)
+      expect(reviews).to include(a_hash_including("email" => a_string_including("@")))
+    end
+
+    it "can get reviews for a pull request", :needs_network do
       reviews = described_class.repository_approved_reviews("Homebrew", "homebrew-core", 1, commit: "deadbeef")
       expect(reviews).to eq([])
     end
