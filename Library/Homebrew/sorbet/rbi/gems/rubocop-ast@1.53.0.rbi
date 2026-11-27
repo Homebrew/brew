@@ -5,6 +5,29 @@
 # Please instead update this file by running `bin/tapioca gem rubocop-ast`.
 
 
+module Parser
+  extend ::RuboCop::AST::ParserSource::LazyConstants
+end
+
+module Parser::AST
+  extend ::RuboCop::AST::ParserSource::LazyConstants
+end
+
+class Parser::Diagnostic; end
+
+module Parser::Source
+  extend ::RuboCop::AST::ParserSource::LazyConstants
+end
+
+class Parser::Source::Map; end
+class Parser::Source::Map::Collection < ::Parser::Source::Map; end
+class Parser::Source::Map::Condition < ::Parser::Source::Map; end
+class Parser::Source::Map::Constant < ::Parser::Source::Map; end
+class Parser::Source::Map::Keyword < ::Parser::Source::Map; end
+class Parser::Source::Map::Operator < ::Parser::Source::Map; end
+class Parser::Source::Map::Send < ::Parser::Source::Map; end
+class Parser::Source::Map::Variable < ::Parser::Source::Map; end
+
 class Parser::Source::Range
   include ::RuboCop::AST::Ext::Range
 end
@@ -938,6 +961,44 @@ RuboCop::AST::Node::SPECIAL_KEYWORD_TYPES = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::TRUTHY_LITERALS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::VARIABLES = T.let(T.unsafe(nil), Set)
 
+class RuboCop::AST::NodeLayout
+  def initialize(description); end
+
+  def arity; end
+  def fit?(children, layout = T.unsafe(nil)); end
+  def kinds(index); end
+
+  private
+
+  def parse(word); end
+
+  class << self
+    def kind(child); end
+    def of(type); end
+  end
+end
+
+class RuboCop::AST::NodeLayout::Child < ::Struct
+  def kinds; end
+  def kinds=(_); end
+  def least; end
+  def least=(_); end
+  def most; end
+  def most=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+RuboCop::AST::NodeLayout::DESCRIPTIONS = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::NodeLayout::LAYOUTS = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::NodeLayout::WORD = T.let(T.unsafe(nil), Regexp)
+
 class RuboCop::AST::NodePattern
   include ::RuboCop::AST::NodePattern::MethodDefiner
   extend ::RuboCop::SimpleForwardable
@@ -985,6 +1046,67 @@ class RuboCop::AST::NodePattern::Builder
   def optimizable_as_set?(children); end
   def union_children(pattern_lists); end
 end
+
+class RuboCop::AST::NodePattern::Checker
+  def check(pattern); end
+
+  private
+
+  def check_alternatives(node); end
+  def check_predicate(node); end
+  def check_sequence(node); end
+  def check_type(node); end
+  def node_classes; end
+  def problem(node, message); end
+  def receivers; end
+  def visit(node); end
+
+  class << self
+    def type?(type); end
+  end
+end
+
+class RuboCop::AST::NodePattern::Checker::Problem < ::Struct
+  def message; end
+  def message=(_); end
+  def node; end
+  def node=(_); end
+  def range; end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+class RuboCop::AST::NodePattern::Checker::SequenceCheck
+  def initialize(node); end
+
+  def problems; end
+
+  private
+
+  def arity; end
+  def arity_problem(type, wanted); end
+  def check_arity(alternatives); end
+  def check_children(types); end
+  def count(range, noun = T.unsafe(nil)); end
+  def describe(kind); end
+  def head_types(head); end
+  def kind?(term, kinds); end
+  def members(type); end
+  def node_type?(node); end
+  def overlap?(range, other); end
+  def possible?(term, kinds); end
+  def problem(node, message); end
+end
+
+RuboCop::AST::NodePattern::Checker::SequenceCheck::GROUPS = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::NodePattern::Checker::SequenceCheck::LITERALS = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::NodePattern::Checker::VALUES = T.let(T.unsafe(nil), Array)
 
 class RuboCop::AST::NodePattern::Comment
   def initialize(range); end
@@ -1728,6 +1850,22 @@ module RuboCop::AST::ParameterizedNode::WrappedArguments
   def arguments; end
 end
 
+module RuboCop::AST::ParserSource
+  class << self
+    def ensure_parser_gem(parser_engine); end
+    def vendored?; end
+  end
+end
+
+RuboCop::AST::ParserSource::FILES = T.let(T.unsafe(nil), Array)
+
+module RuboCop::AST::ParserSource::LazyConstants
+  def const_missing(name); end
+end
+
+RuboCop::AST::ParserSource::VENDORED = T.let(T.unsafe(nil), FalseClass)
+RuboCop::AST::ParserSource::VENDOR_DIR = T.let(T.unsafe(nil), String)
+
 module RuboCop::AST::PredicateOperatorNode
   def logical_operator?; end
   def operator; end
@@ -1741,6 +1879,261 @@ RuboCop::AST::PredicateOperatorNode::SEMANTIC_AND = T.let(T.unsafe(nil), String)
 RuboCop::AST::PredicateOperatorNode::SEMANTIC_OPERATORS = T.let(T.unsafe(nil), Array)
 RuboCop::AST::PredicateOperatorNode::SEMANTIC_OR = T.let(T.unsafe(nil), String)
 
+class RuboCop::AST::PrismCompiler < ::Prism::Compiler
+  def initialize(source_buffer, offset_cache, diagnostics = T.unsafe(nil)); end
+
+  def visit_alias_global_variable_node(node); end
+  def visit_alias_method_node(node); end
+  def visit_alternation_pattern_node(node); end
+  def visit_and_node(node); end
+  def visit_arguments_node(node); end
+  def visit_array_node(node); end
+  def visit_array_pattern_node(node); end
+  def visit_assoc_node(node); end
+  def visit_assoc_splat_node(node); end
+  def visit_back_reference_read_node(node); end
+  def visit_begin_node(node); end
+  def visit_block_argument_node(node); end
+  def visit_block_local_variable_node(node); end
+  def visit_block_node(_node); end
+  def visit_block_parameter_node(node); end
+  def visit_block_parameters_node(node); end
+  def visit_break_node(node); end
+  def visit_call_and_write_node(node); end
+  def visit_call_node(node); end
+  def visit_call_operator_write_node(node); end
+  def visit_call_or_write_node(node); end
+  def visit_call_target_node(node); end
+  def visit_capture_pattern_node(node); end
+  def visit_case_match_node(node); end
+  def visit_case_node(node); end
+  def visit_class_node(node); end
+  def visit_class_variable_and_write_node(node); end
+  def visit_class_variable_operator_write_node(node); end
+  def visit_class_variable_or_write_node(node); end
+  def visit_class_variable_read_node(node); end
+  def visit_class_variable_target_node(node); end
+  def visit_class_variable_write_node(node); end
+  def visit_constant_and_write_node(node); end
+  def visit_constant_operator_write_node(node); end
+  def visit_constant_or_write_node(node); end
+  def visit_constant_path_and_write_node(node); end
+  def visit_constant_path_node(node); end
+  def visit_constant_path_operator_write_node(node); end
+  def visit_constant_path_or_write_node(node); end
+  def visit_constant_path_target_node(node); end
+  def visit_constant_path_write_node(node); end
+  def visit_constant_read_node(node); end
+  def visit_constant_target_node(node); end
+  def visit_constant_write_node(node); end
+  def visit_def_node(node); end
+  def visit_defined_node(node); end
+  def visit_else_node(node); end
+  def visit_embedded_statements_node(node); end
+  def visit_embedded_variable_node(node); end
+  def visit_ensure_node(_node); end
+  def visit_error_recovery_node(node); end
+  def visit_false_node(node); end
+  def visit_find_pattern_node(node); end
+  def visit_flip_flop_node(node); end
+  def visit_float_node(node); end
+  def visit_for_node(node); end
+  def visit_forwarding_arguments_node(node); end
+  def visit_forwarding_parameter_node(node); end
+  def visit_forwarding_super_node(node); end
+  def visit_global_variable_and_write_node(node); end
+  def visit_global_variable_operator_write_node(node); end
+  def visit_global_variable_or_write_node(node); end
+  def visit_global_variable_read_node(node); end
+  def visit_global_variable_target_node(node); end
+  def visit_global_variable_write_node(node); end
+  def visit_hash_node(node); end
+  def visit_hash_pattern_node(node); end
+  def visit_if_node(node); end
+  def visit_imaginary_node(node); end
+  def visit_implicit_node(_node); end
+  def visit_implicit_rest_node(_node); end
+  def visit_in_node(node); end
+  def visit_index_and_write_node(node); end
+  def visit_index_operator_write_node(node); end
+  def visit_index_or_write_node(node); end
+  def visit_index_target_node(node); end
+  def visit_instance_variable_and_write_node(node); end
+  def visit_instance_variable_operator_write_node(node); end
+  def visit_instance_variable_or_write_node(node); end
+  def visit_instance_variable_read_node(node); end
+  def visit_instance_variable_target_node(node); end
+  def visit_instance_variable_write_node(node); end
+  def visit_integer_node(node); end
+  def visit_interpolated_match_last_line_node(node); end
+  def visit_interpolated_regular_expression_node(node); end
+  def visit_interpolated_string_node(node); end
+  def visit_interpolated_symbol_node(node); end
+  def visit_interpolated_x_string_node(node); end
+  def visit_it_local_variable_read_node(node); end
+  def visit_it_parameters_node(_node); end
+  def visit_keyword_hash_node(node); end
+  def visit_keyword_rest_parameter_node(node); end
+  def visit_lambda_node(node); end
+  def visit_local_variable_and_write_node(node); end
+  def visit_local_variable_operator_write_node(node); end
+  def visit_local_variable_or_write_node(node); end
+  def visit_local_variable_read_node(node); end
+  def visit_local_variable_target_node(node); end
+  def visit_local_variable_write_node(node); end
+  def visit_match_last_line_node(node); end
+  def visit_match_predicate_node(node); end
+  def visit_match_required_node(node); end
+  def visit_match_write_node(node); end
+  def visit_module_node(node); end
+  def visit_multi_target_node(node); end
+  def visit_multi_write_node(node); end
+  def visit_next_node(node); end
+  def visit_nil_node(node); end
+  def visit_no_block_parameter_node(node); end
+  def visit_no_keywords_parameter_node(node); end
+  def visit_numbered_parameters_node(_node); end
+  def visit_numbered_reference_read_node(node); end
+  def visit_optional_keyword_parameter_node(node); end
+  def visit_optional_parameter_node(node); end
+  def visit_or_node(node); end
+  def visit_parameters_node(node); end
+  def visit_parentheses_node(node); end
+  def visit_pinned_expression_node(node); end
+  def visit_pinned_variable_node(node); end
+  def visit_post_execution_node(node); end
+  def visit_pre_execution_node(node); end
+  def visit_program_node(node); end
+  def visit_range_node(node); end
+  def visit_rational_node(node); end
+  def visit_redo_node(node); end
+  def visit_regular_expression_node(node); end
+  def visit_required_keyword_parameter_node(node); end
+  def visit_required_parameter_node(node); end
+  def visit_rescue_modifier_node(node); end
+  def visit_rescue_node(_node); end
+  def visit_rest_parameter_node(node); end
+  def visit_retry_node(node); end
+  def visit_return_node(node); end
+  def visit_self_node(node); end
+  def visit_shareable_constant_node(node); end
+  def visit_singleton_class_node(node); end
+  def visit_source_encoding_node(node); end
+  def visit_source_file_node(node); end
+  def visit_source_line_node(node); end
+  def visit_splat_node(node); end
+  def visit_statements_node(node); end
+  def visit_string_node(node); end
+  def visit_super_node(node); end
+  def visit_symbol_node(node); end
+  def visit_true_node(node); end
+  def visit_undef_node(node); end
+  def visit_unless_node(node); end
+  def visit_until_node(node); end
+  def visit_when_node(node); end
+  def visit_while_node(node); end
+  def visit_x_string_node(node); end
+  def visit_yield_node(node); end
+
+  private
+
+  def arg_prefix_map(operator, name); end
+  def array_pattern(begin_l, elements, end_l, tail); end
+  def assign(target, operator, value); end
+  def begin_body(body, rescue_bodies, else_l, else_body, ensure_l, ensure_body); end
+  def begin_keyword(begin_l, body, end_l); end
+  def begin_node(begin_l, body, end_l); end
+  def binary(type, left, operator, right); end
+  def block_node(call, begin_l, parameters, body, end_l); end
+  def call_write_target(node); end
+  def check_condition(condition); end
+  def check_duplicate_keys(pairs); end
+  def check_regexp(parts, options, range); end
+  def collapse_string_parts?(parts); end
+  def collection_map(begin_l, parts, end_l); end
+  def compile_regexp(parts, options); end
+  def condition_map(keyword, condition, begin_l, body, else_l, else_body, end_l); end
+  def const_pattern(const, begin_l, pattern, end_l); end
+  def constant_path(type, node); end
+  def constant_target(name, range); end
+  def diagnostic(level, reason, arguments, range); end
+  def eh_keyword_map(body, keyword, bodies, else_l, else_body); end
+  def find_forwarding(parameters); end
+  def guard_node(type, keyword, body); end
+  def if_statement_map(node, predicate, statements, if_false); end
+  def implicit_assoc(key, value); end
+  def index(name, receiver, lbrack, indexes, rbrack); end
+  def index_write_target(node); end
+  def join(left, right); end
+  def keyword_cmd(type, keyword, lparen, args, rparen); end
+  def keyword_map(keyword, begin_l, args, end_l); end
+  def kwarg_map(label, value); end
+  def match_hash_var(key); end
+  def match_hash_var_from_str(begin_l, strings, end_l); end
+  def match_op(receiver, operator, argument); end
+  def match_rest(operator, name_location); end
+  def multi_target_elements(node); end
+  def n(type, children, map); end
+  def non_interpolating_lines(unescaped, escaped, start_offset, percent_array); end
+  def not_op(node); end
+  def numeric(type, node, value); end
+  def op_assign(target, operator, operator_l, value); end
+  def pair_keyword(name, key_range, value); end
+  def pair_quoted(begin_l, parts, end_l, value); end
+  def percent_array_elements(node, opening); end
+  def push_heredoc_child(children, child); end
+  def quoted_key_parts(key); end
+  def r(location); end
+  def regexp(node, parts); end
+  def rescue_body(keyword, exceptions, assoc, variable, then_l, body); end
+  def rescue_clause_body(node, clause); end
+  def ro(start_offset, end_offset); end
+  def semicolon(start_offset, end_offset); end
+  def send_map(receiver, dot, selector, begin_l = T.unsafe(nil), args = T.unsafe(nil), end_l = T.unsafe(nil)); end
+  def send_unary_op_map(selector, argument); end
+  def static_regexp?(node); end
+  def str_internal(value, range); end
+  def string_compose(begin_l, parts, end_l, heredoc: T.unsafe(nil)); end
+  def string_map(begin_l, parts, end_l, heredoc: T.unsafe(nil)); end
+  def string_nodes_from_interpolation(node, opening); end
+  def string_nodes_from_line_continuations(unescaped, escaped, start_offset, opening); end
+  def symbol_compose(begin_l, parts, end_l); end
+  def unary_op_map(operator, argument); end
+  def variable_logical_write(type, operator, node); end
+  def variable_operator_write(type, node); end
+  def variable_write(type, node); end
+  def visit_delimited_string_node(node, opening); end
+  def visit_heredoc(node); end
+  def visit_loop(type, node, keyword_loc); end
+  def visit_positional_parameter(param); end
+  def visit_special_call(node, name, arguments, block); end
+  def with_block(call, prism_block); end
+  def with_forwarding(forwarding); end
+  def with_pattern(in_pattern); end
+  def within_pattern(&block); end
+end
+
+RuboCop::AST::PrismCompiler::BLOCK_CALL_TYPES = T.let(T.unsafe(nil), Array)
+RuboCop::AST::PrismCompiler::Collection = Parser::Source::Map::Collection
+RuboCop::AST::PrismCompiler::Condition = Parser::Source::Map::Condition
+RuboCop::AST::PrismCompiler::Constant = Parser::Source::Map::Constant
+RuboCop::AST::PrismCompiler::DUPLICATE_KEY_TYPES = T.let(T.unsafe(nil), Array)
+RuboCop::AST::PrismCompiler::EMPTY = T.let(T.unsafe(nil), Array)
+RuboCop::AST::PrismCompiler::Keyword = Parser::Source::Map::Keyword
+RuboCop::AST::PrismCompiler::Map = Parser::Source::Map
+RuboCop::AST::PrismCompiler::NODE_MAP = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::PrismCompiler::Operator = Parser::Source::Map::Operator
+RuboCop::AST::PrismCompiler::PERCENT_ARRAY = T.let(T.unsafe(nil), Array)
+RuboCop::AST::PrismCompiler::Range = Parser::Source::Range
+RuboCop::AST::PrismCompiler::Send = Parser::Source::Map::Send
+RuboCop::AST::PrismCompiler::Variable = Parser::Source::Map::Variable
+
+class RuboCop::AST::PrismDiagnostic < ::Parser::Diagnostic
+  def initialize(message, level, reason, location); end
+
+  def message; end
+end
+
 module RuboCop::AST::PrismLazyTokens
   def tokenize_deferred(source_buffer); end
 
@@ -1748,6 +2141,81 @@ module RuboCop::AST::PrismLazyTokens
 
   def deferred_tokens(source_buffer, tokens, offset_cache); end
 end
+
+class RuboCop::AST::PrismLexer
+  def initialize(source_buffer, lexed, offset_cache); end
+
+  def lexed; end
+  def offset_cache; end
+  def source_buffer; end
+  def to_a; end
+
+  private
+
+  def append_bytes(string, bytes); end
+  def calculate_heredoc_whitespace(heredoc_token_index); end
+  def escape_build(value, control, meta); end
+  def escape_read(result, scanner, control, meta); end
+  def interpolation?(quote); end
+  def parse_complex(value); end
+  def parse_float(value); end
+  def parse_integer(value); end
+  def parse_rational(value); end
+  def percent_array?(quote); end
+  def percent_array_leading_whitespace(string); end
+  def percent_array_unescape(string); end
+  def range(start_offset, end_offset); end
+  def regexp?(quote); end
+  def scan_byte(scanner); end
+  def simplify_string?(value, quote); end
+  def trim_heredoc_whitespace(string, heredoc); end
+  def unescape_string(string, quote); end
+end
+
+RuboCop::AST::PrismLexer::DELIMITER_SYMMETRY = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::PrismLexer::ESCAPES = T.let(T.unsafe(nil), Hash)
+
+class RuboCop::AST::PrismLexer::HeredocData < ::Struct
+  def common_whitespace; end
+  def common_whitespace=(_); end
+  def identifier; end
+  def identifier=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+RuboCop::AST::PrismLexer::REGEXP_META_CHARACTERS = T.let(T.unsafe(nil), Array)
+RuboCop::AST::PrismLexer::Range = Parser::Source::Range
+RuboCop::AST::PrismLexer::TYPES = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::PrismLexer::TYPES_ALWAYS_SKIP = T.let(T.unsafe(nil), Set)
+
+class RuboCop::AST::PrismParser
+  def initialize(ruby_version, prism: T.unsafe(nil)); end
+
+  def diagnostics; end
+  def tokenize_deferred(source_buffer); end
+
+  private
+
+  def build_ast(program); end
+  def build_comments(comments); end
+  def build_offset_cache(source); end
+  def deferred_tokens(tokens); end
+  def error_diagnostic(error); end
+  def prism_options; end
+  def process_diagnostics(result); end
+  def range(location); end
+  def warning_diagnostic(warning); end
+end
+
+RuboCop::AST::PrismParser::Diagnostic = Parser::Diagnostic
+RuboCop::AST::PrismParser::PRISM_VERSIONS = T.let(T.unsafe(nil), Hash)
 
 class RuboCop::AST::PrismPreparsed
   def initialize(prism_result); end
@@ -1802,7 +2270,6 @@ class RuboCop::AST::ProcessedSource
 
   private
 
-  def builder_class(parser_engine); end
   def comment_index; end
   def create_parser(ruby_version, parser_engine, prism_result); end
   def default_parser_engine(ruby_version); end
@@ -1817,6 +2284,7 @@ class RuboCop::AST::ProcessedSource
   def store_tokens(tokens); end
   def tokenize(parser); end
   def tokens_sorted?; end
+  def translation_parser(ruby_version, prism); end
   def trim_lines_after_data_marker(all_lines); end
 
   class << self

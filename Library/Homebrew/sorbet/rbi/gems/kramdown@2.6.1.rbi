@@ -249,7 +249,7 @@ class Kramdown::Converter::Man < ::Kramdown::Converter::Base
 
   def convert_a(el, opts); end
   def convert_abbreviation(el, opts); end
-  def convert_blank(*_arg0); end
+  def convert_blank(*); end
   def convert_blockquote(el, opts); end
   def convert_br(_el, opts); end
   def convert_codeblock(el, opts); end
@@ -260,16 +260,16 @@ class Kramdown::Converter::Man < ::Kramdown::Converter::Base
   def convert_dt(el, opts); end
   def convert_em(el, opts); end
   def convert_entity(el, opts); end
-  def convert_footnote(*_arg0); end
+  def convert_footnote(*); end
   def convert_header(el, opts); end
-  def convert_hr(*_arg0); end
-  def convert_html_element(*_arg0); end
+  def convert_hr(*); end
+  def convert_html_element(*); end
   def convert_img(_el, _opts); end
   def convert_li(el, opts); end
   def convert_math(el, opts); end
   def convert_ol(el, opts); end
   def convert_p(el, opts); end
-  def convert_raw(*_arg0); end
+  def convert_raw(*); end
   def convert_root(el, opts); end
   def convert_smart_quote(el, opts); end
   def convert_strong(el, opts); end
@@ -283,7 +283,7 @@ class Kramdown::Converter::Man < ::Kramdown::Converter::Base
   def convert_typographic_sym(el, opts); end
   def convert_ul(el, opts); end
   def convert_xml_comment(el, opts); end
-  def convert_xml_pi(*_arg0); end
+  def convert_xml_pi(*); end
   def escape(text, preserve_whitespace = T.unsafe(nil)); end
   def inner(el, opts, use = T.unsafe(nil)); end
   def macro(name, *args); end
@@ -664,6 +664,7 @@ Kramdown::Parser::Kramdown::LAZY_END_HTML_STOP = T.let(T.unsafe(nil), Regexp)
 Kramdown::Parser::Kramdown::LINE_BREAK = T.let(T.unsafe(nil), Regexp)
 Kramdown::Parser::Kramdown::LINK_BRACKET_STOP_RE = T.let(T.unsafe(nil), Regexp)
 Kramdown::Parser::Kramdown::LINK_DEFINITION_START = T.let(T.unsafe(nil), Regexp)
+Kramdown::Parser::Kramdown::LINK_EMPHASIS_CONTEXT = T.let(T.unsafe(nil), Hash)
 Kramdown::Parser::Kramdown::LINK_INLINE_ID_RE = T.let(T.unsafe(nil), Regexp)
 Kramdown::Parser::Kramdown::LINK_INLINE_TITLE_RE = T.let(T.unsafe(nil), Regexp)
 Kramdown::Parser::Kramdown::LINK_PAREN_STOP_RE = T.let(T.unsafe(nil), Regexp)
