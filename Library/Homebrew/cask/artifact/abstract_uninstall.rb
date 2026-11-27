@@ -40,6 +40,8 @@ module Cask
 
       UPGRADE_REINSTALL_SKIP_DIRECTIVES = [:signal].freeze
 
+      LAUNCHCTL_SERVICE_NOT_FOUND_EXIT_CODE = 113
+
       sig { params(cask: Cask, directives: DirectivesType).returns(AbstractUninstall) }
       def self.from_args(cask, **directives)
         new(cask, **directives)
@@ -290,7 +292,24 @@ module Cask
         all_services.each do |service|
           ohai "Removing launchctl service #{service}"
           booleans.each do |sudo|
-            next if sudo && !SystemCommand.sudo_available?
+            paths = [
+              "/Library/LaunchAgents/#{service}.plist",
+              "/Library/LaunchDaemons/#{service}.plist",
+            ]
+            paths.each { |path| path.prepend(Dir.home).freeze } unless sudo
+            paths = paths.map { |path| Pathname(path) }
+
+            if sudo
+              next if Homebrew::EnvConfig.no_sudo?
+
+              if !Pathname(service).exist? &&
+                 paths.all? { |path| path.dirname.readable? && path.dirname.executable? && !path.exist? }
+                result = command.run("/bin/launchctl", args: ["print", "system/#{service}"],
+                                                       must_succeed: false, print_stderr: false)
+                next if result.exit_status == LAUNCHCTL_SERVICE_NOT_FOUND_EXIT_CODE
+              end
+              next unless SystemCommand.sudo_available?
+            end
 
             _, found, = Homebrew::Services::System.launchctl_find_service(service, sudo:)
             if found
@@ -305,13 +324,7 @@ module Cask
 
               sleep 1
             end
-            paths = [
-              "/Library/LaunchAgents/#{service}.plist",
-              "/Library/LaunchDaemons/#{service}.plist",
-            ]
-            paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
-            paths = paths.map { |elt| Pathname(elt) }.select(&:exist?)
-            paths.each do |path|
+            paths.select(&:exist?).each do |path|
               command.run("/bin/rm", args: ["-f", "--", path], must_succeed: false, sudo:, sudo_as_root: sudo)
             end
             # undocumented and untested: pass a path to uninstall :launchctl
