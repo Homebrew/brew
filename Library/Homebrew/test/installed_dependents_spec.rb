@@ -582,6 +582,12 @@ RSpec.describe InstalledDependents do
       expect(commands_for_dependent).to eq(["brew reinstall bar"])
     end
 
+    it "unpins a pinned up-to-date dependent before reinstalling it" do
+      commands = commands_for_dependent { |dependent| allow(dependent).to receive(:pinned?).and_return(true) }
+
+      expect(commands).to eq(["brew unpin bar", "brew reinstall bar"])
+    end
+
     it "skips an up-to-date dependent whose keg still links to the dependency" do
       expect(commands_for_dependent(linked: [dependency])).to eq([])
     end

@@ -234,7 +234,7 @@ module InstalledDependents
     outdated, current = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
                                 .partition(&:outdated?)
     {
-      "unpin"     => outdated.select(&:pinned?),
+      "unpin"     => (outdated + current).select(&:pinned?),
       "upgrade"   => outdated,
       "reinstall" => current,
     }.filter_map do |command, dependents|
