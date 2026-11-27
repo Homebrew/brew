@@ -543,7 +543,7 @@ RSpec.describe Homebrew::API do
   end
 
   describe "::download_executables_file_from_github_packages!" do
-    it "downloads executables.txt from the GitHub Packages OCI artifact" do
+    it "downloads executables.txt from the homebrew-core package" do
       target = mktmpdir/"executables.txt"
       stub_const("HOMEBREW_GITHUB_PACKAGES_AUTH", "Bearer QQ==")
       manifest = {
@@ -559,13 +559,13 @@ RSpec.describe Homebrew::API do
         "--fail", "--location",
         "--header", "Accept: application/vnd.oci.image.manifest.v1+json",
         "--header", "Authorization: Bearer QQ==",
-        "https://ghcr.io/v2/homebrew/command-not-found/executables/manifests/latest",
+        "https://ghcr.io/v2/homebrew/core/command-not-found/executables/manifests/latest",
         show_error: false
       ).and_return(instance_double(SystemCommand::Result, stdout: JSON.generate(manifest), success?: true))
       expect(Utils::Curl).to receive(:curl_download).with(
         "--fail",
         "--header", "Authorization: Bearer QQ==",
-        "https://ghcr.io/v2/homebrew/command-not-found/executables/blobs/sha256:abc123",
+        "https://ghcr.io/v2/homebrew/core/command-not-found/executables/blobs/sha256:abc123",
         to:         target,
         show_error: false
       ) { |*_args, **kwargs| kwargs[:to].write "foo:foo-bin\n" }
