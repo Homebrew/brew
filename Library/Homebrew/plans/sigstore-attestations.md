@@ -34,7 +34,7 @@ Pull requests must always fill in the repository's pull request template
 (`.github/PULL_REQUEST_TEMPLATE.md`), never bypass it (e.g. with
 `gh pr create --fill`).
 
-## Current state (20 November 2026)
+## Current state (27 November 2026)
 
 ### Client
 
@@ -98,8 +98,8 @@ Pull requests must always fill in the repository's pull request template
 
 ### Measurements
 
-Single samples from one network against production services. PR 7 repeats
-them properly.
+Single samples from one network against production services. PR 7 repeated
+the manifest requests properly, below.
 
 | Check | Result |
 |---|---|
@@ -159,6 +159,87 @@ Checked on 20 November 2026 against the policy of PR 6:
 Before `master` and `backfill` were allowed, the first sample rejected
 `cowsay` (signed from `master` in December 2024) and the backfilled
 `aalib` bottle for `x86_64_linux` (signed from `backfill`).
+
+Checked on 27 November 2026 for PR 7, anonymously against production.
+The packages are `ca-certificates`, `figlet`, `aalib`, `sl`, `fortune`,
+`cmatrix`, `cowsay`, `h264bitstream`, `hello`, `jq` and `wget`:
+
+| Check | Result |
+|---|---|
+| Untagged versions of the 11 packages, requested by digest | 501 of 501 served |
+| Superseded indexes among them, which no tag reaches | 97, all byte for byte; the oldest was replaced in April 2021 |
+| What those 97 `--keep-old` rewrites changed | nothing already listed: every descriptor kept its digest and only new ones were added |
+| Per-platform manifests that only a superseded index lists | none among the 501, so not observed |
+| All 115 versions of `ca-certificates`, tagged or not | byte for byte by digest |
+| `Accept` header | must name the stored media type: an index requested as a manifest, a manifest as an index, `*/*` and no header all return 404 |
+| Download counting | one per manifest `GET`, by tag or by digest, against the version served, shown within two minutes; a 404 for a wrong `Accept` counts too and `HEAD` does not |
+| Package overview total and daily chart | the sum of every version, tagged or not: 172,281,244 for `ca-certificates` against 172,281,185 summed from its versions a minute earlier |
+| Published API | `bottle_manifest_checksum` for 804 of 8,574 `arm64_tahoe` bottles |
+| `ca-certificates` requests in the last week | 799,770 for the per-platform manifest the API pins and 140,844 for the tagged index |
+| Largest manifests served, of 300 random formulae and the 40 with most dependencies | index 1.18 MB (`rtabmap`); per-platform manifest 724 KB with one 646 KB annotation (`virt-manager`) |
+| Bundle as an annotation value | about 1% larger than the file: 17.5 KB for 35 subjects |
+| Largest possible bundle | about 210 KB: `actions/attest` signs at most 1,024 subjects |
+| Pull-through proxies `ghcr.nju.edu.cn`, `ghcr.m.daocloud.io` and `ghcr.1ms.run` | index by tag, index by digest and per-platform manifest by digest all byte for byte |
+| Flat mirror `mirrors.ustc.edu.cn/homebrew-bottles` | index by tag only and 404 by digest, so `brew` falls back to GitHub Packages |
+| Clients from 3.1.0 to 7.0.16 | read only the annotations of an index's descriptors when installing, never a descriptor's `digest` or `size` |
+
+Each request its own `curl` process, as the download queue runs them, on
+the machine of the verifier comparison above. The connection was noisy:
+three runs gave means this scattered but minimums within 5% of each
+other.
+
+```console
+$ brew benchmark --exec -- --warmup 3 --runs 30 --shell=none ...
+Benchmark 1: hello index by tag (15260 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    295.3 ms  ±   192.7 ms     196.8 ms  …   933.9 ms
+  Memory         4.7 MiB ±     0.0 MiB      4.6 MiB …     4.8 MiB
+
+Benchmark 2: hello index by digest (15260 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    218.6 ms  ±    84.0 ms     184.7 ms  …   645.8 ms           -26.0%
+  Memory         4.7 MiB ±     0.0 MiB      4.6 MiB …     4.8 MiB           -0.6%
+
+Benchmark 3: hello per-platform manifest by digest (3400 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    213.7 ms  ±   104.2 ms     171.9 ms  …   589.4 ms           -27.6%
+  Memory         4.6 MiB ±     0.0 MiB      4.6 MiB …     4.7 MiB           -1.2%
+
+Benchmark 4: wget index by tag (58149 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    307.0 ms  ±   132.8 ms     215.9 ms  …   737.5 ms            +4.0%
+  Memory         4.8 MiB ±     0.0 MiB      4.7 MiB …     4.8 MiB           +1.7%
+
+Benchmark 5: wget index by digest (58149 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    252.3 ms  ±    69.2 ms     203.2 ms  …   445.4 ms           -14.6%
+  Memory         4.7 MiB ±     0.0 MiB      4.7 MiB …     4.8 MiB           +0.5%
+
+  Warning: The first benchmarking run for this command was significantly slower than the rest (348.3 ms). This could be caused by (filesystem) caches that were not filled until after the first run. You are already using the '--warmup' option which helps to fill these caches before the actual benchmark. You can either try to increase the warmup count further or re-run this benchmark on a quiet system in case it was a random outlier. Alternatively, consider using the '--prepare' option to clear the caches before each timing run.
+
+Benchmark 6: wget per-platform manifest by digest (10685 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    335.8 ms  ±   263.7 ms     170.2 ms  …  1173.2 ms           +13.7%
+  Memory         4.7 MiB ±     0.0 MiB      4.6 MiB …     4.8 MiB           -0.3%
+
+Benchmark 7: ffmpeg-full index by tag (631314 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    368.4 ms  ±   110.7 ms     267.2 ms  …   655.3 ms           +24.8%
+  Memory         4.8 MiB ±     0.1 MiB      4.7 MiB …     4.9 MiB           +1.7%
+
+Benchmark 8: ffmpeg-full index by digest (631314 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    357.9 ms  ±   108.6 ms     254.2 ms  …   570.5 ms           +21.2%
+  Memory         4.8 MiB ±     0.1 MiB      4.7 MiB …     4.9 MiB           +2.5%
+
+Benchmark 9: ffmpeg-full per-platform manifest by digest (111837 bytes) (30 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    247.8 ms  ±    50.5 ms     217.2 ms  …   417.3 ms           -16.1%
+  Memory         4.7 MiB ±     0.0 MiB      4.7 MiB …     4.8 MiB           +0.4%
+```
+
+By their minimums, a digest costs nothing over a tag and the per-platform
+manifest is 13% to 21% quicker to fetch than the index it replaces.
 
 ### Prior art
 
@@ -329,9 +410,10 @@ ref missing from the list costs a retry, not an install.
 
 ### Distribution format
 
-Chosen on 13 November 2026, with GitHub Packages behaviour still to be
-confirmed by PR 7: the bundle is an annotation on the bottle's
-per-platform manifest, and the client fetches that manifest alone.
+Chosen on 13 November 2026: the bundle is an annotation on the bottle's
+per-platform manifest, and the client fetches that manifest alone. PR 7
+confirmed what GitHub Packages serves and counts; pushing such a manifest
+is still to be tried with a token.
 
 - `brew pr-upload` writes each bottle's bundle into its per-platform
   manifest, not the index, and the digest of the index into the bottle
@@ -516,18 +598,78 @@ downloads (`api/internal/packages.<tag>.jws.json`: 8,558 bottled formulae,
 gzipped, and is downloaded whole whenever it changes. Simulated on the
 real file with ten distinct real bundles.
 
-What GitHub Packages is known to support on 13 November 2026:
+What GitHub Packages is known to support on 27 November 2026:
 
-- Multi-KB JSON annotations in indexes and per-platform manifests, which
-  the bundle annotation relies on: Homebrew's own manifests carry them
-  today.
+- JSON annotations of hundreds of KB in indexes and per-platform
+  manifests, which the bundle annotation relies on: Homebrew's own
+  manifests carry one of 646 KB today, three times the largest possible
+  bundle.
 - Fetching any manifest by digest, which the design relies on: checked
-  for all 2,762 per-platform manifests of the 420 sampled packages.
+  for all 2,762 per-platform manifests of the 420 sampled packages and
+  for 501 untagged versions of 11 more.
+- Keeping manifests no tag reaches: all 97 superseded indexes of those 11
+  packages are still served, the oldest replaced in April 2021.
 - Not the native Referrers API, which returns 404 even for images that
   have referrers under the tag schema.
 - GitHub documents a 10 GB layer limit and a ten minute upload timeout
   and nothing on manifest size; `GitHubPackages` already refuses indexes
   of 4 MB or more.
+
+### Distribution contract
+
+Fixed by PR 7 on 27 November 2026. PR 8 writes it, PR 12 reads it and
+PR 16 documents it for mirror operators.
+
+- The annotation key is `sh.brew.attestation`. Its value is one Sigstore
+  bundle as JSON text, as `sh.brew.tab` holds its JSON: the bundle
+  `actions/attest` or the backfill produced, whose own `mediaType` names
+  its format.
+- It is written to the `annotations` of the bottle's per-platform
+  manifest only, never to the index or to the index's descriptor of that
+  manifest. A manifest holds at most one bundle, which must verify for
+  that manifest's bottle; a manifest without the key has no published
+  bundle.
+- Lookup with the API's `bottle_manifest_checksum`: request
+  `manifests/sha256:<digest>`, require the body's SHA-256 to be that
+  digest and its `sh.brew.bottle.digest` and
+  `org.opencontainers.image.ref.name` to name the bottle, then read the
+  key.
+- Lookup with a bottle block's `manifest_sha256`: request and check the
+  index likewise, take the descriptor whose annotations name the bottle,
+  then request and check the manifest with that descriptor's `digest`.
+- Lookup with neither digest: request the index by its tag
+  `<version>[-<rebuild>]` and continue from its descriptor.
+- Every request sends an `Accept` header naming exactly what it expects,
+  `application/vnd.oci.image.index.v1+json` or
+  `application/vnd.oci.image.manifest.v1+json`: GitHub Packages answers
+  anything else with 404.
+- Every manifest stays under 4 MB, the limit `GitHubPackages` already
+  applies to an index. The largest served today are 1.18 MB for an index
+  and 724 KB for a per-platform manifest; a bundle adds from 11 KB to
+  about 210 KB.
+- A mirror must serve both kinds of manifest by digest, byte for byte, as
+  three public pull-through proxies of `ghcr.io` do. A mirror that only
+  has manifests by tag is passed over for GitHub Packages, as it is today
+  for every bottle with a pinned digest.
+- GitHub Packages counts each manifest `GET` once against the version
+  served, tagged or not, and the package overview that
+  `brew info --github-packages-downloads` reads sums every version. An
+  API install swaps one index request for one per-platform manifest
+  request, so its share of the total is unchanged. From PR 12 a client
+  that starts from a bottle block or a tag requests the index and then
+  the manifest, so on a cache miss it is counted twice where it is
+  counted once today and the total grows faster for those clients. How
+  many they are is not known. One sample: 15% of `ca-certificates`
+  requests still went to its index in the week measured, from these
+  clients and from those too old to request a per-platform manifest at
+  all. Other formulae and later client populations will differ.
+- That extra count is not mitigated. It is the one request design
+  decision 4 accepts for these clients, removing it means carrying
+  bundles in the index, which option A was rejected for, and the total
+  counts requests, not installs. Nor is any of these a count of bottles
+  fetched: a per-platform manifest's version counts requests for that
+  manifest, which the catalogue sweep of PR 17 makes without fetching a
+  bottle and older clients never make when they do fetch one.
 
 ## Performance targets and rollout gates
 
@@ -564,7 +706,7 @@ runner and one residential connection.
 | 4 | brew | 2 | Done: Homebrew's verifier replaces the vendored Sigstore dependencies |
 | 5 | brew | 2 | Done: `Attestation.verify_bundle`, offline, against a pinned trusted root |
 | 6 | brew | 3 | Done: trust policy enforced, listed bundles verified in Ruby |
-| 7 | brew | 4 to 5 | GitHub Packages distribution experiment and format contract |
+| 7 | brew | 4 to 5 | Format contract done; push checks left, which need a token |
 | 8 | brew | 6 | Publish bundles from `brew pr-upload` |
 | 9 | brew | 3 | Done: `brew pr-upload` writes the manifest digest at upload |
 | 10 | homebrew-core | 6 | Pass bundles to `brew pr-upload` |
@@ -603,9 +745,10 @@ nothing else depends on them.
    gets it in three ways. On 20 November 2026 the ten most installed
    formulae were pinned by hand, from the index each tag pointed to and
    only where that index listed every bottle checksum in the block. From
-   PR 9 every newly bottled formula is pinned. The rest are pinned the
-   following week by the same pass, which a trial run completed for 8,726
-   of 8,735 formulae; none of this checks attestations, which PR 11 does.
+   PR 9 every newly bottled formula is pinned, which had reached 804 of
+   8,574 `arm64_tahoe` bottles by 27 November 2026. The rest are still to
+   be pinned by the same pass, which a trial run completed for 8,726 of
+   8,735 formulae; none of this checks attestations, which PR 11 does.
    The trial found four disabled formulae with no index for their version
    (`freeling`, `promtail`, `pypy3.10` and `vineyard`): each one's version
    or revision changed after its last bottle, which CI does not rebuild
@@ -694,31 +837,37 @@ nothing else depends on them.
 
 ### Distribution (weeks 4 to 6)
 
-7. **Distribution experiment and format contract.** The read-only
-   measurements are above; what is left needs a token. In a scratch GitHub
-   Packages namespace, push per-platform manifests carrying a bundle as an
-   annotation and an index that lists them. Confirm that each is served
-   byte for byte by digest, that older clients reading the index by tag
-   are unaffected and that rewriting a published bottle's manifests
-   changes nothing else. Test whether the existing `skopeo` flow can push
-   them, what happens to superseded manifests that no tag reaches and how
-   GitHub Packages counts downloads of a per-platform manifest and of an
-   index fetched by digest. Check behaviour through an OCI pull-through
-   proxy as used with `HOMEBREW_ARTIFACT_DOMAIN`. Record the results and
-   the contract (annotation keys, lookup algorithm and limits) here. No
-   production code.
+7. **Distribution experiment and format contract.** Everything that can
+   be checked without a token is done and recorded above: the contract
+   (annotation key, lookup algorithm and limits), serving by digest,
+   retention of superseded indexes, what `--keep-old` rewrites change,
+   what released clients read, download counting, proxies and manifest
+   sizes. Left, in a scratch GitHub Packages namespace with a token:
+   push a per-platform manifest carrying a bundle and an index that lists
+   it through the existing `skopeo` flow and confirm both are served byte
+   for byte; rewrite a published bottle's manifests as PR 11 will, a new
+   per-platform manifest and index for a bottle whose blob is already
+   uploaded, and confirm that nothing else changes and that the replaced
+   per-platform manifest, which only the superseded index then lists,
+   stays served; and fetch by digest through an Artifactory-style
+   `HOMEBREW_ARTIFACT_DOMAIN` proxy. None of this holds up PR 8, which
+   publishes nothing to Homebrew/core until PR 10 passes it bundles, and
+   PR 8's first upload to a scratch tap can be the first of these checks.
+   No production code.
 8. **Publish bundles from `brew pr-upload`.** Add an option taking the
    `actions/attest` bundle file. `GitHubPackages#upload_bottle` matches
    bundles to bottles by SHA-256, verifies each under the client policy and
-   writes each bottle's bundle as an annotation on its per-platform
-   manifest only, not on the index entry that otherwise repeats the same
-   annotations. With the option set, a bottle without a valid bundle fails
-   the upload. `--keep-old` leaves the manifests of the bottles it keeps
-   untouched and `--dry-run` prints the plan. Specs validate the generated
-   manifests against the OCI schemas `load_schemas!` already fetches. The
-   option is not specific to Homebrew/core but the client policy is, so
-   every other tap's bundles fail the upload until PR 21 adds a tap's own
-   policy.
+   writes each bottle's bundle as the `sh.brew.attestation` annotation on
+   its per-platform manifest only, not on the index entry that otherwise
+   repeats the same annotations, as the distribution contract sets out.
+   It refuses a per-platform manifest of 4 MB or more as it does an index.
+   With the option set, a bottle without a valid bundle fails the upload.
+   `--keep-old` leaves the manifests of the bottles it keeps untouched,
+   as it has in every rewrite PR 7 sampled, and `--dry-run` prints the
+   plan. Specs validate the generated manifests against the OCI schemas
+   `load_schemas!` already fetches. The option is not specific to
+   Homebrew/core but the client policy is, so every other tap's bundles
+   fail the upload until PR 21 adds a tap's own policy.
 9. **Write the manifest digest at upload.** Done, ahead of its week so
    that Homebrew/core's pinned blocks grow with every publish. For bottles
    uploaded to GitHub Packages `brew pr-upload` has
@@ -770,9 +919,11 @@ nothing else depends on them.
     call and shown as the bottle's `:verifying` phase. Verified bundles are
     memoised by digest for the process. The `Attestation.prefetch` call
     sites go. Until PR 13, a bottle with no published bundle falls back to
-    the `gh` path. `brew info --github-packages-downloads` reads
-    per-platform counts where clients no longer fetch the index, as PR 7
-    found them to be counted. The commit message carries cold and warm
+    the `gh` path. `brew info --github-packages-downloads` needs no
+    change: PR 7 found that the package overview it reads already sums
+    per-platform manifests, and the distribution contract records the
+    second count a client that starts from a bottle block then adds. The
+    commit message carries cold and warm
     `brew benchmark` output for one-bottle and 20-bottle installs,
     comparing the direct manifest fetch of PR 3 with the index fetch.
 13. **Remove the `gh`, token and API paths** once the mirror reports full
@@ -984,12 +1135,14 @@ How the chosen design uses the digest:
   then the per-platform manifest it lists, checking both.
 - Existing bottles are pinned in the same pass that adds their bundles,
   because a bundle changes the per-platform digests the index lists.
-- GitHub Packages counts downloads per manifest. Clients fetch the tagged
-  index today, so counts are per formula version. Fetching the index by
-  digest should not change that; fetching only per-platform manifests
-  moves the counts to those untagged manifests and gives per-platform
-  counts for the first time. PR 7 confirms both on a test package and
-  PR 12 then updates `brew info --github-packages-downloads` to read them.
+- GitHub Packages counts downloads per manifest. PR 7 confirmed that
+  fetching the index by digest counts against the same version as
+  fetching it by tag, and that fetching only per-platform manifests moves
+  the counts to those untagged manifests and gives per-platform counts
+  for the first time. The package overview sums them all, so
+  `brew info --github-packages-downloads` reads the same totals for API
+  installs; a client that starts from a bottle block is counted for the
+  index and for the manifest, which the distribution contract accepts.
 
 Considered instead of the DSL change:
 
@@ -1010,15 +1163,15 @@ Considered instead of the DSL change:
 
 | Risk | Mitigation |
 |---|---|
-| GitHub Packages limits manifest annotations or removes manifests that no tag reaches | PR 7 tests both before the format is fixed; an annotation uses only what `sh.brew.tab` already relies on, and a current bottle's per-platform manifest is always listed by a tagged index |
+| GitHub Packages limits manifest annotations or removes manifests that no tag reaches | PR 7 found a 646 KB annotation served today, three times the largest possible bundle, and every superseded index it sampled kept since 2021; a current bottle's per-platform manifest is always listed by a tagged index. Not yet observed: a per-platform manifest that only a superseded index lists, which PR 7's push checks and PR 11's first formulae cover |
 | Rewriting the manifests of every current bottle breaks installs | PR 11 adds only the bundle, compares everything else before and after, starts with a handful of formulae and is resumable |
 | Some current bottles have no valid attestation | PR 11 census and coverage report; rebottle until none remain; the developers gate needs 100% |
 | A Sigstore key rotation or GitHub's move to Rekor v2 outpaces stable tags | PR 15 refresh and canary; `verify_bundle` rejects Rekor v2 until a real DSSE fixture and reviewed timestamp-authority support are available (design decision 1) |
 | Homebrew's verifier lacks the former gem's outside review and use by other consumers | OpenSSL cryptography, exact input form, real and tampered fixtures, differential and mutation checks; independent security review, fuzzing and macOS/Linux catalogue coverage before rollout |
 | API generation fails when GitHub Packages is unreachable or a pinned index is missing | Indexes are cached by digest, so a run fetches only new ones; a failed run leaves the previous API published; generation already depends on GitHub Packages for the executables database |
 | The API carries a wrong per-platform digest | Installs fail closed, as the client checks the manifest names its bottle; the generator fails on any mismatch and the sweep derives the digests again daily |
-| Download counts move from the index to per-platform manifests | PR 7 confirms how GitHub Packages counts them and PR 12 updates `brew info --github-packages-downloads` to match |
-| Mirrors and proxies do not serve bundles | They travel in a manifest, which a mirror already has to serve; PR 7 tests a proxy by digest; contract documented before the stable gate |
+| Download counts move from the index to per-platform manifests | They do, and PR 7 found the package overview that `brew info --github-packages-downloads` reads sums every version, so its totals do not change for API installs. From PR 12 a client that starts from a bottle block is counted for the index and for the manifest: accepted in the distribution contract, as the total counts requests, not installs; in one sample 15% of a week of `ca-certificates` requests still went to its index |
+| Mirrors and proxies do not serve bundles | They travel in a manifest, which a mirror already has to serve; PR 7 found three public pull-through proxies serve manifests by digest byte for byte, with an Artifactory-style proxy still to try; contract documented before the stable gate |
 | Slow links or `HOMEBREW_DOWNLOAD_CONCURRENCY=1` regress | Benchmarked in PR 12; API installs download fewer manifest bytes than today and nothing on a cache hit |
 | GitHub Packages throttles anonymous requests | No extra request for API installs; the sweep measures retrieval reliability against bottle retrieval |
 | A bug or stale trusted root on Homebrew's side makes valid bottles fail for everyone once this is the default | Publish-time verification, canary and sweep catch it first; messages name `HOMEBREW_NO_VERIFY_ATTESTATIONS`; each stage reverts with one PR |
@@ -1027,7 +1180,8 @@ Considered instead of the DSL change:
 
 - Should a legacy `HOMEBREW_BOTTLE_DOMAIN` mirror that cannot reach GitHub
   Packages fail closed at default-on, or must its operator mirror bundles or
-  opt out?
+  opt out? PR 7 found such a mirror holding manifests by tag only, so
+  its users already fetch every pinned manifest from GitHub Packages.
 - What marks a third-party tap as attesting, so that a bottle of its with
   no bundle fails? Not `manifest_sha256`, which every tap that uploads
   gets. Candidates are the attestation logic in the tap's publishing
