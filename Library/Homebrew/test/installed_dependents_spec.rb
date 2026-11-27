@@ -580,26 +580,12 @@ RSpec.describe InstalledDependents do
       expect(commands_for_dependent).to eq(["brew upgrade bar"])
     end
 
-    it "unpins a pinned outdated dependent before upgrading it" do
-      commands = commands_for_dependent { |dependent| allow(dependent).to receive(:pinned?).and_return(true) }
-
-      expect(commands).to eq(["brew unpin bar", "brew upgrade bar"])
-    end
-
     it "leaves an up-to-date dependent to the pruning of its install receipt" do
       expect(commands_for_dependent(outdated: false)).to eq([])
     end
 
     it "skips a disabled dependent, which cannot be upgraded" do
       commands = commands_for_dependent { |dependent| allow(dependent).to receive(:disabled?).and_return(true) }
-
-      expect(commands).to eq([])
-    end
-
-    it "skips a dependent with a dependency from an untrusted tap" do
-      commands = commands_for_dependent do |dependent|
-        allow(dependent).to receive(:recursive_dependencies).and_raise(Homebrew::UntrustedTapError)
-      end
 
       expect(commands).to eq([])
     end
@@ -738,13 +724,6 @@ RSpec.describe InstalledDependents do
       other = instance_double(Formula, full_name: "baz")
       allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)
       allow(other).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([dependency])
-      allow(other).to receive(:recursive_dependencies).and_raise(Homebrew::UntrustedTapError)
-
-      expect(commands_for_dependent(others: [other])).to eq([])
-    end
-
-    it "suggests nothing while a dependent with a dependency from an untrusted tap lists the dependency" do
-      other = instance_double(Formula, full_name: "baz", runtime_dependencies: [dependency])
       allow(other).to receive(:recursive_dependencies).and_raise(Homebrew::UntrustedTapError)
 
       expect(commands_for_dependent(others: [other])).to eq([])

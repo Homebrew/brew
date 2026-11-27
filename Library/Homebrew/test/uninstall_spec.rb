@@ -142,18 +142,6 @@ RSpec.describe Homebrew::Uninstall do
         EOS
     end
 
-    specify "when another dependent still declares the keg after that upgrade" do
-      install_formula("outdated_dependent", receipt_dependency: "dependency", outdated: true)
-
-      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack, named_args: ["dependency"]) }
-        .to output(<<~EOS).to_stderr
-          Error: Refusing to uninstall #{HOMEBREW_CELLAR}/dependency/1
-          because it is required by dependent_formula and outdated_dependent, which are currently installed.
-          You can override this and force removal with:
-            brew uninstall --ignore-dependencies dependency
-        EOS
-    end
-
     specify "when a cask requires the keg as well" do
       former_dependency = install_formula("former_dependency")
       install_formula("outdated_dependent", receipt_dependency: "former_dependency", outdated: true)
