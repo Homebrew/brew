@@ -205,8 +205,7 @@ module InstalledDependents
   # The commands that stop `formulae` from requiring the formulae in
   # `dependency_names`, which maps their possible names to their full names.
   # An outdated dependent is upgraded when its latest version no longer needs
-  # them. An up-to-date one whose install receipt still lists them is
-  # reinstalled, unless its keg links to them.
+  # them.
   # With `all_dependents`, every one of `formulae` is known to require one of
   # them, whatever name it lists it under.
   sig {
@@ -226,12 +225,8 @@ module InstalledDependents
 
       declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
       dropped = installed_dependency_names - full_names.call(declared_dependencies)
-      # A disabled formula cannot be upgraded or reinstalled, so it keeps what its receipt lists.
-      dropped = [] if dropped.any? && dependent.disabled?
-      # A reinstall keeps the keg, so the new install receipt still lists what the keg links to.
-      if dropped.any? && !dependent.outdated?
-        dropped -= full_names.call(dependent.runtime_dependencies(read_from_tab: false))
-      end
+      # Only an upgrade changes what a dependent requires, and a disabled formula cannot be upgraded.
+      dropped = [] if dropped.any? && (!dependent.outdated? || dependent.disabled?)
       kept_dependencies.concat(installed_dependency_names - dropped)
       droppers << [dependent, dropped]
     rescue Homebrew::UntrustedTapError
@@ -240,12 +235,10 @@ module InstalledDependents
     end
 
     # A command only helps when no other dependent keeps requiring what it drops.
-    outdated, current = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
-                                .partition(&:outdated?)
+    outdated = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
     {
-      "unpin"     => (outdated + current).select(&:pinned?),
-      "upgrade"   => outdated,
-      "reinstall" => current,
+      "unpin"   => outdated.select(&:pinned?),
+      "upgrade" => outdated,
     }.filter_map do |command, dependents|
       ["brew", command, *dependents.map(&:full_name).uniq.sort].join(" ") if dependents.any?
     end

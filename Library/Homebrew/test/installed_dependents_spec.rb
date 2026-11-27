@@ -568,38 +568,33 @@ RSpec.describe InstalledDependents do
   describe "::commands_to_drop_dependencies" do
     let(:dependency) { instance_double(Dependency, name: "foo") }
 
-    def commands_for_dependent(outdated: false, linked: [], others: [])
+    def commands_for_dependent(outdated: true, others: [])
       dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false, disabled?: false,
                                            runtime_dependencies: [dependency])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
-      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false).and_return(linked)
       yield dependent if block_given?
 
       described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent, *others])
     end
 
-    it "reinstalls an up-to-date dependent whose install receipt still lists the dependency" do
-      expect(commands_for_dependent).to eq(["brew reinstall bar"])
+    it "upgrades an outdated dependent whose latest version no longer declares the dependency" do
+      expect(commands_for_dependent).to eq(["brew upgrade bar"])
     end
 
-    it "unpins a pinned up-to-date dependent before reinstalling it" do
+    it "unpins a pinned outdated dependent before upgrading it" do
       commands = commands_for_dependent { |dependent| allow(dependent).to receive(:pinned?).and_return(true) }
 
-      expect(commands).to eq(["brew unpin bar", "brew reinstall bar"])
+      expect(commands).to eq(["brew unpin bar", "brew upgrade bar"])
     end
 
-    it "skips a disabled dependent, which cannot be installed again" do
+    it "leaves an up-to-date dependent to the pruning of its install receipt" do
+      expect(commands_for_dependent(outdated: false)).to eq([])
+    end
+
+    it "skips a disabled dependent, which cannot be upgraded" do
       commands = commands_for_dependent { |dependent| allow(dependent).to receive(:disabled?).and_return(true) }
 
       expect(commands).to eq([])
-    end
-
-    it "skips an up-to-date dependent whose keg still links to the dependency" do
-      expect(commands_for_dependent(linked: [dependency])).to eq([])
-    end
-
-    it "upgrades an outdated dependent whose keg still links to the dependency" do
-      expect(commands_for_dependent(outdated: true, linked: [dependency])).to eq(["brew upgrade bar"])
     end
 
     it "skips a dependent with a dependency from an untrusted tap" do
