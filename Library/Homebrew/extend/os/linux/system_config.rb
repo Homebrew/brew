@@ -44,7 +44,7 @@ module OS
           return "N/A" if Homebrew::EnvConfig.no_install_from_api? && !CoreTap.instance.installed?
 
           Formulary.factory(formula).any_installed_version || "N/A"
-        rescue FormulaUnavailableError
+        rescue FormulaUnavailableError, ErrorDuringExecution
           "N/A"
         end
 

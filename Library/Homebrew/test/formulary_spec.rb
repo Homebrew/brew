@@ -1236,6 +1236,30 @@ RSpec.describe Formulary do
     end
   end
 
+  describe "::from_keg" do
+    let(:keg_path) { HOMEBREW_CELLAR/formula_name/"0.1" }
+
+    before do
+      (keg_path/".brew/#{formula_name}.rb").tap do |keg_formula|
+        keg_formula.dirname.mkpath
+        keg_formula.write(formula_content)
+      end
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.tap = CoreTap.instance
+      tab.write
+    end
+
+    it "loads the keg's own copy when the API data cannot be downloaded" do
+      FileUtils.rm_f Homebrew::API::Internal.cached_packages_json_file_path
+      allow(Utils::Curl).to receive(:curl_download).and_raise(ErrorDuringExecution.new(["curl"], status: 7))
+
+      formula = described_class.from_keg(Keg.new(keg_path))
+      expect(formula.name).to eq(formula_name)
+      expect(formula.path).to eq(keg_path/".brew/#{formula_name}.rb")
+    end
+  end
+
   describe "::to_rack" do
     alias_matcher :exist, :be_exist
 
