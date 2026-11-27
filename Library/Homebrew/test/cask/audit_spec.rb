@@ -1954,6 +1954,96 @@ RSpec.describe Cask::Audit, :cask do
           .and_return(instance_double(SystemCommand::Result, success?: true, merged_output: "x86_64"))
       end
 
+      context "when an app launches a script outside Contents/MacOS" do
+        let(:tmpdir) { mktmpdir }
+        let(:cask) do
+          Cask::Cask.new("script-app") do
+            version "1.0"
+            sha256 :no_check
+            url "https://brew.sh/script-app.zip"
+            app "Script.app"
+            caveats do
+              requires_rosetta
+            end
+          end
+        end
+
+        before do
+          script = tmpdir/"Script.app/Contents/Resources/start.sh"
+          script.dirname.mkpath
+          script.write("#!/bin/bash\n")
+          script.chmod(0755)
+          allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts, tmpdir)
+          allow(audit).to receive(:system_command)
+            .and_return(instance_double(SystemCommand::Result, success?: true, stdout: script.to_s))
+        end
+
+        it "accepts a declared Rosetta requirement without claiming to determine the script architecture" do
+          expect(run).to pass
+        end
+
+        context "when the executable cannot be read" do
+          before do
+            allow(File).to receive(:open).and_call_original
+            allow(File).to receive(:open).with((tmpdir/"Script.app/Contents/Resources/start.sh").to_s, "rb")
+                                         .and_raise(Errno::EACCES)
+          end
+
+          it "reports the affected artifact without aborting the audit" do
+            expect(run).to error_with(/Unable to inspect artifact executable: .*Script.app/)
+          end
+        end
+
+        context "when executable resolution fails" do
+          before do
+            allow(audit).to receive(:system_command)
+              .and_return(instance_double(SystemCommand::Result, success?: false))
+          end
+
+          it "reports the resolution failure" do
+            expect(run).to error_with(/Unable to resolve app executable/)
+          end
+        end
+
+        context "when no executable can be found" do
+          before do
+            allow(audit).to receive(:system_command)
+              .and_return(instance_double(SystemCommand::Result, success?: true, stdout: ""))
+          end
+
+          it "reports the missing executable without raising an index error" do
+            expect(run).to error_with(/No binaries in App/)
+          end
+        end
+      end
+
+      context "when a binary executable cannot be read" do
+        let(:tmpdir) { mktmpdir }
+
+        before do
+          executable = tmpdir/"rosetta-audit"
+          executable.write("#!/bin/bash\n")
+          allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts, tmpdir)
+          allow(File).to receive(:open).and_call_original
+          allow(File).to receive(:open).with(executable.to_s, "rb").and_raise(Errno::EACCES)
+        end
+
+        it "reports the affected artifact without aborting the audit" do
+          expect(run).to error_with(/Unable to inspect artifact executable: .*rosetta-audit/)
+        end
+      end
+
+      context "when architecture detection fails" do
+        before do
+          allow(audit).to receive(:system_command)
+            .and_return(instance_double(SystemCommand::Result, success?: false))
+        end
+
+        it "reports the detection failure" do
+          expect(run).to error_with(/Unable to determine artifact architecture/)
+        end
+      end
+
       it "recognizes a suppressed requires_rosetta caveat" do
         expect(run).to pass
       end
