@@ -14,6 +14,9 @@ class Homebrew::DevCmd::DetermineTestRunners::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def all_supported?; end
 
+  sig { returns(T::Boolean) }
+  def cask?; end
+
   sig { returns(T.nilable(String)) }
   def dependent_shards; end
 
@@ -22,4 +25,13 @@ class Homebrew::DevCmd::DetermineTestRunners::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def eval_all?; end
+
+  sig { returns(T::Boolean) }
+  def new?; end
+
+  sig { returns(T::Boolean) }
+  def skip_install?; end
+
+  sig { returns(T.nilable(String)) }
+  def url; end
 end

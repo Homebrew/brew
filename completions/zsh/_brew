@@ -280,7 +280,7 @@ __brew_internal_commands() {
       'advisory-match:Match formula against OSV.dev (GIT, language-registry and distro ecosystems) and CPANSA to produce candidate `BREW-*` advisory records for https://github.com/Homebrew/advisory-database'
       'bump-python-resources-pr:Update vulnerable PyPI resources in formula, bump its revision, and create a pull request'
       'cask-ci:Run Homebrew Cask'\''s internal CI helpers'
-      'determine-test-runners:Determines the runners used to test formulae or their dependents'
+      'determine-test-runners:Determine the runners used to test casks, formulae or formula dependents'
       'dispatch-build-bottle:Build bottles for these formulae with GitHub Actions'
       'formula-analytics:Query Homebrew'\''s analytics'
       'formula-python-resources:Print JSON describing the PyPI resources used by formula'
@@ -1315,11 +1315,15 @@ _brew_desc() {
 # brew determine-test-runners
 _brew_determine_test_runners() {
   _arguments \
-    '(--dependents)--all-supported[Instead of selecting runners based on the chosen formula, return all supported runners]' \
+    '(--dependents --cask)--all-supported[Instead of selecting runners based on the chosen formula, return all supported runners]' \
+    '(--all-supported --dependents)--cask[Select runners for the listed casks]' \
     '--debug[Display any debugging information]' \
-    '(--all-supported)--dependents[Determine runners for testing dependents]' \
+    '(--all-supported --cask)--dependents[Determine runners for testing dependents]' \
     '--help[Show this message]' \
+    '--new[Run new cask checks for all listed casks]' \
     '--quiet[Make some output more quiet]' \
+    '--skip-install[Skip installing casks]' \
+    '--url[Apply CI labels from the given pull request URL]' \
     '--verbose[Make some output more verbose]'
 }
 

@@ -49,6 +49,26 @@ RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
 
   it_behaves_like "parseable arguments"
 
+  it "selects runners and new-cask checks for a detected cask", :cask do
+    ENV["GITHUB_REPOSITORY"] = "Homebrew/homebrew-cask"
+    ENV["GITHUB_OUTPUT"] = github_output
+    described_class.new(%w[--cask local-caffeine local-caffeine]).run
+
+    rows = JSON.parse(File.open(github_output, &:readline).delete_prefix("runners="))
+    expect(rows.map { |row| [row.fetch("cask").fetch("token"), row.fetch("audit_args")] }.uniq)
+      .to eq([["local-caffeine", %w[--online --new]]])
+  end
+
+  it "outputs no cask runners for a syntax-only pull request" do
+    ENV["GITHUB_OUTPUT"] = github_output
+    url = "https://api.github.com/repos/Homebrew/homebrew-cask/pulls/1"
+    allow(GitHub::API).to receive(:open_rest).with(url).and_return("labels" => [{ "name" => "ci-syntax-only" }])
+
+    described_class.new(["--cask", "--url=#{url}", "local-caffeine"]).run
+
+    expect(File.readlines(github_output, chomp: true)).to eq(%w[runners=[] runners_present=false])
+  end
+
   it "preserves base-branch transition coverage after the bottle block is removed", :integration_test do
     path = setup_test_formula "testball", bottle_block: <<~RUBY
       bottle do

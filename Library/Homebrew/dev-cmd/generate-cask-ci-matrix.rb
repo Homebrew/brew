@@ -41,6 +41,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        # odeprecated "`brew generate-cask-ci-matrix`", "`brew determine-test-runners --cask`"
         pr_url = args.named if args.url?
 
         repository = ENV.fetch("GITHUB_REPOSITORY", nil)

@@ -1008,12 +1008,16 @@ __fish_brew_complete_arg 'desc; and not __fish_seen_argument -l cask -l casks' -
 __fish_brew_complete_arg 'desc; and not __fish_seen_argument -l formula -l formulae' -a '(__fish_brew_suggest_casks_all)'
 
 
-complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'determine-test-runners' -d 'Determines the runners used to test formulae or their dependents'
+complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'determine-test-runners' -d 'Determine the runners used to test casks, formulae or formula dependents'
 __fish_brew_complete_arg 'determine-test-runners' -l all-supported -d 'Instead of selecting runners based on the chosen formula, return all supported runners'
+__fish_brew_complete_arg 'determine-test-runners' -l cask -d 'Select runners for the listed casks'
 __fish_brew_complete_arg 'determine-test-runners' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'determine-test-runners' -l dependents -d 'Determine runners for testing dependents'
 __fish_brew_complete_arg 'determine-test-runners' -l help -d 'Show this message'
+__fish_brew_complete_arg 'determine-test-runners' -l new -d 'Run new cask checks for all listed casks'
 __fish_brew_complete_arg 'determine-test-runners' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'determine-test-runners' -l skip-install -d 'Skip installing casks'
+__fish_brew_complete_arg 'determine-test-runners' -l url -d 'Apply CI labels from the given pull request URL'
 __fish_brew_complete_arg 'determine-test-runners' -l verbose -d 'Make some output more verbose'
 
 

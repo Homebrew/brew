@@ -10,10 +10,21 @@ module Homebrew
     class DetermineTestRunners < AbstractCommand
       cmd_args do
         usage_banner <<~EOS
-          `determine-test-runners` {<testing-formulae> [<deleted-formulae>]|--all-supported}
+          `determine-test-runners` {<testing-formulae> [<deleted-formulae>]|--cask <testing-casks> [<added-casks>]|--all-supported}
 
-          Determines the runners used to test formulae or their dependents. For internal use in Homebrew taps.
+          Determine the runners used to test casks, formulae or formula dependents. For internal use in Homebrew taps.
         EOS
+        switch "--cask",
+               description: "Select runners for the listed casks."
+        flag   "--url=",
+               depends_on:  "--cask",
+               description: "Apply CI labels from the given pull request URL."
+        switch "--skip-install",
+               depends_on:  "--cask",
+               description: "Skip installing casks."
+        switch "--new",
+               depends_on:  "--cask",
+               description: "Run new cask checks for all listed casks."
         switch "--all-supported",
                description: "Instead of selecting runners based on the chosen formula, return all supported runners."
         switch "--eval-all",
@@ -31,7 +42,7 @@ module Homebrew
 
         named_args max: 2
 
-        conflicts "--all-supported", "--dependents"
+        conflicts "--all-supported", "--dependents", "--cask"
 
         hide_from_man_page!
       end
@@ -44,21 +55,39 @@ module Homebrew
           raise UsageError, "`--all-supported` is mutually exclusive to other arguments."
         end
 
-        testing_formulae = args.named.first&.split(",").to_a.map do |name|
-          TestRunnerFormula.new(Formulary.factory(name), include_uninstalled: true)
-        end.freeze
-        deleted_formulae = args.named.second&.split(",").to_a.freeze
-        dependent_shards = args.dependent_shards || "1"
-        unless dependent_shards.match?(/\A[1-9]\d*\z/)
-          raise UsageError,
-                "`--dependent-shards` must be a positive integer."
-        end
+        runners = if args.cask?
+          require "cask/ci/runner_matrix"
 
-        runner_matrix = GitHubRunnerMatrix.new(testing_formulae, deleted_formulae,
-                                               all_supported:    args.all_supported?,
-                                               dependent_matrix: args.dependents?,
-                                               dependent_shards: dependent_shards.to_i)
-        runners = runner_matrix.active_runner_specs_hash
+          repository = ENV.fetch("GITHUB_REPOSITORY", nil)
+          tap = if repository.present?
+            Tap.fetch(repository)
+          else
+            Tap.from_path(Dir.pwd) || CoreCaskTap.instance
+          end
+          Homebrew::API.with_no_api_env do
+            Cask::CI::RunnerMatrix.generate(tap, args.named.fetch(0).split(/[,\s]+/).reject(&:empty?),
+                                            added_casks:  args.named.second.to_s.split(/[,\s]+/),
+                                            labels:       Cask::CI::RunnerMatrix.labels(args.url),
+                                            skip_install: args.skip_install?,
+                                            new_cask:     args.new?)
+          end
+        else
+          testing_formulae = args.named.first&.split(",").to_a.map do |name|
+            TestRunnerFormula.new(Formulary.factory(name), include_uninstalled: true)
+          end.freeze
+          deleted_formulae = args.named.second&.split(",").to_a.freeze
+          dependent_shards = args.dependent_shards || "1"
+          unless dependent_shards.match?(/\A[1-9]\d*\z/)
+            raise UsageError,
+                  "`--dependent-shards` must be a positive integer."
+          end
+
+          runner_matrix = GitHubRunnerMatrix.new(testing_formulae, deleted_formulae,
+                                                 all_supported:    args.all_supported?,
+                                                 dependent_matrix: args.dependents?,
+                                                 dependent_shards: dependent_shards.to_i)
+          runner_matrix.active_runner_specs_hash
+        end
 
         ohai "Runners", JSON.pretty_generate(runners)
 

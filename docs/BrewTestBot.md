@@ -14,6 +14,8 @@ The workflow definitions are the authoritative description of the current runner
 Use `brew test-bot --only-packages-detect` to report added, modified and deleted formulae and casks without installing them.
 In GitHub Actions it writes `testing_formulae`, `added_formulae`, `deleted_formulae` and the corresponding cask lists to `GITHUB_OUTPUT`.
 The older `--only-formulae-detect` spelling is an alias for `--only-packages-detect`.
+Homebrew/core passes its formula lists to `brew determine-test-runners`.
+Homebrew/cask runs `brew determine-test-runners --cask "$TESTING_CASKS" "$ADDED_CASKS"` and supplies the pull request URL with `--url` to apply CI labels.
 
 ## Pull requests
 
