@@ -177,7 +177,7 @@ module Homebrew
         # A dependent that is not a formula keeps requiring the kegs.
         commands = if formulae.count == dependents.count
           keg_names = required_kegs.to_h { |keg| [keg.name, keg.name] }
-          InstalledDependents.commands_to_drop_dependencies(keg_names, formulae)
+          InstalledDependents.commands_to_drop_dependencies(keg_names, formulae, all_dependents: true)
         else
           []
         end

@@ -181,6 +181,18 @@ RSpec.describe Homebrew::Uninstall do
         .not_to output(/brew reinstall/).to_stderr
     end
 
+    specify "when a dependent requires the keg under another name" do
+      former_dependency = install_formula("former_dependency")
+      install_formula("stale_dependent", receipt_dependency: "former_dependency")
+      install_formula("other_dependent", receipt_dependency: "former_dependency_alias")
+      keg = Keg.new(former_dependency.latest_installed_prefix)
+      allow(InstalledDependents).to receive(:find_some_installed_dependents)
+        .and_return([[keg], ["other_dependent", "stale_dependent"]])
+
+      expect { described_class.handle_unsatisfied_dependents({ former_dependency.rack => [keg] }) }
+        .not_to output(/brew reinstall/).to_stderr
+    end
+
     specify "when `ignore_dependencies` is true" do
       expect do
         described_class.handle_unsatisfied_dependents(kegs_by_rack, ignore_dependencies: true)

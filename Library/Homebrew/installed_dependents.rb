@@ -207,14 +207,21 @@ module InstalledDependents
   # An outdated dependent is upgraded when its latest version no longer needs
   # them. An up-to-date one whose install receipt still lists them is
   # reinstalled, unless its keg links to them.
-  sig { params(dependency_names: T::Hash[String, String], formulae: T::Array[Formula]).returns(T::Array[String]) }
-  def commands_to_drop_dependencies(dependency_names, formulae)
+  # With `all_dependents`, every one of `formulae` is known to require one of
+  # them, whatever name it lists it under.
+  sig {
+    params(dependency_names: T::Hash[String, String], formulae: T::Array[Formula], all_dependents: T::Boolean)
+      .returns(T::Array[String])
+  }
+  def commands_to_drop_dependencies(dependency_names, formulae, all_dependents: false)
     kept_dependencies = T.let([], T::Array[String])
     droppers = T.let([], T::Array[[Formula, T::Array[String]]])
     full_names = ->(deps) { deps.filter_map { |dep| dependency_names[Utils.name_from_full_name(dep.name)] } }
 
     formulae.each do |dependent|
       installed_dependency_names = full_names.call(dependent.runtime_dependencies(stop_at_untrusted: true))
+      # A dependent that lists a dependency under another name, such as an alias, keeps requiring it.
+      return [] if all_dependents && installed_dependency_names.empty?
       next if installed_dependency_names.empty?
 
       declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
