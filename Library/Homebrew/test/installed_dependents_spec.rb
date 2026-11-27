@@ -568,14 +568,14 @@ RSpec.describe InstalledDependents do
   describe "::commands_to_drop_dependencies" do
     let(:dependency) { instance_double(Dependency, name: "foo") }
 
-    def commands_for_dependent(outdated: false, linked: [])
+    def commands_for_dependent(outdated: false, linked: [], others: [])
       dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false,
                                            runtime_dependencies: [dependency])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false).and_return(linked)
       yield dependent if block_given?
 
-      described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent])
+      described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent, *others])
     end
 
     it "reinstalls an up-to-date dependent whose install receipt still lists the dependency" do
@@ -597,6 +597,21 @@ RSpec.describe InstalledDependents do
       end
 
       expect(commands).to eq([])
+    end
+
+    it "suggests nothing while another dependent still declares the dependency" do
+      other = instance_double(Formula, full_name: "baz", outdated?: false, pinned?: false,
+                                       runtime_dependencies: [dependency])
+
+      expect(commands_for_dependent(others: [other])).to eq([])
+    end
+
+    it "suggests nothing while a dependent with a dependency from an untrusted tap lists the dependency" do
+      other = instance_double(Formula, full_name: "baz", runtime_dependencies: [dependency])
+      allow(other).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false)
+                                                    .and_raise(Homebrew::UntrustedTapError)
+
+      expect(commands_for_dependent(others: [other])).to eq([])
     end
   end
 end

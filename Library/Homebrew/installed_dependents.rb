@@ -209,9 +209,8 @@ module InstalledDependents
   # reinstalled, unless its keg links to them.
   sig { params(dependency_names: T::Hash[String, String], formulae: T::Array[Formula]).returns(T::Array[String]) }
   def commands_to_drop_dependencies(dependency_names, formulae)
-    upgradeable_dependents = T.let([], T::Array[String])
-    pinned_dependents = T.let([], T::Array[String])
-    reinstallable_dependents = T.let([], T::Array[String])
+    kept_dependencies = T.let([], T::Array[String])
+    droppers = T.let([], T::Array[[Formula, T::Array[String]]])
     full_names = ->(deps) { deps.filter_map { |dep| dependency_names[Utils.name_from_full_name(dep.name)] } }
 
     formulae.each do |dependent|
@@ -219,24 +218,27 @@ module InstalledDependents
       next if installed_dependency_names.empty?
 
       declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
-      next if (installed_dependency_names - full_names.call(declared_dependencies)).empty?
-
-      if dependent.outdated?
-        destination = dependent.pinned? ? pinned_dependents : upgradeable_dependents
-        destination << dependent.full_name
+      dropped = installed_dependency_names - full_names.call(declared_dependencies)
       # A reinstall keeps the keg, so the new install receipt still lists what the keg links to.
-      elsif (installed_dependency_names - full_names.call(dependent.runtime_dependencies(read_from_tab: false))).any?
-        reinstallable_dependents << dependent.full_name
+      if dropped.any? && !dependent.outdated?
+        dropped -= full_names.call(dependent.runtime_dependencies(read_from_tab: false))
       end
+      kept_dependencies.concat(installed_dependency_names - dropped)
+      droppers << [dependent, dropped]
     rescue Homebrew::UntrustedTapError
-      # An untrusted tap hides the dependencies behind it, so suggest nothing for this dependent.
-      next
+      # An untrusted tap hides the dependencies behind it, so this dependent keeps what its receipt lists.
+      kept_dependencies.concat(installed_dependency_names.to_a)
     end
 
+    # A command only helps when no other dependent keeps requiring what it drops.
+    outdated, current = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
+                                .partition(&:outdated?)
     {
-      "unpin"     => pinned_dependents,
-      "upgrade"   => upgradeable_dependents + pinned_dependents,
-      "reinstall" => reinstallable_dependents,
-    }.filter_map { |command, names| ["brew", command, *names.uniq.sort].join(" ") if names.any? }
+      "unpin"     => outdated.select(&:pinned?),
+      "upgrade"   => outdated,
+      "reinstall" => current,
+    }.filter_map do |command, dependents|
+      ["brew", command, *dependents.map(&:full_name).uniq.sort].join(" ") if dependents.any?
+    end
   end
 end

@@ -173,10 +173,14 @@ module Homebrew
     def self.check_for_dependents!(kegs, casks: [], named_args: [])
       if (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
         required_kegs, dependents = result
-        commands = InstalledDependents.commands_to_drop_dependencies(
-          required_kegs.to_h { |keg| [keg.name, keg.name] },
-          Formula.installed.select { |f| dependents.include?(f.to_s) },
-        )
+        formulae = Formula.installed.select { |f| dependents.include?(f.to_s) }
+        # A dependent that is not a formula keeps requiring the kegs.
+        commands = if formulae.count == dependents.count
+          keg_names = required_kegs.to_h { |keg| [keg.name, keg.name] }
+          InstalledDependents.commands_to_drop_dependencies(keg_names, formulae)
+        else
+          []
+        end
         DependentsMessage.new(required_kegs, dependents, named_args:, commands:).output
       elsif (result = InstalledDependents.find_installed_build_dependents(kegs))
         DependentsMessage.new(*result, named_args:, build: true).output
