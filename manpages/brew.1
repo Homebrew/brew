@@ -2510,8 +2510,8 @@ Only run the tap syntax checks needed on stable brew\.
 \fB\-\-only\-formulae\fP
 Only run the formulae steps\.
 .TP
-\fB\-\-only\-formulae\-detect\fP
-Only run the formulae detection steps\.
+\fB\-\-only\-packages\-detect\fP
+Only detect added, modified and deleted formulae and casks\.
 .TP
 \fB\-\-only\-formulae\-dependents\fP
 Only run the formulae dependents steps\.
@@ -2523,13 +2523,13 @@ Only run the bottles fetch steps\. This optional post\-upload test checks that a
 Only run the post\-cleanup step\. Needs \fB\-\-cleanup\fP, except in GitHub Actions\.
 .TP
 \fB\-\-testing\-formulae\fP
-Use these testing formulae rather than running the formulae detection steps\.
+Use these testing formulae rather than running package detection\.
 .TP
 \fB\-\-added\-formulae\fP
-Use these added formulae rather than running the formulae detection steps\.
+Use these added formulae rather than running package detection\.
 .TP
 \fB\-\-deleted\-formulae\fP
-Use these deleted formulae rather than running the formulae detection steps\.
+Use these deleted formulae rather than running package detection\.
 .TP
 \fB\-\-skipped\-or\-failed\-formulae\fP
 Use these skipped or failed formulae from formulae steps for a formulae dependents step\.

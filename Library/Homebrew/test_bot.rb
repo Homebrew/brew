@@ -55,7 +55,7 @@ module Homebrew
 
       # Get tap from GitHub Actions GITHUB_REPOSITORY
       git_url = ENV.fetch("GITHUB_REPOSITORY", nil)
-      return if git_url.blank?
+      return Tap.from_path(Dir.pwd) if git_url.blank?
 
       url_path = git_url.sub(%r{^https?://github\.com/}, "")
                         .chomp("/")

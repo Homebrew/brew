@@ -1609,16 +1609,18 @@ _brew_generate_cask_api() {
 # brew generate-cask-ci-matrix
 _brew_generate_cask_ci_matrix() {
   _arguments \
+    '--added-casks[Run new cask checks for these detected additions]' \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '(--syntax-only)--new[Run new cask checks]' \
     '--quiet[Make some output more quiet]' \
     '(--syntax-only)--skip-install[Skip installing casks]' \
-    '(--skip-install --new)--syntax-only[Only run syntax checks]' \
+    '(--testing-casks --cask --skip-install --new)--syntax-only[Only run syntax checks]' \
+    '(--cask --syntax-only)--testing-casks[Use these detected casks instead of comparing Git revisions]' \
     '(--cask)--url[Treat named argument as a pull request URL]' \
     '--verbose[Make some output more verbose]' \
     - cask \
-    '(--url)--cask[Treat all named arguments as cask tokens]' \
+    '(--url --testing-casks --syntax-only)--cask[Treat all named arguments as cask tokens]' \
     '*:cask:__brew_casks'
 }
 
@@ -2609,12 +2611,12 @@ _brew_test() {
 # brew test-bot
 _brew_test_bot() {
   _arguments \
-    '(--only-formulae-detect)--added-formulae[Use these added formulae rather than running the formulae detection steps]' \
+    '(--only-packages-detect)--added-formulae[Use these added formulae rather than running package detection]' \
     '--build-dependents-from-source[Build a limited set of dependents from source in addition to testing bottles. Up to 10 per formula per shard, prioritising popular dependents in a sharded group]' \
     '--build-from-source[Build from source rather than building bottles]' \
     '--cleanup[Clean all state from the Homebrew directory. Use with care!]' \
     '--debug[Display any debugging information]' \
-    '(--only-formulae-detect)--deleted-formulae[Use these deleted formulae rather than running the formulae detection steps]' \
+    '(--only-packages-detect)--deleted-formulae[Use these deleted formulae rather than running package detection]' \
     '--dry-run[Print what would be done rather than doing it]' \
     '--fail-fast[Immediately exit on a failing step]' \
     '--git-email[Set the Git author/committer email to the given email]' \
@@ -2623,15 +2625,15 @@ _brew_test_bot() {
     '--junit[generate a JUnit XML test results file]' \
     '--keep-old[Run `brew bottle --keep-old` to build new bottles for a single platform]' \
     '--local[Ask Homebrew to write verbose logs under `./logs/` and set `$HOME` to `./home/`]' \
-    '--only-bottles-fetch[Only run the bottles fetch steps. This optional post-upload test checks that all the bottles were uploaded correctly. It is not run unless requested and only needs to be run on a single machine. The bottle commit to be tested must be on the tested branch]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-detect --only-formulae-dependents --skip-setup)--only-cleanup-after[Only run the post-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
-    '(--only-setup --only-tap-syntax --only-formulae --only-formulae-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-cleanup-before[Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-formulae[Only run the formulae steps]' \
-    '(--skip-dependents --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-detect --only-cleanup-after --skip-setup)--only-formulae-dependents[Only run the formulae dependents steps]' \
-    '(--testing-formulae --added-formulae --deleted-formulae --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-dependents --only-cleanup-after --skip-setup)--only-formulae-detect[Only run the formulae detection steps]' \
+    '(--only-packages-detect)--only-bottles-fetch[Only run the bottles fetch steps. This optional post-upload test checks that all the bottles were uploaded correctly. It is not run unless requested and only needs to be run on a single machine. The bottle commit to be tested must be on the tested branch]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --skip-setup)--only-cleanup-after[Only run the post-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
+    '(--only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-cleanup-before[Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-formulae[Only run the formulae steps]' \
+    '(--skip-dependents --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-cleanup-after --skip-setup)--only-formulae-dependents[Only run the formulae dependents steps]' \
     '--only-json-tab[Run `brew bottle --only-json-tab` to build new bottles that do not contain a tab]' \
-    '(--only-cleanup-before --only-tap-syntax --only-formulae --only-formulae-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-setup[Only run the local system setup check step]' \
-    '(--only-cleanup-before --only-setup --only-formulae --only-formulae-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-tap-syntax[Only run the tap syntax check step]' \
+    '(--testing-formulae --added-formulae --deleted-formulae --only-bottles-fetch --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-dependents --only-cleanup-after --skip-setup)--only-packages-detect[Only detect added, modified and deleted formulae and casks]' \
+    '(--only-cleanup-before --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-setup[Only run the local system setup check step]' \
+    '(--only-cleanup-before --only-setup --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-tap-syntax[Only run the tap syntax check step]' \
     '--publish[Publish the uploaded bottles]' \
     '--quiet[Make some output more quiet]' \
     '--root-url[Use the specified URL as the root of the bottle'\''s URL instead of Homebrew'\''s default]' \
@@ -2643,14 +2645,14 @@ _brew_test_bot() {
     '--skip-online-checks[Don'\''t pass `--online` to `brew audit` and skip `brew livecheck`]' \
     '--skip-relocation[Run `brew bottle --skip-relocation` to build new bottles that don'\''t require relocation]' \
     '--skip-revision-audit[Don'\''t audit the revision]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-detect --only-formulae-dependents --only-cleanup-after)--skip-setup[Don'\''t check if the local system is set up correctly]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after)--skip-setup[Don'\''t check if the local system is set up correctly]' \
     '--skip-stable-version-audit[Don'\''t audit the stable version]' \
     '--skipped-or-failed-formulae[Use these skipped or failed formulae from formulae steps for a formulae dependents step]' \
     '--stable[Only run the tap syntax checks needed on stable brew]' \
     '--tap[Use the Git repository of the given tap. Defaults to the core tap for syntax checking]' \
     '--test-default-formula[Use a default testing formula when not building a tap and no other formulae are specified]' \
     '--tested-formulae[Use these tested formulae from formulae steps for a formulae dependents step]' \
-    '(--only-formulae-detect)--testing-formulae[Use these testing formulae rather than running the formulae detection steps]' \
+    '(--only-packages-detect)--testing-formulae[Use these testing formulae rather than running package detection]' \
     '--verbose[Print test step output in real time. Has the side effect of passing output as raw bytes instead of re-encoding in UTF-8]'
 }
 

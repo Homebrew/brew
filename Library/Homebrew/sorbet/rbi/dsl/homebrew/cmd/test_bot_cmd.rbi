@@ -72,6 +72,9 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
   def only_json_tab?; end
 
   sig { returns(T::Boolean) }
+  def only_packages_detect?; end
+
+  sig { returns(T::Boolean) }
   def only_setup?; end
 
   sig { returns(T::Boolean) }

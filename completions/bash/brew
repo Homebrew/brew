@@ -1843,6 +1843,7 @@ _brew_generate_cask_ci_matrix() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --added-casks
       --cask
       --debug
       --help
@@ -1850,6 +1851,7 @@ _brew_generate_cask_ci_matrix() {
       --quiet
       --skip-install
       --syntax-only
+      --testing-casks
       --url
       --verbose
       "
@@ -3214,8 +3216,8 @@ _brew_test_bot() {
       --only-cleanup-before
       --only-formulae
       --only-formulae-dependents
-      --only-formulae-detect
       --only-json-tab
+      --only-packages-detect
       --only-setup
       --only-tap-syntax
       --publish
