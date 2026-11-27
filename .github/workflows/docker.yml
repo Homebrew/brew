@@ -409,7 +409,7 @@ jobs:
       - name: AWS Elastic Container Registry Login
         if: fromJSON(steps.attributes.outputs.push)
         id: aws_registry_login
-        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
 
       - name: Generate AWS image name
         id: aws_image
@@ -456,7 +456,7 @@ jobs:
 
       - name: AWS Elastic Container Registry Login
         id: aws_registry_login
-        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1

@@ -25,19 +25,19 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        uses: Homebrew/actions/setup-homebrew@61b401267256bb9c047d6d1481b176d5772a0ba7 # 2026.11.23.1
         with:
           core: false
           cask: false
 
       - name: Configure Git user
-        uses: Homebrew/actions/git-user-config@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        uses: Homebrew/actions/git-user-config@61b401267256bb9c047d6d1481b176d5772a0ba7 # 2026.11.23.1
         with:
           username: BrewTestBot
 
       - name: Set up commit signing
         if: github.actor != 'dependabot[bot]'
-        uses: Homebrew/actions/setup-commit-signing@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        uses: Homebrew/actions/setup-commit-signing@61b401267256bb9c047d6d1481b176d5772a0ba7 # 2026.11.23.1
         with:
           signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
 
@@ -80,7 +80,7 @@ jobs:
 
       - name: Push commits
         if: steps.update.outputs.committed == 'true' && github.actor != 'dependabot[bot]'
-        uses: Homebrew/actions/git-try-push@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        uses: Homebrew/actions/git-try-push@61b401267256bb9c047d6d1481b176d5772a0ba7 # 2026.11.23.1
         with:
           token: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
           directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -106,7 +106,7 @@ jobs:
       issues: write
     steps:
       - name: Open, update, or close schema issue
-        uses: Homebrew/actions/create-or-update-issue@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        uses: Homebrew/actions/create-or-update-issue@61b401267256bb9c047d6d1481b176d5772a0ba7 # 2026.11.23.1
         with:
           title: Failed to update SBOM schema
           body: >
