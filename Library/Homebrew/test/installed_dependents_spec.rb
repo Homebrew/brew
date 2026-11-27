@@ -710,6 +710,19 @@ RSpec.describe InstalledDependents do
         expect(commands).to eq(["brew upgrade bar"])
       end
 
+      it "suggests nothing when the latest version selects the dependency as an option of its own dependency" do
+        stub_formula("baz") do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :optional
+        end
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "baz" => "with-foo"
+        end
+
+        expect(commands).to eq([])
+      end
+
       it "upgrades it when the dependency is recommended and was opted out of" do
         commands = commands_for_receipt(used_options: ["--without-foo"]) do
           T.bind(self, T.class_of(Formula))
