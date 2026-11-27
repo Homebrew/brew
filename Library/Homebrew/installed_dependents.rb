@@ -223,14 +223,15 @@ module InstalledDependents
       return [] if all_dependents && installed_dependency_names.empty?
       next if installed_dependency_names.empty?
 
-      declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
+      # Unlike `runtime_dependencies`, this raises when a dependency cannot be loaded.
+      declared_dependencies = dependent.recursive_dependencies { |_, dep| Dependable::PRUNE if dep.build? || dep.test? }
       dropped = installed_dependency_names - full_names.call(declared_dependencies)
       # Only an upgrade changes what a dependent requires, and a disabled formula cannot be upgraded.
       dropped = [] if dropped.any? && (!dependent.outdated? || dependent.disabled?)
       kept_dependencies.concat(installed_dependency_names - dropped)
       droppers << [dependent, dropped]
-    rescue Homebrew::UntrustedTapError
-      # An untrusted tap hides the dependencies behind it, so this dependent keeps what its receipt lists.
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, FormulaSpecificationError, Homebrew::UntrustedTapError
+      # Its latest dependencies cannot be read, so this dependent keeps what its receipt lists.
       kept_dependencies.concat(installed_dependency_names.to_a)
     end
 

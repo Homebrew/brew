@@ -328,7 +328,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       dependency = instance_double(Dependency, name: "testball")
       dependent = instance_double(Formula, deprecated?: false, disabled?: false, runtime_dependencies: [dependency],
                                            full_name: "dependent", pinned?: false, outdated?: true)
-      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(dependent).to receive(:recursive_dependencies).and_return([])
       allow(Formula).to receive(:installed).and_return([deprecated, dependent])
       allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).and_return([])
 
@@ -476,7 +476,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     }.map do |name, pinned|
       dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true, disabled?: false,
                                            runtime_dependencies: [dependency])
-      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(dependent).to receive(:recursive_dependencies).and_return([])
       dependent
     end
     allow(Keg).to receive(:all).and_return([keg])
