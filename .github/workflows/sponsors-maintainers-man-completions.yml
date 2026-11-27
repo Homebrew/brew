@@ -121,16 +121,8 @@ jobs:
           if [[ -n "${COMMITTED-}" ]]
           then
             echo "committed=true" >> "$GITHUB_OUTPUT"
-            open_pr="$(gh api --method GET --paginate "repos/$GITHUB_REPOSITORY/pulls" \
-              -f state=open -f head="$GITHUB_REPOSITORY_OWNER:$BRANCH" \
-              --jq '.[] | select(.head.repo.id == .base.repo.id) | .number')"
-            if [[ -z "$open_pr" ]]
-            then
-              echo "pull_request=true" >> "$GITHUB_OUTPUT"
-            fi
           fi
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_BREW_UPDATE_SPONSORS_MAINTAINERS_TOKEN }}
           HOMEBREW_PATREON_API_TOKEN: ${{ secrets.HOMEBREW_PATREON_API_TOKEN }}
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -145,11 +137,13 @@ jobs:
           force: true
 
       - name: Open a pull request
-        if: steps.update.outputs.pull_request == 'true'
-        run: gh pr create --fill
-        env:
-          GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
-        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        if: steps.update.outputs.committed == 'true'
+        # TODO: Pin a released Homebrew/actions commit and add its version tag.
+        uses: Homebrew/actions/get-or-create-pull-request@b4c226ae32acab42c7c2c0745ad224a1e9958022
+        with:
+          head: ${{ steps.update.outputs.branch }}
+          working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+          token: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
 
       - name: Report sponsor update failure
         if: steps.update.outputs.sponsors_failed == 'true'
