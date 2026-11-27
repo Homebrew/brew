@@ -16,6 +16,7 @@ require "cask/caskroom"
 require "cask/quarantine"
 require "diagnostic/finding"
 require "git_repository"
+require "installed_dependents"
 require "missing"
 require "system_command"
 require "trust"
@@ -1954,44 +1955,13 @@ module Homebrew
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
-        upgradeable_dependents = T.let([], T::Array[String])
-        pinned_dependents = T.let([], T::Array[String])
+        commands = InstalledDependents.commands_to_drop_dependencies(dependency_names, installed_formulae)
+        return "" if commands.empty?
 
-        installed_formulae.each do |dependent|
-          installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
-            dependency_names[Utils.name_from_full_name(dependency.name)]
-          end.uniq
-          next if installed_dependency_names.empty?
-
-          current_dependency_names = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
-                                              .filter_map do |dependency|
-            dependency_names[Utils.name_from_full_name(dependency.name)]
-          end
-          dependencies_still_required = installed_dependency_names & current_dependency_names
-          dependencies_to_drop = installed_dependency_names - dependencies_still_required
-
-          next if dependencies_to_drop.empty? || !dependent.outdated?
-
-          destination = dependent.pinned? ? pinned_dependents : upgradeable_dependents
-          destination << dependent.full_name
-        end
-
-        guidance = []
-        if upgradeable_dependents.present? || pinned_dependents.present?
-          commands = []
-          if pinned_dependents.present?
-            pinned_names = pinned_dependents.uniq.sort.join(" ")
-            commands << "brew unpin #{pinned_names}"
-          end
-          upgrade_names = (upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")
-          commands << "brew upgrade #{upgrade_names}"
-          guidance << [
-            "To stop the listed dependents from requiring the formulae above, run:",
-            commands.map { |command| "  #{command}" }.join("\n"),
-          ].join("\n")
-        end
-
-        guidance.join("\n\n")
+        [
+          "To stop the listed dependents from requiring the formulae above, run:",
+          commands.map { |command| "  #{command}" }.join("\n"),
+        ].join("\n")
       end
 
       sig { params(path: String).returns(Finding::Remediation) }

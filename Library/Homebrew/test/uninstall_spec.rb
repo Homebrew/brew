@@ -105,6 +105,31 @@ RSpec.describe Homebrew::Uninstall do
         .to output(/required to build build_dependent, which is currently installed/).to_stderr
     end
 
+    specify "when reinstalling an up-to-date dependent stops it requiring the keg" do
+      stale_dependent = formula("stale_dependent") do
+        T.bind(self, T.class_of(Formula))
+        url "f-1"
+      end
+      stale_dependent.latest_installed_prefix.mkpath
+      Keg.new(stale_dependent.latest_installed_prefix).optlink
+      tab = Tab.empty
+      tab.homebrew_version = "1.1.6"
+      tab.tabfile = stale_dependent.latest_installed_prefix/AbstractTab::FILENAME
+      tab.runtime_dependencies = [{ "full_name" => "dependency", "version" => "1" }]
+      tab.write
+      stub_formula_loader stale_dependent
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack, named_args: ["dependency"]) }
+        .to output(<<~EOS).to_stderr
+          Error: Refusing to uninstall #{HOMEBREW_CELLAR}/dependency/1
+          because it is required by dependent_formula and stale_dependent, which are currently installed.
+          To stop the dependents below from requiring it, run:
+            brew reinstall stale_dependent
+          You can override this and force removal with:
+            brew uninstall --ignore-dependencies dependency
+        EOS
+    end
+
     specify "when `ignore_dependencies` is true" do
       expect do
         described_class.handle_unsatisfied_dependents(kegs_by_rack, ignore_dependencies: true)

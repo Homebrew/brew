@@ -172,7 +172,12 @@ module Homebrew
     sig { params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask], named_args: T::Array[String]).returns(T::Boolean) }
     def self.check_for_dependents!(kegs, casks: [], named_args: [])
       if (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
-        DependentsMessage.new(*result, named_args:).output
+        required_kegs, dependents = result
+        commands = InstalledDependents.commands_to_drop_dependencies(
+          required_kegs.to_h { |keg| [keg.name, keg.name] },
+          Formula.installed.select { |f| dependents.include?(f.to_s) },
+        )
+        DependentsMessage.new(required_kegs, dependents, named_args:, commands:).output
       elsif (result = InstalledDependents.find_installed_build_dependents(kegs))
         DependentsMessage.new(*result, named_args:, build: true).output
       else

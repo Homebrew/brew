@@ -564,4 +564,39 @@ RSpec.describe InstalledDependents do
       expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("baz")], installed)).to eq([])
     end
   end
+
+  describe "::commands_to_drop_dependencies" do
+    let(:dependency) { instance_double(Dependency, name: "foo") }
+
+    def commands_for_dependent(outdated: false, linked: [])
+      dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false,
+                                           runtime_dependencies: [dependency])
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false).and_return(linked)
+      yield dependent if block_given?
+
+      described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent])
+    end
+
+    it "reinstalls an up-to-date dependent whose install receipt still lists the dependency" do
+      expect(commands_for_dependent).to eq(["brew reinstall bar"])
+    end
+
+    it "skips an up-to-date dependent whose keg still links to the dependency" do
+      expect(commands_for_dependent(linked: [dependency])).to eq([])
+    end
+
+    it "upgrades an outdated dependent whose keg still links to the dependency" do
+      expect(commands_for_dependent(outdated: true, linked: [dependency])).to eq(["brew upgrade bar"])
+    end
+
+    it "skips a dependent with a dependency from an untrusted tap" do
+      commands = commands_for_dependent do |dependent|
+        allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false)
+                                                          .and_raise(Homebrew::UntrustedTapError)
+      end
+
+      expect(commands).to eq([])
+    end
+  end
 end
