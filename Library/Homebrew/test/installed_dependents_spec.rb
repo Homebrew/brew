@@ -707,6 +707,23 @@ RSpec.describe InstalledDependents do
         expect(commands).to eq([])
       end
 
+      it "upgrades it when a dependency of the latest version was installed without the dependency it recommends" do
+        installed_keg = setup_test_keg("baz", "1.0") do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :recommended
+        end
+        tab = Tab.empty
+        tab.tabfile = installed_keg/AbstractTab::FILENAME
+        tab.used_options = ["--without-foo"]
+        tab.write
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "baz"
+        end
+
+        expect(commands).to eq(["brew upgrade bar"])
+      end
+
       it "upgrades it when the dependency is recommended and was opted out of" do
         commands = commands_for_receipt(used_options: ["--without-foo"]) do
           T.bind(self, T.class_of(Formula))

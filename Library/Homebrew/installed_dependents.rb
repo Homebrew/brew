@@ -228,10 +228,10 @@ module InstalledDependents
         next Dependable::PRUNE if dep.build? || dep.test?
         next if dep.required? || !formula.is_a?(Formula)
 
-        # An upgrade keeps the options that were used, so a recommended dependency stays unless it was
-        # opted out of and an optional one only when it was selected. An older install receipt does not
-        # list the options that its formula has gained since.
-        used_options = formula.build.used_options
+        # An upgrade keeps the options that each formula was installed with, so a recommended dependency
+        # stays unless it was opted out of and an optional one only when it was selected. An older install
+        # receipt does not list the options that its formula has gained since.
+        used_options = Tab.for_formula(formula).used_options
         selected = if dep.recommended?
           dep.option_names.none? { |name| used_options.include?("without-#{name}") }
         else
