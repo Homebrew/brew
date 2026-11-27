@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 defaults:
   run:
@@ -75,7 +76,8 @@ jobs:
         id: commit
         if: github.event_name != 'pull_request'
         env:
-          GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.update.outputs.branch }}
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: |
           if ! git diff --stat --exit-code "Library/Homebrew/sorbet"
@@ -92,8 +94,10 @@ jobs:
             fi
 
             echo "committed=true" >> "$GITHUB_OUTPUT"
-            PULL_REQUEST_STATE="$(gh pr view --json=state | jq -r ".state" || true)"
-            if [[ "${PULL_REQUEST_STATE}" != "OPEN" ]]
+            open_pr="$(gh api --method GET --paginate "repos/$GITHUB_REPOSITORY/pulls" \
+              -f state=open -f head="$GITHUB_REPOSITORY_OWNER:$BRANCH" \
+              --jq '.[] | select(.head.repo.id == .base.repo.id) | .number')"
+            if [[ -z "$open_pr" ]]
             then
               echo "pull_request=true" >> "$GITHUB_OUTPUT"
             fi
