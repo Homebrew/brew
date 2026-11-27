@@ -881,6 +881,11 @@ module Cask
       nil
     end
 
+    sig { params(bundle: T.nilable(String), tap: String).returns(T::Boolean) }
+    def same_version_format?(bundle, tap)
+      bundle&.gsub(/\d+/, "#") == tap.gsub(/\d+/, "#")
+    end
+
     sig {
       params(installed_version: String, on_self_update: T.nilable(T.proc.params(cask: Cask, installed: Cask).void))
         .returns(T::Boolean)
@@ -900,31 +905,50 @@ module Cask
       return false if installed_cask.nil? || !installed_cask.artifacts.one?(Artifact::App)
 
       installed_short_version = installed_cask.bundle_short_version
-      installed_bundle_version = installed_cask.bundle_long_version
+      raw_bundle_version = installed_cask.bundle_long_version
       installed_short_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_short_version)
-      installed_bundle_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_bundle_version)
-      bundle_versions = [installed_short_version, installed_bundle_version].compact
+      raw_bundle_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(raw_bundle_version)
+      bundle_versions = [installed_short_version, raw_bundle_version].compact
       return false if bundle_versions.empty?
 
-      if [*bundle_versions, bundle_versions.join(","), bundle_versions.join("-")].include?(version)
-        return false if !on_self_update || installed_version == version || pinned?
+      exact_versions = [*bundle_versions, bundle_versions.join(","), bundle_versions.join("-")]
+      tap_versions = version.csv
+      tap_builds = tap_versions.drop(1)
+      installed_bundle_version = raw_bundle_version
+      # JetBrains apps prefix the numeric bundle build with a product code.
+      if tap_builds.present? && tap_builds.all?(/\A\d+(?:\.\d+)*\z/)
+        installed_bundle_version = raw_bundle_version&.sub(/\A[A-Z]+-(\d+(?:\.\d+)*)\z/, '\1')
+        exact_versions << [installed_short_version, installed_bundle_version].compact.join(",") if tap_builds.one?
+      end
+
+      current_receipt = installed_version == version
+      if exact_versions.include?(version)
+        return false if !on_self_update || current_receipt || pinned?
 
         yield self, installed_cask if Version.new(installed_version) < Version.new(version)
         return false
       end
 
-      tap_versions = version.csv
       tap_short_version = tap_versions.first.to_s.presence || version.to_s
-
       short_comparison = compare_version_strings(installed_short_version, tap_short_version)
-      if tap_versions.size > 1 && short_comparison&.zero?
-        comparisons = tap_versions.drop(1).map { |build| compare_version_strings(installed_bundle_version, build) }
-        return false if comparisons.intersect?([0, 1])
-        return true if comparisons.all?(-1)
+      if tap_builds.present?
+        # A current receipt can contain download identifiers. Require a comparable
+        # release and, if it matches, a comparable build before inferring an upgrade.
+        return false if current_receipt && !same_version_format?(installed_short_version, tap_short_version)
+
+        if short_comparison&.zero?
+          return false if current_receipt && !same_version_format?(installed_bundle_version, version.after_comma)
+
+          comparisons = tap_builds.map { |build| compare_version_strings(installed_bundle_version, build) }
+          return false if comparisons.intersect?([0, 1])
+          return true if comparisons.all?(-1)
+        end
       end
 
       # An exact match with the recorded short version and build identifies the cask's version scheme.
-      if installed_version.split(",").first(2) == [installed_short_version, installed_bundle_version]
+      recorded_short_version, recorded_build = installed_version.split(",")
+      if recorded_build && recorded_short_version == installed_short_version &&
+         [raw_bundle_version, installed_bundle_version].include?(recorded_build)
         return Version.new(installed_version) < Version.new(version)
       end
 

@@ -124,6 +124,20 @@ RSpec.describe Cask::Upgrade, :cask do
       expect { described_class.upgrade_casks!(args:) }.not_to change(auto_updates, :installed_version)
     end
 
+    test_each([
+      ["2.61,2061", "PS-2061", "2.61,2061"],
+      ["2.61,2061", "PS-2062", "2.57"],
+      ["2.61,2060,2061", "PS-2061", "2.57"],
+    ]) do |tap_version, bundle_version, expected|
+      it "records #{expected} for bundle build #{bundle_version} and tap version #{tap_version}" do
+        allow(auto_updates).to receive(:version).and_return(Cask::DSL::Version.new(tap_version))
+        stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version:)
+        described_class.upgrade_casks!(args:)
+
+        expect(auto_updates).to have_attributes(installed_version: expected, tab: have_attributes(version: expected))
+      end
+    end
+
     test_each(["2.62", "0.0"]) do |app_version|
       it "skips a named cask when the bundle reports #{app_version}" do
         stub_cask_bundle_version(auto_updates_path, short_version: app_version)
