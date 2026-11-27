@@ -11,6 +11,9 @@ last_review_date: "2025-02-08"
 [`brew test-bot`](Manpage.md#test-bot-options-formula) is Homebrew's continuous-integration orchestration command, originally funded by [our Kickstarter in 2013](https://www.kickstarter.com/projects/homebrew/brew-test-bot).
 Homebrew's GitHub Actions workflows run it on macOS and Linux runners to build bottles and test the lifecycle of changes to Homebrew and its taps.
 The workflow definitions are the authoritative description of the current runner and job configuration.
+Use `brew test-bot --only-packages-detect` to report added, modified and deleted formulae and casks without installing them.
+In GitHub Actions it writes `testing_formulae`, `added_formulae`, `deleted_formulae` and the corresponding cask lists to `GITHUB_OUTPUT`.
+The older `--only-formulae-detect` spelling is an alias for `--only-packages-detect`.
 
 ## Pull requests
 

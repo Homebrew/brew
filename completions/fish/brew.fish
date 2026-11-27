@@ -1228,6 +1228,7 @@ __fish_brew_complete_arg 'generate-cask-api' -l verbose -d 'Make some output mor
 
 
 complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'generate-cask-ci-matrix' -d 'Generate a GitHub Actions matrix for a given pull request URL or list of cask names'
+__fish_brew_complete_arg 'generate-cask-ci-matrix' -l added-casks -d 'Run new cask checks for these detected additions'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l cask -d 'Treat all named arguments as cask tokens'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l help -d 'Show this message'
@@ -1235,6 +1236,7 @@ __fish_brew_complete_arg 'generate-cask-ci-matrix' -l new -d 'Run new cask check
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l skip-install -d 'Skip installing casks'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l syntax-only -d 'Only run syntax checks'
+__fish_brew_complete_arg 'generate-cask-ci-matrix' -l testing-casks -d 'Use these detected casks instead of comparing Git revisions'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l url -d 'Treat named argument as a pull request URL'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -a '(__fish_brew_suggest_casks_all)'
@@ -2020,12 +2022,12 @@ __fish_brew_complete_arg 'test' -a '(__fish_brew_suggest_formulae_installed)'
 
 
 __fish_brew_complete_cmd 'test-bot' 'Tests the full lifecycle of a Homebrew change to a tap (Git repository)'
-__fish_brew_complete_arg 'test-bot' -l added-formulae -d 'Use these added formulae rather than running the formulae detection steps'
+__fish_brew_complete_arg 'test-bot' -l added-formulae -d 'Use these added formulae rather than running package detection'
 __fish_brew_complete_arg 'test-bot' -l build-dependents-from-source -d 'Build a limited set of dependents from source in addition to testing bottles. Up to 10 per formula per shard, prioritising popular dependents in a sharded group'
 __fish_brew_complete_arg 'test-bot' -l build-from-source -d 'Build from source rather than building bottles'
 __fish_brew_complete_arg 'test-bot' -l cleanup -d 'Clean all state from the Homebrew directory. Use with care!'
 __fish_brew_complete_arg 'test-bot' -l debug -d 'Display any debugging information'
-__fish_brew_complete_arg 'test-bot' -l deleted-formulae -d 'Use these deleted formulae rather than running the formulae detection steps'
+__fish_brew_complete_arg 'test-bot' -l deleted-formulae -d 'Use these deleted formulae rather than running package detection'
 __fish_brew_complete_arg 'test-bot' -l dry-run -d 'Print what would be done rather than doing it'
 __fish_brew_complete_arg 'test-bot' -l fail-fast -d 'Immediately exit on a failing step'
 __fish_brew_complete_arg 'test-bot' -l git-email -d 'Set the Git author/committer email to the given email'
@@ -2039,8 +2041,8 @@ __fish_brew_complete_arg 'test-bot' -l only-cleanup-after -d 'Only run the post-
 __fish_brew_complete_arg 'test-bot' -l only-cleanup-before -d 'Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions'
 __fish_brew_complete_arg 'test-bot' -l only-formulae -d 'Only run the formulae steps'
 __fish_brew_complete_arg 'test-bot' -l only-formulae-dependents -d 'Only run the formulae dependents steps'
-__fish_brew_complete_arg 'test-bot' -l only-formulae-detect -d 'Only run the formulae detection steps'
 __fish_brew_complete_arg 'test-bot' -l only-json-tab -d 'Run `brew bottle --only-json-tab` to build new bottles that do not contain a tab'
+__fish_brew_complete_arg 'test-bot' -l only-packages-detect -d 'Only detect added, modified and deleted formulae and casks'
 __fish_brew_complete_arg 'test-bot' -l only-setup -d 'Only run the local system setup check step'
 __fish_brew_complete_arg 'test-bot' -l only-tap-syntax -d 'Only run the tap syntax check step'
 __fish_brew_complete_arg 'test-bot' -l publish -d 'Publish the uploaded bottles'
@@ -2061,7 +2063,7 @@ __fish_brew_complete_arg 'test-bot' -l stable -d 'Only run the tap syntax checks
 __fish_brew_complete_arg 'test-bot' -l tap -d 'Use the Git repository of the given tap. Defaults to the core tap for syntax checking'
 __fish_brew_complete_arg 'test-bot' -l test-default-formula -d 'Use a default testing formula when not building a tap and no other formulae are specified'
 __fish_brew_complete_arg 'test-bot' -l tested-formulae -d 'Use these tested formulae from formulae steps for a formulae dependents step'
-__fish_brew_complete_arg 'test-bot' -l testing-formulae -d 'Use these testing formulae rather than running the formulae detection steps'
+__fish_brew_complete_arg 'test-bot' -l testing-formulae -d 'Use these testing formulae rather than running package detection'
 __fish_brew_complete_arg 'test-bot' -l verbose -d 'Print test step output in real time. Has the side effect of passing output as raw bytes instead of re-encoding in UTF-8'
 
 

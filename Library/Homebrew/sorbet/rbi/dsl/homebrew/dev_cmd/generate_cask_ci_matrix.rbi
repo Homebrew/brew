@@ -11,6 +11,9 @@ class Homebrew::DevCmd::GenerateCaskCiMatrix
 end
 
 class Homebrew::DevCmd::GenerateCaskCiMatrix::Args < Homebrew::CLI::Args
+  sig { returns(T.nilable(T::Array[String])) }
+  def added_casks; end
+
   sig { returns(T::Boolean) }
   def cask?; end
 
@@ -25,6 +28,9 @@ class Homebrew::DevCmd::GenerateCaskCiMatrix::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def syntax_only?; end
+
+  sig { returns(T.nilable(String)) }
+  def testing_casks; end
 
   sig { returns(T::Boolean) }
   def url?; end

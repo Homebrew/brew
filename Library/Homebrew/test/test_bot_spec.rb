@@ -20,7 +20,7 @@ RSpec.describe Homebrew::TestBot do
       allow(args).to receive_messages(only_cleanup_before?:  false,
                                       only_setup?:           false,
                                       only_tap_syntax?:      false,
-                                      only_formulae_detect?: false,
+                                      only_packages_detect?: false,
                                       only_bottles_fetch?:   false,
                                       only_cleanup_after?:   false)
       allow(Utils).to receive(:safe_popen_read).and_return("revision")
@@ -54,7 +54,7 @@ RSpec.describe Homebrew::TestBot do
       allow(args).to receive_messages(only_cleanup_before?:  false,
                                       only_setup?:           false,
                                       only_tap_syntax?:      false,
-                                      only_formulae_detect?: false,
+                                      only_packages_detect?: false,
                                       only_bottles_fetch?:   false,
                                       only_cleanup_after?:   false)
       allow(Utils).to receive(:safe_popen_read).and_return("revision")
@@ -87,7 +87,7 @@ RSpec.describe Homebrew::TestBot do
       allow(args).to receive_messages(only_cleanup_before?:  false,
                                       only_setup?:           false,
                                       only_tap_syntax?:      false,
-                                      only_formulae_detect?: false,
+                                      only_packages_detect?: false,
                                       only_bottles_fetch?:   false,
                                       only_cleanup_after?:   false)
       allow(Utils).to receive(:safe_popen_read).and_return("revision")

@@ -50,9 +50,9 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
   it "rejects a matrix exceeding GitHub's job limit" do
     ENV["GITHUB_REPOSITORY"] = "Homebrew/homebrew-cask"
     ENV.delete("GITHUB_OUTPUT")
-    command = described_class.new(["--cask", "test"])
-    allow(command).to receive(:generate_matrix).and_return(Array.new(Cask::CI::RunnerMatrix::MAX_JOBS - 1,
-                                                                     {}))
+    command = described_class.new(["--testing-casks=test"])
+    allow(Cask::CI::RunnerMatrix).to receive(:generate).and_return(Array.new(Cask::CI::RunnerMatrix::MAX_JOBS - 1,
+                                                                             {}))
 
     expect { command.run }
       .to output("Error: Maximum job matrix size exceeded: 257/256\n").to_stderr
@@ -84,5 +84,18 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
       runners = File.readlines("output").grep(/^runners=/).fetch(0).delete_prefix("runners=")
       expect(JSON.parse(runners).map { |job| job.fetch("cask").fetch("token") }.uniq).to eq(["local-caffeine"])
     end
+  end
+
+  it "uses detected casks and their additions without diffing the checkout", :cask, :no_api do
+    ENV["GITHUB_REPOSITORY"] = "Homebrew/homebrew-cask"
+    ENV.delete("GITHUB_OUTPUT")
+    stdout = StringIO.new
+    command = described_class.new(["--testing-casks=local-caffeine", "--added-casks=local-caffeine"])
+    allow(command).to receive(:puts) { |output| stdout.puts(output) }
+
+    command.run
+
+    expect(JSON.parse(stdout.string).filter_map { |row| row["audit_args"] }.uniq)
+      .to eq([%w[--online --new]])
   end
 end

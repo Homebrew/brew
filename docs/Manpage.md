@@ -3996,9 +3996,9 @@ and Linux workers.
 
 : Only run the formulae steps.
 
-`--only-formulae-detect`
+`--only-packages-detect`
 
-: Only run the formulae detection steps.
+: Only detect added, modified and deleted formulae and casks.
 
 `--only-formulae-dependents`
 
@@ -4017,15 +4017,15 @@ and Linux workers.
 
 `--testing-formulae`
 
-: Use these testing formulae rather than running the formulae detection steps.
+: Use these testing formulae rather than running package detection.
 
 `--added-formulae`
 
-: Use these added formulae rather than running the formulae detection steps.
+: Use these added formulae rather than running package detection.
 
 `--deleted-formulae`
 
-: Use these deleted formulae rather than running the formulae detection steps.
+: Use these deleted formulae rather than running package detection.
 
 `--skipped-or-failed-formulae`
 
