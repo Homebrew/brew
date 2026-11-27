@@ -1428,10 +1428,14 @@ _brew_determine_test_runners() {
     -*)
       __brewcomp "
       --all-supported
+      --cask
       --debug
       --dependents
       --help
+      --new
       --quiet
+      --skip-install
+      --url
       --verbose
       "
       return
