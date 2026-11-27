@@ -214,7 +214,7 @@ module InstalledDependents
     full_names = ->(deps) { deps.filter_map { |dep| dependency_names[Utils.name_from_full_name(dep.name)] } }
 
     formulae.each do |dependent|
-      installed_dependency_names = full_names.call(dependent.runtime_dependencies)
+      installed_dependency_names = full_names.call(dependent.runtime_dependencies(stop_at_untrusted: true))
       next if installed_dependency_names.empty?
 
       declared_dependencies = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)

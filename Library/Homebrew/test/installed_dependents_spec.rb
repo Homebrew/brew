@@ -612,6 +612,14 @@ RSpec.describe InstalledDependents do
       expect(commands_for_dependent(others: [other])).to eq([])
     end
 
+    it "suggests nothing while a dependent without a receipt list has a dependency from an untrusted tap" do
+      other = instance_double(Formula, full_name: "baz")
+      allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)
+      allow(other).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([dependency])
+
+      expect(commands_for_dependent(others: [other])).to eq([])
+    end
+
     it "suggests nothing while a dependent with a dependency from an untrusted tap lists the dependency" do
       other = instance_double(Formula, full_name: "baz", runtime_dependencies: [dependency])
       allow(other).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false)
