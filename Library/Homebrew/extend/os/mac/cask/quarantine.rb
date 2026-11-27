@@ -118,15 +118,11 @@ module OS
               return
             end
 
-            ruby, *args = HOMEBREW_RUBY_EXEC_ARGS
             command.run!(
-              ruby,
-              args: args + [
-                "-I",
-                $LOAD_PATH.join(File::PATH_SEPARATOR),
-                COPY_XATTRS_SCRIPT,
-                from,
-                to,
+              "/usr/bin/env",
+              args: [
+                "-i", "HOMEBREW_BUNDLER_VERSION=#{HOMEBREW_BUNDLER_VERSION}", *HOMEBREW_RUBY_EXEC_ARGS,
+                COPY_XATTRS_SCRIPT, from, to
               ],
               sudo: nil,
             )

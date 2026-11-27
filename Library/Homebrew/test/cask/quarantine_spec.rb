@@ -1,8 +1,6 @@
 # typed: true
 # frozen_string_literal: true
 
-require "open3"
-
 RSpec.describe Cask::Quarantine do
   let(:klass) { described_class }
 
@@ -196,23 +194,20 @@ RSpec.describe Cask::Quarantine do
       end
     end
 
-    it "uses FFI through vendored Ruby with optional elevation" do
+    it "starts the helper with an isolated environment and optional elevation" do
       require "os/mac/ffi"
 
       source = Pathname("/tmp/Source.app")
       destination = Pathname("/tmp/Destination.app")
       command = class_double(SystemCommand)
-      ruby, *args = HOMEBREW_RUBY_EXEC_ARGS
-
       allow(destination).to receive(:writable?).and_return(false)
       expect(command).to receive(:run!).with(
-        ruby,
-        args: args + [
-          "-I",
-          $LOAD_PATH.join(File::PATH_SEPARATOR),
+        "/usr/bin/env",
+        args: [
+          "-i", "HOMEBREW_BUNDLER_VERSION=#{HOMEBREW_BUNDLER_VERSION}", *HOMEBREW_RUBY_EXEC_ARGS,
           OS::Mac::Cask::Quarantine::COPY_XATTRS_SCRIPT,
           source,
-          destination,
+          destination
         ],
         sudo: nil,
       )
@@ -222,7 +217,7 @@ RSpec.describe Cask::Quarantine do
       end
     end
 
-    it "copies extended attributes when run as a standalone script" do
+    it "copies extended attributes without an inherited Bundler version" do
       require "os/mac/ffi"
 
       mktmpdir do |tmpdir|
@@ -232,15 +227,11 @@ RSpec.describe Cask::Quarantine do
         destination.write("destination")
         MacOS::FFI.set_xattr(source.to_s, "com.homebrew.test.source", "source")
 
-        _, stderr, status = Open3.capture3(
-          *HOMEBREW_RUBY_EXEC_ARGS,
-          "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
-          OS::Mac::Cask::Quarantine::COPY_XATTRS_SCRIPT.to_s,
-          source.to_s,
-          destination.to_s
-        )
+        allow(destination).to receive(:writable?).and_return(false)
+        ENV.delete("HOMEBREW_BUNDLER_VERSION")
+        ENV["HOMEBREW_NO_SUDO"] = "1"
+        klass.copy_xattrs(source, destination, command: SystemCommand)
 
-        expect(status).to be_success, stderr
         expect(MacOS::FFI.get_xattr(destination.to_s, "com.homebrew.test.source")).to eq("source")
       end
     end
