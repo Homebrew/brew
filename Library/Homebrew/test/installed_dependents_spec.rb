@@ -619,6 +619,19 @@ RSpec.describe InstalledDependents do
       expect(commands_for_dependent(others: [other])).to eq([])
     end
 
+    def dependent_listing(lists, name:, declares: [], outdated: true)
+      instance_double(Formula, full_name: name, outdated?: outdated, pinned?: false, disabled?: false,
+                               runtime_dependencies: [instance_double(Dependency, name: lists)],
+                               recursive_dependencies: declares.map { instance_double(Dependency, name: it) })
+    end
+
+    it "suggests nothing when the upgrades make the dependents require each other's dependencies" do
+      dependents = [dependent_listing("foo", name: "bar", declares: ["baz"]),
+                    dependent_listing("baz", name: "qux", declares: ["foo"])]
+
+      expect(described_class.commands_to_drop_dependencies({ "foo" => "foo", "baz" => "baz" }, dependents)).to eq([])
+    end
+
     it "suggests nothing while a dependent without a receipt list has a dependency from an untrusted tap" do
       other = instance_double(Formula, full_name: "baz")
       allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)
