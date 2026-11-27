@@ -56,6 +56,8 @@ then
   HOMEBREW_TEMP="${HOMEBREW_DEFAULT_TEMP}"
 fi
 
+export -n HOMEBREW_FORCE_RUBY_COMMAND
+
 # commands that take a single or no arguments.
 # HOMEBREW_LIBRARY set by bin/brew
 # shellcheck disable=SC2154
