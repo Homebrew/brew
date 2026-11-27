@@ -652,6 +652,20 @@ RSpec.describe InstalledDependents do
       end
     end
 
+    it "upgrades an outdated dependent whose latest version only has the dependency as an unselected option" do
+      dependent_keg = setup_test_keg("bar", "1.0")
+      tab = Tab.empty
+      tab.tabfile = dependent_keg/AbstractTab::FILENAME
+      tab.runtime_dependencies = [{ "full_name" => "foo" }]
+      tab.write
+      latest = stub_formula("bar", "2.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :optional
+      end
+
+      expect(described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [latest])).to eq(["brew upgrade bar"])
+    end
+
     it "suggests nothing while a dependent without a receipt list has a dependency from an untrusted tap" do
       other = instance_double(Formula, full_name: "baz")
       allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)

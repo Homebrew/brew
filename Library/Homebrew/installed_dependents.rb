@@ -224,7 +224,11 @@ module InstalledDependents
       next if installed_dependency_names.empty?
 
       # Unlike `runtime_dependencies`, this raises when a dependency cannot be loaded.
-      declared_dependencies = dependent.recursive_dependencies { |_, dep| Dependable::PRUNE if dep.build? || dep.test? }
+      declared_dependencies = dependent.recursive_dependencies do |formula, dep|
+        next Dependable::PRUNE if dep.build? || dep.test?
+
+        Dependable::PRUNE if !dep.required? && formula.is_a?(Formula) && formula.build.without?(dep)
+      end
       declared_dependency_names = full_names.call(declared_dependencies)
       dropped = installed_dependency_names - declared_dependency_names
       # Only an upgrade changes what a dependent requires, and a disabled formula cannot be upgraded.
