@@ -226,8 +226,18 @@ module InstalledDependents
       # Unlike `runtime_dependencies`, this raises when a dependency cannot be loaded.
       declared_dependencies = dependent.recursive_dependencies do |formula, dep|
         next Dependable::PRUNE if dep.build? || dep.test?
+        next if dep.required? || !formula.is_a?(Formula)
 
-        Dependable::PRUNE if !dep.required? && formula.is_a?(Formula) && formula.build.without?(dep)
+        # An upgrade keeps the options that were used, so a recommended dependency stays unless it was
+        # opted out of and an optional one only when it was selected. An older install receipt does not
+        # list the options that its formula has gained since.
+        used_options = formula.build.used_options
+        selected = if dep.recommended?
+          dep.option_names.none? { |name| used_options.include?("without-#{name}") }
+        else
+          dep.option_names.any? { |name| used_options.include?("with-#{name}") }
+        end
+        Dependable::PRUNE unless selected
       end
       declared_dependency_names = full_names.call(declared_dependencies)
       dropped = installed_dependency_names - declared_dependency_names
