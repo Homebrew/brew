@@ -1954,6 +1954,57 @@ RSpec.describe Cask::Audit, :cask do
           .and_return(instance_double(SystemCommand::Result, success?: true, merged_output: "x86_64"))
       end
 
+      context "when an app executable is a script outside Contents/MacOS" do
+        let(:tmpdir) { mktmpdir }
+        let(:cask) do
+          Cask::Cask.new("script-app") do
+            version "1.0"
+            sha256 :no_check
+            url "https://brew.sh/script-app.zip"
+
+            app "Script.app"
+
+            caveats do
+              requires_rosetta
+            end
+          end
+        end
+
+        before do
+          allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts, tmpdir)
+          allow(audit).to receive(:system_command)
+            .and_return(instance_double(SystemCommand::Result, success?: false))
+        end
+
+        it "does not contradict the caveat" do
+          script = tmpdir/"Script.app/Contents/Resources/start.sh"
+          script.dirname.mkpath
+          script.write("#!/bin/bash\n")
+          script.chmod(0755)
+          FileUtils.touch tmpdir/"Script.app/Contents/Info.plist"
+          allow(audit).to receive(:system_command!).and_return(
+            instance_double(SystemCommand::Result, plist: { "CFBundleExecutable" => "Resources/start.sh" }),
+          )
+
+          expect(run).to pass
+        end
+
+        it "reports a missing executable without raising" do
+          expect(run.errors.map { |error| error.fetch(:message) }).to contain_exactly(/\ANo binaries in App/)
+        end
+      end
+
+      context "when lipo fails for a binary" do
+        before do
+          allow(audit).to receive(:system_command)
+            .and_return(instance_double(SystemCommand::Result, success?: false))
+        end
+
+        it "does not contradict the caveat" do
+          expect(run).to pass
+        end
+      end
+
       it "recognizes a suppressed requires_rosetta caveat" do
         expect(run).to pass
       end
