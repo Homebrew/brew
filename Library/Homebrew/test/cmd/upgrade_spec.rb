@@ -1124,7 +1124,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "codex",
-      installed_version: "0.117.0",
+      displayed_version: "0.117.0",
       version:           "0.118.0",
     )
     installer = Cask::Installer.allocate
@@ -1295,7 +1295,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "codex",
-      installed_version: "0.117.0",
+      displayed_version: "0.117.0",
       version:           "0.118.0",
     )
     installer = Cask::Installer.allocate
@@ -1419,7 +1419,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "bad-cask",
-      installed_version: "1.0",
+      displayed_version: "1.0",
       token:             "bad-cask",
       version:           "2.0",
     )
@@ -1427,7 +1427,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "codex",
-      installed_version: "0.117.0",
+      displayed_version: "0.117.0",
       token:             "codex",
       version:           "0.118.0",
     )
@@ -1476,7 +1476,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "codex",
-      installed_version: "0.117.0",
+      displayed_version: "0.117.0",
       token:             "codex",
       version:           "0.118.0",
     )
@@ -1556,7 +1556,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       Cask::Cask,
       artifacts:         [],
       full_name:         "codex",
-      installed_version: "0.117.0",
+      displayed_version: "0.117.0",
       version:           "0.118.0",
     )
     installer = Cask::Installer.allocate

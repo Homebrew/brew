@@ -87,7 +87,7 @@ module Cask
       pinned_casks = outdated_casks.select(&:pinned?)
       outdated_casks -= pinned_casks
       pinned_versions = pinned_casks.map do |cask|
-        VersionChange.new(name: cask.full_name, old_version: cask.installed_version.to_s,
+        VersionChange.new(name: cask.full_name, old_version: cask.displayed_version.to_s,
                           new_version: cask.version.to_s)
       end
       summary_pinned&.concat(pinned_versions)
@@ -280,8 +280,8 @@ module Cask
 
       return false if upgradable_casks.empty? && !failed
 
-      cask_upgrades = upgradable_casks.map do |(old_cask, new_cask)|
-        VersionChange.new(name: new_cask.full_name, old_version: old_cask.version.to_s,
+      cask_upgrades = upgradable_casks.map do |(_, new_cask)|
+        VersionChange.new(name: new_cask.full_name, old_version: new_cask.displayed_version.to_s,
                           new_version: new_cask.version.to_s)
       end
       summary_upgrades&.concat(cask_upgrades) if dry_run

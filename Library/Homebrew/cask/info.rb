@@ -23,7 +23,7 @@ module Cask
           name:              cask.token,
           display_names:     cask.name,
           version:           cask.version.to_s,
-          installed_version: (cask.installed_version.presence if outdated),
+          installed_version: (cask.displayed_version.presence if outdated),
           installed:,
           outdated:,
           auto_updates:      cask.auto_updates == true,
@@ -112,7 +112,7 @@ module Cask
 
         outdated = installed_cask.outdated?
         name = pretty_install_status(installed_cask.full_name, installed: true, outdated:)
-        version = installed_version
+        version = installed_cask.displayed_version.to_s
         latest = installed_cask.version.to_s
         version = "#{version} → #{latest}" if outdated && latest != version
         ::Utils::InfoDisplay::InstalledVersion.new(
