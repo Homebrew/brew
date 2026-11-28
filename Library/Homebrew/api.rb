@@ -348,7 +348,7 @@ module Homebrew
 
     sig { params(target: Pathname).returns(T::Boolean) }
     def self.download_executables_file_from_github_packages!(target)
-      github_packages_url = "https://ghcr.io/v2/homebrew/command-not-found/executables"
+      github_packages_url = "https://ghcr.io/v2/homebrew/core/command-not-found/executables"
       manifest_args = [
         "--fail", "--location",
         "--header", "Accept: application/vnd.oci.image.manifest.v1+json",
