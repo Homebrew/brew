@@ -948,6 +948,13 @@ RSpec.describe Cask::Upgrade, :cask do
     end
   end
 
+  it "prints the version of an app that has updated itself when upgrading it" do
+    Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/auto-updates"))).install
+    stub_cask_bundle_version(auto_updates_path, short_version: "2.60")
+
+    expect { described_class.upgrade_casks!(auto_updates, args:) }.to output(/^  2\.60 -> 2\.61$/).to_stdout
+  end
+
   context "when upgrading after a forced upgrade without a cask receipt" do
     before do
       InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
