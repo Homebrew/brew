@@ -5,4 +5,14 @@
 # Please instead update this file by running `bin/tapioca dsl RuboCop::Cop::FormulaAuditStrict::MakeCheck`.
 
 
-class RuboCop::Cop::FormulaAuditStrict::MakeCheck; end
+class RuboCop::Cop::FormulaAuditStrict::MakeCheck
+  sig do
+    params(
+      node: RuboCop::AST::Node,
+      pattern: T.any(String, Symbol),
+      kwargs: T.untyped,
+      block: T.untyped
+    ).returns(T.untyped)
+  end
+  def make_check(node, *pattern, **kwargs, &block); end
+end
