@@ -271,8 +271,10 @@ module InstalledDependents
   # one of its own and the dependent is not rebuilt. An installed dependency
   # goes when none of `formulae` that list it still declares it, the
   # dependent's dependency tree no longer has it and its keg does not link to it.
-  sig { params(formulae: T::Array[Formula], dry_run: T::Boolean).void }
-  def prune_stale_dependencies(formulae, dry_run: false)
+  # One of `removed_names` also goes from the receipts that list it while
+  # another of `formulae` still declares it, so that only that one is reported.
+  sig { params(formulae: T::Array[Formula], dry_run: T::Boolean, removed_names: T::Array[String]).void }
+  def prune_stale_dependencies(formulae, dry_run: false, removed_names: [])
     declared_names = formulae.to_h { |f| [f.name, f.deps.map { |dep| Utils.name_from_full_name(dep.name) }] }
     receipt_name = ->(dep) { Utils.name_from_full_name(dep["full_name"]) if dep.is_a?(Hash) && dep["full_name"] }
     receipts = formulae.filter_map do |dependent|
@@ -286,7 +288,7 @@ module InstalledDependents
       [dependent, keg, tab_dependencies, tab_names - undeclared_names, undeclared_names]
     end
     # A dependency that a formula still declares stays installed, whatever the other receipts list.
-    declared_somewhere = receipts.flat_map { |_, _, _, names, _| names }.to_set
+    declared_somewhere = receipts.flat_map { |_, _, _, names, _| names }.to_set - removed_names
     # A receipt can list a formula under the name it had before it was renamed.
     possible_names = T.let({}, T::Hash[String, T::Array[String]])
     current_names = ->(deps) { deps.flat_map { |dep| possible_names[dep.name] ||= dep.to_formula.possible_names } }

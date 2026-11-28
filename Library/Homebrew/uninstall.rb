@@ -169,7 +169,7 @@ module Homebrew
       # A formula that is uninstalled too does not keep the dependencies it declares.
       keg_names = all_kegs.map(&:name)
       remaining_formulae = Formula.installed.reject { |f| keg_names.intersect?(f.possible_names) }
-      InstalledDependents.prune_stale_dependencies(remaining_formulae, dry_run:)
+      InstalledDependents.prune_stale_dependencies(remaining_formulae, dry_run:, removed_names: keg_names)
       check_for_dependents!(all_kegs, casks:, named_args:)
     rescue MethodDeprecatedError
       # Silently ignore deprecations when uninstalling.

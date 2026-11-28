@@ -165,6 +165,13 @@ RSpec.describe Homebrew::Uninstall do
         .not_to output(/brew upgrade/).to_stderr
     end
 
+    specify "when a stale install receipt lists the keg that another formula still declares" do
+      install_formula("stale_dependent", receipt_dependency: "dependency")
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack) }
+        .to output(/required by dependent_formula, which is currently installed/).to_stderr
+    end
+
     specify "when the only formula that still declares the keg is uninstalled as well" do
       install_formula("stale_dependent", receipt_dependency: "dependency")
       kegs_by_rack = [dependency, dependent_formula].to_h { |f| [f.rack, [Keg.new(f.latest_installed_prefix)]] }
