@@ -530,6 +530,15 @@ RSpec.describe Homebrew::API do
       expect(Homebrew::API::Internal).to receive(:fetch_packages_api!).and_return([{}, false])
       described_class.fetch_api_files!
     end
+
+    it "reports but tolerates a failed download when the API cache is missing" do
+      FileUtils.rm_f Homebrew::API::Internal.cached_packages_json_file_path
+      allow(Utils).to receive(:exponential_backoff_sleep)
+      allow(Utils::Curl).to receive(:curl_download).and_raise(ErrorDuringExecution.new(["curl"], status: 7))
+
+      expect { described_class.fetch_api_files! }.to output(/✘ JSON API/).to_stderr
+      expect(Homebrew).not_to have_failed
+    end
   end
 
   describe "::urlsafe_decode64" do

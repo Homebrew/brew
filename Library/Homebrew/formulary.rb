@@ -933,7 +933,7 @@ module Formulary
           factory(formula_name, spec, alias_path:, warn: false, force_bottle:, flags:)
         end
       end
-    rescue FormulaUnavailableError
+    rescue FormulaUnavailableError, ErrorDuringExecution
       raise if from_cache
 
       from_path(keg/".brew/#{keg.name}.rb", spec, alias_path:, force_bottle:, flags:)

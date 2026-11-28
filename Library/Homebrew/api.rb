@@ -266,7 +266,7 @@ module Homebrew
       ENV["HOMEBREW_API_UPDATED"] = "1"
 
       begin
-        download_queue.fetch(heading: "Downloading Homebrew API data")
+        download_queue.fetch(heading: "Downloading Homebrew API data", allow_failures: true)
       ensure
         download_queue.shutdown
       end
