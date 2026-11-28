@@ -1276,6 +1276,7 @@ module Homebrew
           (f.deprecated? || f.disabled?) &&
             f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
         end
+        deprecated_or_disabled.reject! { |f| removed_automatically?(f.possible_names) }
         return if deprecated_or_disabled.empty?
 
         installed_dependency_names = installed_formula_dependency_names(installed_formulae)
@@ -1539,6 +1540,7 @@ module Homebrew
         newest_kegs_first = Keg.all.select(&:deleted_formula?).sort_by(&:scheme_and_version).reverse
         kegs_with_a_tap, kegs_without_a_tap = newest_kegs_first.partition { |keg| keg.tab.tap }
         deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name)
+        deleted_kegs.reject! { |keg| removed_automatically?([keg.name]) }
 
         return if deleted_kegs.blank?
 
@@ -1951,17 +1953,28 @@ module Homebrew
         end.to_set
       end
 
+      # The names of the formulae that `brew autoremove` removes. Finding them also drops stale dependencies
+      # from the install receipts in memory, as `brew uninstall` does.
+      sig { returns(T::Array[String]) }
+      def autoremovable_names
+        @autoremovable ||= T.let(Cleanup.autoremovable_formulae(dry_run: true), T.nilable(T::Array[Formula]))
+        @autoremovable.flat_map(&:possible_names)
+      end
+
+      # Autoremove runs after `brew uninstall` and with the periodic cleanup, so what it removes needs no action.
+      sig { params(names: T::Array[String]).returns(T::Boolean) }
+      def removed_automatically?(names)
+        !Homebrew::EnvConfig.no_autoremove? && autoremovable_names.intersect?(names)
+      end
+
       sig {
         params(dependency_names: T::Hash[String, String], installed_formulae: T::Array[Formula])
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
-        # This also drops stale dependencies from the install receipts in memory, as `brew uninstall` does.
-        unneeded_names = Cleanup.autoremovable_formulae(dry_run: true)
-                                .flat_map(&:possible_names)
-                                .filter_map { |name| dependency_names[name] }
-                                .uniq
-                                .sort
+        unneeded_names = autoremovable_names.filter_map { |name| dependency_names[name] }
+                                            .uniq
+                                            .sort
         commands = InstalledDependents.commands_to_drop_dependencies(dependency_names, installed_formulae)
 
         guidance = []

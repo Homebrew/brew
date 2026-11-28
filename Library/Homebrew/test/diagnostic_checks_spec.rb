@@ -339,27 +339,41 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       )
     end
 
-    it "says to run `brew autoremove` for a deprecated formula that nothing requires any more" do
-      tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
-      keg = instance_double(Keg, tab:)
-      deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
-                                            full_name: "testball", possible_names: ["testball"],
-                                            installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
-      dependent = instance_double(Formula, deprecated?: false, disabled?: false, full_name: "dependent",
-                                           runtime_dependencies: [instance_double(Dependency, name: "testball")])
-      # Finding what `brew autoremove` removes drops the stale dependency from the install receipt in memory.
-      allow(dependent).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([])
-      allow(Formula).to receive(:installed).and_return([deprecated, dependent])
-      allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([deprecated])
+    context "when nothing requires a deprecated formula any more" do
+      before do
+        tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
+        keg = instance_double(Keg, tab:)
+        deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
+                                              full_name: "testball", possible_names: ["testball"],
+                                              installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
+        dependent = instance_double(Formula, deprecated?: false, disabled?: false, full_name: "dependent",
+                                             runtime_dependencies: [instance_double(Dependency, name: "testball")])
+        # Finding what `brew autoremove` removes drops the stale dependency from the install receipt in memory.
+        allow(dependent).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([])
+        autoremovable = formula("testball") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/testball-1.0.tar.gz"
+        end
+        allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+        allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([autoremovable])
+      end
 
-      expect(checks.check_deprecated_disabled&.to_s).to end_with <<~EOS.chomp
-        The following formulae are installed as dependencies:
+      it "skips it, as `brew autoremove` removes it after an uninstall or with the periodic cleanup" do
+        expect(checks.check_deprecated_disabled).to be_nil
+      end
 
-          testball
+      it "says to run `brew autoremove` when that is disabled" do
+        ENV["HOMEBREW_NO_AUTOREMOVE"] = "1"
 
-        Nothing requires testball any more. To remove it, run:
-          brew autoremove
-      EOS
+        expect(checks.check_deprecated_disabled&.to_s).to end_with <<~EOS.chomp
+          The following formulae are installed as dependencies:
+
+            testball
+
+          Nothing requires testball any more. To remove it, run:
+            brew autoremove
+        EOS
+      end
     end
 
     it "skips a formula removed from its tap whose keg kept a deprecated copy" do
@@ -461,6 +475,21 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       No tap recorded (possibly installed manually):
         hand-made
     EOS
+  end
+
+  it "skips a deleted formula that `brew autoremove` removes" do
+    tab = instance_double(Tab, tap: CoreTap.instance, installed_on_request_present?: true,
+                               installed_on_request: false)
+    keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
+                               scheme_and_version: [0, PkgVersion.parse("1.0")], tab:)
+    autoremovable = formula("deleted-dep") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/deleted-dep-1.0.tar.gz"
+    end
+    allow(Keg).to receive(:all).and_return([keg])
+    allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([autoremovable])
+
+    expect(checks.check_deleted_formula).to be_nil
   end
 
   it "provides commands to upgrade dependents of a deleted formula" do
