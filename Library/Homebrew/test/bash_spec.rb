@@ -103,6 +103,24 @@ RSpec.describe "Bash" do
         expect([stdout, stderr, status.success?]).to eq(["#{command}\n", "", true])
       end
 
+      it "exits with the status of the Ruby fallback without jq" do
+        stdout, stderr, status = Open3.capture3(
+          "/bin/bash", "-c", <<~BASH, "bash", command
+            source() {
+              builtin source "$@"
+              case "$1" in
+                */items.sh) homebrew-trusted-items() { return 1; } ;;
+              esac
+            }
+            HOMEBREW_BREW_FILE=/usr/bin/false
+            source "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$1"
+          BASH
+        )
+
+        expect([stdout, stderr, status.exitstatus])
+          .to eq(["", "Warning: jq is unavailable; falling back to Ruby to apply tap trust.\n", 1])
+      end
+
       it "lists items without jq, Ruby or a blank line when no taps are installed" do
         cache = mktmpdir
         ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
