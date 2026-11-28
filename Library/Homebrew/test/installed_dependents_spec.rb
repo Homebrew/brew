@@ -639,7 +639,7 @@ RSpec.describe InstalledDependents do
     end
 
     context "when the dependent's latest version makes the dependency a choice" do
-      # The dependent as `Formula.installed` loads it, with the options from its install receipt.
+      # The dependent as `Formula.installed` loads it, with its install receipt as build options.
       def commands_for_receipt(&latest_dependencies)
         dependent_keg = setup_test_keg("bar", "1.0")
         tab = Tab.empty

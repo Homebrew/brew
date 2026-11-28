@@ -266,13 +266,13 @@ module InstalledDependents
   end
 
   # Removes the dependencies from the install receipts of `formulae` that
-  # installing them again would no longer list. A receipt lists all runtime
+  # an install would no longer record for their kegs. A receipt lists all runtime
   # dependencies from install time, so it goes stale when a dependency drops
   # one of its own and the dependent is not rebuilt. An installed dependency
   # goes when none of `formulae` that list it still declares it, the
   # dependent's dependency tree no longer has it and its keg does not link to it.
-  # One of `removed_names` also goes from the receipts that list it while
-  # another of `formulae` still declares it, so that only that one is reported.
+  # One of `removed_names` also goes while another of `formulae` still declares
+  # it, so that only the formulae that need it are reported as its dependents.
   sig { params(formulae: T::Array[Formula], dry_run: T::Boolean, removed_names: T::Array[String]).void }
   def prune_stale_dependencies(formulae, dry_run: false, removed_names: [])
     declared_names = formulae.to_h { |f| [f.name, f.deps.map { |dep| Utils.name_from_full_name(dep.name) }] }
@@ -287,7 +287,8 @@ module InstalledDependents
       undeclared_names = tab_names - declared_names.values_at(dependent.name, *tab_names).flatten
       [dependent, keg, tab_dependencies, tab_names - undeclared_names, undeclared_names]
     end
-    # A dependency that a formula still declares stays installed, whatever the other receipts list.
+    # A dependency that a formula still declares stays installed, whatever the other receipts list,
+    # so those receipts are only checked for a dependency that is being removed.
     declared_somewhere = receipts.flat_map { |_, _, _, names, _| names }.to_set - removed_names
     # A receipt can list a formula under the name it had before it was renamed.
     possible_names = T.let({}, T::Hash[String, T::Array[String]])
@@ -308,7 +309,7 @@ module InstalledDependents
         stale_names -= current_names.call(dependent.recursive_dependencies)
         next if stale_names.empty?
 
-        # Installing again keeps the keg, so the receipt would still list what the keg links to.
+        # A receipt also lists what the keg links to, whether or not a formula declares it.
         stale_names -= current_names.call(dependent.runtime_dependencies(read_from_tab: false))
         next if stale_names.empty?
 

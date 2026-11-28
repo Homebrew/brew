@@ -1948,7 +1948,7 @@ module Homebrew
 
       sig { params(formulae: T::Array[Formula]).returns(T::Set[String]) }
       def installed_formula_dependency_names(formulae)
-        # What `brew autoremove` removes was installed as a dependency that no install receipt lists any more.
+        # What `brew autoremove` removes is a dependency too, even when no install receipt lists it any more.
         autoremovable_names.to_set + formulae.flat_map do |formula|
           formula.runtime_dependencies.map { |dependency| Utils.name_from_full_name(dependency.name) }
         end
