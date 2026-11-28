@@ -137,16 +137,16 @@ jobs:
 
   build:
     needs: generate-tags
-    if: github.repository_owner == 'Homebrew'
+    if: github.repository_owner == 'Homebrew' && !fromJSON(needs.generate-tags.outputs.merge)
     name: docker (${{ matrix.arch }} Ubuntu ${{ matrix.version }})
-    runs-on: ${{ case(matrix.arch == 'arm64', 'ubuntu-24.04-arm', 'ubuntu-latest') }}
-    strategy:
+    runs-on: &build-runner ${{ case(matrix.arch == 'arm64', 'ubuntu-24.04-arm', 'ubuntu-latest') }}
+    strategy: &build-strategy
       fail-fast: false
       matrix:
         version: ["24.04", "26.04"]
         arch: ["x86_64", "arm64"]
 
-    steps:
+    steps: &build-steps
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -170,12 +170,12 @@ jobs:
           filter="$(printf '.["%s"]' "${VERSION}")"
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
-      - name: Log in to GitHub Packages (github-actions[bot])
+      - name: Log in to GitHub Packages
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
-          username: github-actions[bot]
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Build Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -192,14 +192,6 @@ jobs:
       - name: Run brew test-bot --only-setup
         run: docker run --env HOMEBREW_DEVELOPER=1 --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
 
-      - name: Log in to GitHub Packages (BrewTestBot)
-        if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
-        with:
-          registry: ghcr.io
-          username: BrewTestBot
-          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
-
       - name: Deploy the Docker image by digest
         id: digest
         if: fromJSON(steps.attributes.outputs.push)
@@ -215,6 +207,7 @@ jobs:
           outputs: type=image,name=ghcr.io/homebrew/ubuntu${{ matrix.version }},name-canonical=true,push=true,push-by-digest=true
 
       - name: Export the Docker image digest
+        if: fromJSON(steps.attributes.outputs.push)
         run: |
           mkdir -p "${RUNNER_TEMP}"/digests
           echo "${DIGEST#sha256:}" >"${RUNNER_TEMP}/digests/${VERSION}-${ARCH}"
@@ -224,6 +217,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
 
       - name: Upload the Docker image digest
+        if: fromJSON(steps.attributes.outputs.push)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: digest-${{ matrix.version }}-${{ matrix.arch }}
@@ -248,10 +242,22 @@ jobs:
           name: long-runner-base-24.04-${{ matrix.arch }}
           path: ${{ runner.temp }}/long-runner-base/*
 
+  deploy:
+    needs: generate-tags
+    if: fromJSON(needs.generate-tags.outputs.merge)
+    permissions:
+      contents: read
+      packages: write
+    runs-on: *build-runner
+    strategy: *build-strategy
+    steps: *build-steps
+
   merge:
-    needs: [generate-tags, build]
+    needs: [generate-tags, deploy]
     if: github.repository_owner == 'Homebrew' && fromJSON(needs.generate-tags.outputs.merge)
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -269,12 +275,12 @@ jobs:
           pattern: digest-${{ matrix.version }}-*
           merge-multiple: true
 
-      - name: Log in to GitHub Packages (BrewTestBot)
+      - name: Log in to GitHub Packages
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
-          username: BrewTestBot
-          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Merge and push Docker image
         env:
@@ -306,9 +312,11 @@ jobs:
 
   build-and-publish-long-runner:
     name: Build runner Docker image (${{ matrix.platform }})
-    needs: [generate-tags, build]
+    needs: [generate-tags, build, deploy]
     # The `main` push for the tagged commit already publishes this image.
-    if: github.repository_owner == 'Homebrew' && github.event_name != 'release'
+    if: >-
+      !cancelled() && github.event_name != 'release' &&
+      (needs.build.result == 'success' || needs.deploy.result == 'success')
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -442,7 +450,9 @@ jobs:
   publish-long-runner-manifest:
     name: Publish multi-platform runner Docker image
     needs: [generate-tags, build-and-publish-long-runner]
-    if: github.repository_owner == 'Homebrew' && fromJSON(needs.generate-tags.outputs.push)['24.04']
+    if: >-
+      !cancelled() && needs.build-and-publish-long-runner.result == 'success' &&
+      fromJSON(needs.generate-tags.outputs.push)['24.04']
     runs-on: ubuntu-24.04
     permissions:
       contents: read
