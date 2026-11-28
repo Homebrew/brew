@@ -143,7 +143,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           stable do
-            patch :DATA
+            patch :p0, :DATA
           end
         end
         __END__
@@ -161,10 +161,24 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       RUBY
     end
 
-    it "reports an offense when __END__ is found with no DATA" do
+    it "reports an offense when __END__ is found with no patches" do
       expect_offense(<<~RUBY)
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
+        end
+        __END__
+        ^^^^^^^ FormulaAudit/Patches: Patch is missing `patch :DATA`
+        patch content here
+      RUBY
+    end
+
+    it "reports an offense when __END__ is found with only non-DATA patches" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          patch do
+            file "Patches/foo.diff"
+          end
         end
         __END__
         ^^^^^^^ FormulaAudit/Patches: Patch is missing `patch :DATA`
