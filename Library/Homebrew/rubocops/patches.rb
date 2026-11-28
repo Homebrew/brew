@@ -40,7 +40,7 @@ module RuboCop
           inline_patches = find_every_method_call_by_name(body_node, :patch)
           inline_patches.each { |patch| inline_patch_problems(patch) }
 
-          if inline_patches.empty? && patch_end?
+          if inline_patches.none? { patch_data?(it) } && patch_end?
             @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
             @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
             line_no = node.loc.last_line + 1
@@ -190,7 +190,7 @@ module RuboCop
         end
 
         def_node_search :patch_data?, <<~AST
-          (send nil? :patch (:sym :DATA))
+          (send nil? :patch (:sym _)? (:sym :DATA))
         AST
 
         sig { returns(T::Boolean) }
