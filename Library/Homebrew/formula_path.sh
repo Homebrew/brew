@@ -41,6 +41,7 @@ homebrew-formula-path() {
     return 0
   fi
 
+  local given_formula="${formula}"
   local formula_exists
   if [[ -f "${HOMEBREW_REPOSITORY}/Library/Taps/homebrew/homebrew-core/Formula/${formula}.rb" ]]
   then
@@ -95,6 +96,17 @@ homebrew-formula-path() {
     rack="${keg%/*}"
     [[ "${rack%/*}" -ef "${HOMEBREW_CELLAR}" ]] || return 1
     formula="${rack##*/}"
+  fi
+
+  # Renaming an installed formula leaves a Cellar/<old name> symlink behind.
+  # Ruby resolves that name to the installed formula even after the name has
+  # become an alias of another formula, so only answer here when both agree.
+  local given_rack="${HOMEBREW_CELLAR}/${given_formula}"
+  if [[ -L "${given_rack}" ]]
+  then
+    local installed_rack
+    installed_rack="$(realpath "${given_rack}")" || return 1
+    [[ "${installed_rack##*/}" == "${formula}" ]] || return 1
   fi
 
   if [[ -n "${prefix}" ]]
