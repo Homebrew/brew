@@ -96,6 +96,10 @@ RSpec.describe Homebrew::Cmd::Exec do
 
       fake_brew.write(<<~SH)
         #!/bin/sh
+        if [ -n "$HOMEBREW_HELP" ]; then
+          echo "Usage: brew $1"
+          exit 0
+        fi
         case "$1" in
           deps)
             exit 0
@@ -184,6 +188,16 @@ RSpec.describe Homebrew::Cmd::Exec do
               "fake install stderr\n",
             ).to_stderr,
           ),
+      )
+    end
+
+    it "installs missing providers when the command is passed a help flag" do
+      # `brew.sh` exports `HOMEBREW_HELP` when any argument is a help flag.
+      ENV["HOMEBREW_HELP"] = "1"
+
+      expect { exec_command(installable_executable_name, "--help") }.to(
+        output("installable-version --help\n").to_stdout
+          .and(output(/fake install stdout/).to_stderr),
       )
     end
   end

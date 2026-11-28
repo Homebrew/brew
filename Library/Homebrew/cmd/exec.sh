@@ -146,6 +146,10 @@ homebrew-exec() {
 
   homebrew-command-enable-debug
 
+  # `brew.sh` exports `HOMEBREW_HELP` for a help flag meant for <command>;
+  # don't let it turn the `brew` subprocesses below into help requests.
+  unset HOMEBREW_HELP
+
   if [[ "${formulae_seen}" -eq 1 ]]
   then
     [[ -n "${formulae_arg}" ]] || odie "\`--formulae\` requires a comma-separated formula list."
