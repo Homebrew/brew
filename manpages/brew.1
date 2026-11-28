@@ -2386,7 +2386,7 @@ Specify a comma\-separated \fIcops\fP list to check for violations of only the l
 \fB\-\-except\-cops\fP
 Specify a comma\-separated \fIcops\fP list to skip checking for violations of the listed RuboCop cops\.
 .SS "\fBtap\-new\fP \fR[\fIoptions\fP] \fIuser\fP\fB/\fP\fIrepo\fP"
-Generate the template files for a new tap\.
+Generate a new tap with GitHub Actions workflows for testing formulae and casks\.
 .TP
 \fB\-\-no\-git\fP
 Don\[u2019]t initialise a Git repository for the tap\.
@@ -2412,8 +2412,10 @@ Retain the temporary files created for the test\.
 .TP
 \fB\-\-retry\fP
 Retry if a testing fails\.
-.SS "\fBtest\-bot\fP \fR[\fIoptions\fP] \fR[\fIformula\fP]"
+.SS "\fBtest\-bot\fP \fR[\fIoptions\fP] \fR[\fIformula\fP|\fIcask\fP]"
 Tests the full lifecycle of a Homebrew change to a tap (Git repository)\. For example, for a GitHub Actions pull request that changes a formula \fBbrew test\-bot\fP will ensure the system is cleaned and set up to test the formula, install the formula, run various tests and checks on it, bottle (package) the binaries and test formulae that depend on it to ensure they aren\[u2019]t broken by these changes\.
+.P
+For cask changes, it fetches and audits the cask, then tests installation and uninstallation on supported platforms\.
 .P
 Only supports GitHub Actions as a CI provider\. This is because Homebrew uses GitHub Actions and it\[u2019]s freely available for public and private use with macOS and Linux workers\.
 .TP
@@ -2448,7 +2450,7 @@ Run \fBbrew bottle \-\-only\-json\-tab\fP to build new bottles that do not conta
 Ask Homebrew to write verbose logs under \fB\&\./logs/\fP and set \fB$HOME\fP to \fB\&\./home/\fP
 .TP
 \fB\-\-tap\fP
-Use the Git repository of the given tap\. Defaults to the core tap for syntax checking\.
+Use the given tap\. Defaults to the current tap, or the core tap for syntax checking\.
 .TP
 \fB\-\-fail\-fast\fP
 Immediately exit on a failing step\.
@@ -2472,19 +2474,19 @@ Set the Git author/committer email to the given email\.
 Publish the uploaded bottles\.
 .TP
 \fB\-\-skip\-online\-checks\fP
-Don\[u2019]t pass \fB\-\-online\fP to \fBbrew audit\fP and skip \fBbrew livecheck\fP\&\.
+Skip online audit checks and livecheck, including for new packages\.
 .TP
 \fB\-\-skip\-new\fP
-Don\[u2019]t pass \fB\-\-new\fP to \fBbrew audit\fP for new formulae\.
+Don\[u2019]t pass \fB\-\-new\fP to \fBbrew audit\fP for new packages\.
 .TP
 \fB\-\-skip\-new\-strict\fP
-Don\[u2019]t pass \fB\-\-strict\fP to \fBbrew audit\fP for new formulae\.
+Don\[u2019]t pass \fB\-\-strict\fP to \fBbrew audit\fP for new packages\.
 .TP
 \fB\-\-skip\-dependents\fP
 Don\[u2019]t test any dependents\.
 .TP
 \fB\-\-skip\-livecheck\fP
-Don\[u2019]t test livecheck\.
+Skip livecheck for formulae and casks\.
 .TP
 \fB\-\-skip\-checksum\-only\-audit\fP
 Don\[u2019]t audit checksum\-only changes\.
@@ -2494,6 +2496,9 @@ Don\[u2019]t audit the stable version\.
 .TP
 \fB\-\-skip\-revision\-audit\fP
 Don\[u2019]t audit the revision\.
+.TP
+\fB\-\-except\fP
+Skip the listed \fBbrew audit\fP methods for formulae and casks\.
 .TP
 \fB\-\-only\-cleanup\-before\fP
 Only run the pre\-cleanup step\. Needs \fB\-\-cleanup\fP, except in GitHub Actions\.
@@ -2506,6 +2511,12 @@ Only run the tap syntax check step\.
 .TP
 \fB\-\-stable\fP
 Only run the tap syntax checks needed on stable brew\.
+.TP
+\fB\-\-only\-casks\fP
+Only fetch, audit and test changed or named casks\.
+.TP
+\fB\-\-skip\-install\fP
+With \fB\-\-only\-casks\fP, fetch and audit casks without installing them\.
 .TP
 \fB\-\-only\-formulae\fP
 Only run the formulae steps\.
@@ -2530,6 +2541,12 @@ Use these added formulae rather than running package detection\.
 .TP
 \fB\-\-deleted\-formulae\fP
 Use these deleted formulae rather than running package detection\.
+.TP
+\fB\-\-testing\-casks\fP
+Use these testing casks rather than running package detection\.
+.TP
+\fB\-\-added\-casks\fP
+Treat these testing casks as newly added\.
 .TP
 \fB\-\-skipped\-or\-failed\-formulae\fP
 Use these skipped or failed formulae from formulae steps for a formulae dependents step\.

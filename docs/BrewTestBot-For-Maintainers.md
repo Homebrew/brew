@@ -8,7 +8,7 @@ last_review_date: "2026-07-18"
 
 # BrewTestBot for Maintainers
 
-[`brew test-bot`](Manpage.md#test-bot-options-formula) runs Homebrew's formula checks, builds bottles and tests affected dependents in GitHub Actions.
+[`brew test-bot`](Manpage.md#test-bot-options-formulacask) runs Homebrew's formula checks, builds bottles and tests affected dependents in GitHub Actions.
 This page describes maintainer actions after the required checks have completed.
 
 ## Publishing bottles from a pull request

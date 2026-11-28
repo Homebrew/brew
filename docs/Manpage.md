@@ -3811,7 +3811,7 @@ core code and all formulae.
 
 ### `tap-new` \[*`options`*\] *`user`*`/`*`repo`*
 
-Generate the template files for a new tap.
+Generate a new tap with GitHub Actions workflows for testing formulae and casks.
 
 `--no-git`
 
@@ -3850,7 +3850,7 @@ wrong with the installed formula.
 
 : Retry if a testing fails.
 
-### `test-bot` \[*`options`*\] \[*`formula`*\]
+### `test-bot` \[*`options`*\] \[*`formula`*\|*`cask`*\]
 
 Tests the full lifecycle of a Homebrew change to a tap (Git repository). For
 example, for a GitHub Actions pull request that changes a formula `brew
@@ -3858,6 +3858,9 @@ test-bot` will ensure the system is cleaned and set up to test the formula,
 install the formula, run various tests and checks on it, bottle (package) the
 binaries and test formulae that depend on it to ensure they aren't broken by
 these changes.
+
+For cask changes, it fetches and audits the cask, then tests installation and
+uninstallation on supported platforms.
 
 Only supports GitHub Actions as a CI provider. This is because Homebrew uses
 GitHub Actions and it's freely available for public and private use with macOS
@@ -3910,7 +3913,7 @@ and Linux workers.
 
 `--tap`
 
-: Use the Git repository of the given tap. Defaults to the core tap for syntax
+: Use the given tap. Defaults to the current tap, or the core tap for syntax
   checking.
 
 `--fail-fast`
@@ -3946,15 +3949,15 @@ and Linux workers.
 
 `--skip-online-checks`
 
-: Don't pass `--online` to `brew audit` and skip `brew livecheck`.
+: Skip online audit checks and livecheck, including for new packages.
 
 `--skip-new`
 
-: Don't pass `--new` to `brew audit` for new formulae.
+: Don't pass `--new` to `brew audit` for new packages.
 
 `--skip-new-strict`
 
-: Don't pass `--strict` to `brew audit` for new formulae.
+: Don't pass `--strict` to `brew audit` for new packages.
 
 `--skip-dependents`
 
@@ -3962,7 +3965,7 @@ and Linux workers.
 
 `--skip-livecheck`
 
-: Don't test livecheck.
+: Skip livecheck for formulae and casks.
 
 `--skip-checksum-only-audit`
 
@@ -3975,6 +3978,10 @@ and Linux workers.
 `--skip-revision-audit`
 
 : Don't audit the revision.
+
+`--except`
+
+: Skip the listed `brew audit` methods for formulae and casks.
 
 `--only-cleanup-before`
 
@@ -3991,6 +3998,14 @@ and Linux workers.
 `--stable`
 
 : Only run the tap syntax checks needed on stable brew.
+
+`--only-casks`
+
+: Only fetch, audit and test changed or named casks.
+
+`--skip-install`
+
+: With `--only-casks`, fetch and audit casks without installing them.
 
 `--only-formulae`
 
@@ -4026,6 +4041,14 @@ and Linux workers.
 `--deleted-formulae`
 
 : Use these deleted formulae rather than running package detection.
+
+`--testing-casks`
+
+: Use these testing casks rather than running package detection.
+
+`--added-casks`
+
+: Treat these testing casks as newly added.
 
 `--skipped-or-failed-formulae`
 

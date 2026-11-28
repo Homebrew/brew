@@ -10,9 +10,11 @@ module Homebrew
     class TestBotCmd < AbstractCommand
       cmd_args do
         usage_banner <<~EOS
-          `test-bot` [<options>] [<formula>]
+          `test-bot` [<options>] [<formula>|<cask>]
 
           Tests the full lifecycle of a Homebrew change to a tap (Git repository). For example, for a GitHub Actions pull request that changes a formula `brew test-bot` will ensure the system is cleaned and set up to test the formula, install the formula, run various tests and checks on it, bottle (package) the binaries and test formulae that depend on it to ensure they aren't broken by these changes.
+
+          For cask changes, it fetches and audits the cask, then tests installation and uninstallation on supported platforms.
 
           Only supports GitHub Actions as a CI provider. This is because Homebrew uses GitHub Actions and it's freely available for public and private use with macOS and Linux workers.
         EOS
@@ -39,7 +41,7 @@ module Homebrew
         switch "--local",
                description: "Ask Homebrew to write verbose logs under `./logs/` and set `$HOME` to `./home/`"
         flag   "--tap=",
-               description: "Use the Git repository of the given tap. Defaults to the core tap for syntax checking."
+               description: "Use the given tap. Defaults to the current tap, or the core tap for syntax checking."
         switch "--fail-fast",
                description: "Immediately exit on a failing step."
         switch "-v", "--verbose",
@@ -57,16 +59,16 @@ module Homebrew
         switch "--publish",
                description: "Publish the uploaded bottles."
         switch "--skip-online-checks",
-               description: "Don't pass `--online` to `brew audit` and skip `brew livecheck`."
+               description: "Skip online audit checks and livecheck, including for new packages."
         switch "--skip-new",
-               description: "Don't pass `--new` to `brew audit` for new formulae."
+               description: "Don't pass `--new` to `brew audit` for new packages."
         switch "--skip-new-strict",
                depends_on:  "--skip-new",
-               description: "Don't pass `--strict` to `brew audit` for new formulae."
+               description: "Don't pass `--strict` to `brew audit` for new packages."
         switch "--skip-dependents",
                description: "Don't test any dependents."
         switch "--skip-livecheck",
-               description: "Don't test livecheck."
+               description: "Skip livecheck for formulae and casks."
         switch "--[no-]skip-recursive-dependents",
                description: "Only test the direct dependents (default: enabled).",
                replacement: "the default behaviour",
@@ -78,8 +80,7 @@ module Homebrew
         switch "--skip-revision-audit",
                description: "Don't audit the revision."
         comma_array "--except=",
-                    description: "Skip the listed audits for formulae and casks.",
-                    hidden:      true
+                    description: "Skip the listed `brew audit` methods for formulae and casks."
         switch "--only-cleanup-before",
                description: "Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions."
         switch "--only-setup",
@@ -90,12 +91,10 @@ module Homebrew
                depends_on:  "--only-tap-syntax",
                description: "Only run the tap syntax checks needed on stable brew."
         switch "--only-casks",
-               description: "Only fetch, audit and test changed or named casks.",
-               hidden:      true
+               description: "Only fetch, audit and test changed or named casks."
         switch "--skip-install",
                depends_on:  "--only-casks",
-               description: "Fetch and audit casks without installing them.",
-               hidden:      true
+               description: "With `--only-casks`, fetch and audit casks without installing them."
         switch "--only-formulae",
                description: "Only run the formulae steps."
         switch "--only-packages-detect", "--only-formulae-detect",
@@ -116,11 +115,9 @@ module Homebrew
         comma_array "--deleted-formulae=",
                     description: "Use these deleted formulae rather than running package detection."
         comma_array "--testing-casks=",
-                    description: "Use these testing casks rather than running package detection.",
-                    hidden:      true
+                    description: "Use these testing casks rather than running package detection."
         comma_array "--added-casks=",
-                    description: "Treat these testing casks as newly added.",
-                    hidden:      true
+                    description: "Treat these testing casks as newly added."
         comma_array "--skipped-or-failed-formulae=",
                     description: "Use these skipped or failed formulae from formulae steps for a " \
                                  "formulae dependents step."
@@ -162,16 +159,9 @@ module Homebrew
         end
         ENV["HOMEBREW_TEST_BOT"] = "1"
 
-        Utils::GemSetup.install_bundler_gems!(groups: ["ast"]) if args.only_formulae? || [
-          args.only_cleanup_before?,
-          args.only_setup?,
-          args.only_tap_syntax?,
-          args.only_casks?,
-          args.only_packages_detect?,
-          args.only_formulae_dependents?,
-          args.only_bottles_fetch?,
-          args.only_cleanup_after?,
-        ].none?
+        if args.only_formulae? || TestBot::TestRunner.full_run?(args)
+          Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
+        end
 
         TestBot.run!(args)
       end
