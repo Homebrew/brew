@@ -70,7 +70,7 @@ RSpec.describe Cask::DesktopFileParser do
 
   describe "#replace_program" do
     subject(:replaced_exec) do
-      desktop_file.replace_program(program, environment: { "X" => "1" })
+      desktop_file.replace_program(environment: { "X" => "1" }) { program }
       desktop_file.get("Exec")
     end
 
@@ -83,6 +83,14 @@ RSpec.describe Cask::DesktopFileParser do
 
       it "keeps them" do
         expect(replaced_exec).to eq("env X=1 GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 /A/Foo.AppImage %F")
+      end
+    end
+
+    describe "when it sets variables with an absolute `env`" do
+      let(:embedded_exec) { "/usr/bin/env GDK_BACKEND=x11 audacity %F" }
+
+      it "keeps them" do
+        expect(replaced_exec).to eq("env X=1 GDK_BACKEND=x11 /A/Foo.AppImage %F")
       end
     end
 
@@ -118,6 +126,19 @@ RSpec.describe Cask::DesktopFileParser do
       end
     end
 
+    describe "when no variables are set" do
+      subject(:replaced_exec) do
+        desktop_file.replace_program { |embedded_program| "/A/bin/#{embedded_program}" }
+        desktop_file.get("Exec")
+      end
+
+      let(:embedded_exec) { "audacity %F" }
+
+      it "points it at the program for the one it names without `env`" do
+        expect(replaced_exec).to eq("/A/bin/audacity %F")
+      end
+    end
+
     describe "when it has an unmatched quote" do
       let(:embedded_exec) { 'AppRun "--flag' }
 
@@ -129,10 +150,10 @@ RSpec.describe Cask::DesktopFileParser do
     describe "when there is a `TryExec`" do
       let(:contents) { "[Desktop Entry]\nTryExec=AppRun\n" }
 
-      it "points it at the program" do
-        desktop_file.replace_program(program, environment: {})
+      it "points it at the program for the one it names" do
+        desktop_file.replace_program { |embedded_program| "/A/bin/#{embedded_program}" }
 
-        expect(desktop_file.get("TryExec")).to eq(program)
+        expect(desktop_file.get("TryExec")).to eq("/A/bin/AppRun")
       end
     end
   end

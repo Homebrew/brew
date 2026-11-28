@@ -239,6 +239,30 @@ RSpec.describe Cask::Artifact::AppImage, :cask do
       expect((xdg_data_home/"applications").children).to be_empty
     end
 
+    it "leaves the files other `.desktop` links in the Caskroom point to" do
+      linked_file = mktmpdir/"notes.txt"
+      FileUtils.touch linked_file
+      install_phase
+      (cask.staged_path/"notes.desktop").make_symlink(linked_file)
+
+      uninstall_phase
+
+      expect(linked_file).to exist
+    end
+
+    it "doesn't follow the staged archive's own relative `.desktop` links" do
+      install_phase
+      (cask.staged_path/"notes.desktop").make_symlink("share/applications/notes.desktop")
+      working_dir = mktmpdir
+      linked_file = working_dir/"share/applications/notes.desktop"
+      linked_file.dirname.mkpath
+      FileUtils.touch linked_file
+
+      Dir.chdir(working_dir) { uninstall_phase }
+
+      expect(linked_file).to exist
+    end
+
     describe "migrating from the old Symlinked layout" do
       before do
         # Recreate the pre-inversion on-disk state: a real file in the

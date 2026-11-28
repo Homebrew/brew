@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "os/linux"
+require "utils/path"
 
 module OS
   module Linux
@@ -11,7 +12,7 @@ module OS
           DEFAULT_DIRS = T.let({
             vst_plugindir:  "~/.vst",
             vst3_plugindir: "~/.vst3",
-            fontdir:        "#{ENV.fetch("HOMEBREW_XDG_DATA_HOME", "~/.local/share")}/fonts",
+            fontdir:        "#{::Utils::Path.xdg_data_home}/fonts",
             appdir:         "~/.config/apps",
             appimagedir:    "~/Applications",
           }.freeze, T::Hash[Symbol, String])

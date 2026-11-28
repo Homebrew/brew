@@ -48,27 +48,31 @@ module Cask
       end
     end
 
-    # Point every `Exec` and `TryExec` at `program`, keeping the arguments and environment
-    # variables of each `Exec` and setting `environment` with `env`, e.g. for
-    # `program: "<target>"` and `environment: { "DESKTOPINTEGRATION" => "1" }`:
+    # Replace the program each `Exec` and `TryExec` names with the block's result for it,
+    # keeping the arguments and environment variables of each `Exec` and setting `environment`
+    # with `env`, e.g. for a block returning `"<target>"` and
+    # `environment: { "DESKTOPINTEGRATION" => "1" }`:
     #   Input:  Exec=env GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 audacity %F
     #   Output: Exec=env DESKTOPINTEGRATION=1 GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 <target> %F
     # Raises `ArgumentError` if an `Exec` has unmatched quotes.
-    sig { params(program: String, environment: T::Hash[String, String]).void }
-    def replace_program(program, environment:)
-      update("TryExec") { program }
+    sig {
+      params(environment: T::Hash[String, String], block: T.proc.params(program: String).returns(String)).void
+    }
+    def replace_program(environment: {}, &block)
+      update("TryExec", &block)
       update("Exec") do |exec|
         words = Shellwords.split(exec)
-        # Variables can be set with or without a leading `env`.
-        words.shift if words.first == "env"
+        # Variables can be set with or without a leading `env` or `/usr/bin/env`.
+        words.shift if %w[env /usr/bin/env].include?(words.first)
         variables = words.take_while { |word| word.match?(/\A[A-Za-z_]\w*=/) }
-        # Skip the program itself, which is replaced.
+        program = yield(words.fetch(variables.length, ""))
         arguments = words.drop(variables.length + 1)
         # `environment` takes precedence over the same variables in `exec`.
         variables.reject! { |variable| environment.key?(variable.split("=", 2).fetch(0)) }
         variables = environment.map { |name, value| "#{name}=#{value}" } + variables
+        variables.unshift("env") if variables.present?
         # `%` starts a field code like `%U`, so a literal one in `program` must be doubled.
-        ["env", *variables, program.gsub("%", "%%"), *arguments].map do |word|
+        [*variables, program.gsub("%", "%%"), *arguments].map do |word|
           # Quote only what needs it, as some launchers split `Exec` on spaces and keep the quotes.
           next word unless word.match?(EXEC_RESERVED_CHARACTERS)
 

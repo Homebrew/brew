@@ -77,6 +77,7 @@ When multiple `depends_on` stanzas are present, order them alphabetically by dep
     suite
     app
     app_image
+    desktop_entry
     pkg
     generated_script
     installer
@@ -150,7 +151,7 @@ A homepage override that changes the URL needs its own browser check.
 
 Each cask must declare one or more [artifacts](/rubydoc/Cask/Artifact.html) (i.e. something to install).
 Homebrew determines a cask's supported operating systems from its [`depends_on`](#stanza-depends_on) declarations, not from its artifact types.
-Artifact stanzas can be OS-specific or portable: `app_image` is Linux-only, `app` and `pkg` are macOS-only, and `binary` works on either operating system.
+Artifact stanzas can be OS-specific or portable: `app_image` and `desktop_entry` are Linux-only, `app` and `pkg` are macOS-only and `binary` works on either operating system.
 Use a matching top-level `depends_on :macos` or `depends_on :linux` for a cask that supports only one operating system.
 Cross-platform casks should scope OS-specific artifact stanzas inside `on_macos` or `on_linux` blocks; a top-level OS dependency would drop support for the other operating system.
 
@@ -159,6 +160,7 @@ Cross-platform casks should scope OS-specific artifact stanzas inside `on_macos`
 | [`suite`](#stanza-suite)                                                               |              yes              | Relative path to a containing directory that should be moved into the `/Applications` folder on installation.                                                                                                                                                                                                                                                              |
 | [`app`](#stanza-app)                                                                   |              yes              | Relative path to an `.app` that should be moved into the `/Applications` folder on installation.                                                                                                                                                                                                                                                                           |
 | `app_image`                                                                            |              yes              | Relative path to an AppImage that should be moved into the configured AppImage directory on installation. Its embedded desktop entries are installed into `${XDG_DATA_HOME:-~/.local/share}/applications` so the app shows up in the desktop's application menu                                                                                                            |
+| `desktop_entry`                                                                        |              yes              | Relative path to a desktop entry in a `share/applications` directory that should be installed into `${XDG_DATA_HOME:-~/.local/share}/applications`, pointing its `Exec` at the same prefix's `bin` directory and its `Icon` at the same prefix's `share/icons/hicolor` theme.                                                                                              |
 | [`pkg`](#stanza-pkg)                                                                   |              yes              | Relative path to a `.pkg` file containing the distribution.                                                                                                                                                                                                                                                                                                                |
 | [`generated_script`](#stanza-generated_script)                                         |              yes              | Generates a script for another artifact or install step to use.                                                                                                                                                                                                                                                                                                            |
 | [`installer`](#stanza-installer)                                                       |              yes              | Describes an executable which must be run to complete the installation.                                                                                                                                                                                                                                                                                                    |

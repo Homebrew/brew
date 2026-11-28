@@ -58,6 +58,9 @@ class RuboCop::Cask::AST::Stanza
   def desc?; end
 
   sig { returns(T::Boolean) }
+  def desktop_entry?; end
+
+  sig { returns(T::Boolean) }
   def dictionary?; end
 
   sig { returns(T::Boolean) }
