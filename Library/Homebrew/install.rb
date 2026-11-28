@@ -18,6 +18,7 @@ require "utils/topological_hash"
 require "install/check"
 require "api/source_download"
 require "attestation"
+require "utils/analytics"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
@@ -296,6 +297,8 @@ module Homebrew
           cask_installer.enqueue_downloads
           true
         rescue => e
+          # A dependant cask keeps this installer, so stop it before it reports or installs this cask.
+          cask_installer.download_failed!
           failed_casks << cask_installer.cask if e.is_a?(Cask::CaskError)
           ofail(
             e.message.start_with?("#{cask_installer.cask}: ") ? e : "#{cask_installer.cask}: #{e}",
@@ -403,8 +406,6 @@ module Homebrew
           Cleanup.install_formula_clean!(formula) if cleanup
           installed_formulae << formula
         rescue BuildError => e
-          require "utils/analytics"
-
           Utils::Analytics.report_build_error(e)
           e.dump(verbose:)
           puts

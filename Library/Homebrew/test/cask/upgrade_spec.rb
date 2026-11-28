@@ -895,15 +895,19 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when reporting upgrade analytics" do
+    let(:upgrade_event) do
+      { package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true, options: "" }
+    end
+
     before do
       Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
       allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(true)
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
     end
 
     it "reports a successful upgrade as one cask install" do
-      expect(Utils::Analytics).to receive(:report_package_event)
-        .with(:cask_install, package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true)
-        .once
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
@@ -911,19 +915,44 @@ RSpec.describe Cask::Upgrade, :cask do
     it "does not report upgrades from private taps" do
       allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(false)
 
-      expect(Utils::Analytics).not_to receive(:report_package_event)
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [])
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
 
-    it "does not report failed upgrades" do
-      allow_any_instance_of(Cask::Installer).to receive(:finalize_upgrade)
-        .and_raise(Cask::CaskError, "finalize failed")
+    it "reports a cask whose download couldn't be enqueued for prefetching" do
+      allow(Homebrew::Install).to receive(:enqueue_cask_installers).and_return([])
 
-      expect(Utils::Analytics).not_to receive(:report_package_event)
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
+
+    it "reports a cask whose fallback download only succeeds on retry" do
+      download_attempts = 0
+      allow_any_instance_of(Cask::Installer).to receive(:download).and_wrap_original do |original, *args, **kwargs|
+        download_attempts += 1
+        raise Cask::CaskError, "download failed" if download_attempts == 1
+
+        original.call(*args, **kwargs)
+      end
+      allow(Utils::Analytics).to receive(:report_package_events)
+
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
+
+      described_class.upgrade_casks!(local_caffeine, args:, skip_prefetch: true)
+    end
+  end
+
+  it "rechecks conflicts right before each upgrade after downloading the casks" do
+    Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
+    calls = []
+    allow_any_instance_of(Cask::Installer).to receive(:check_conflicts) { calls << :check_conflicts }
+    allow(described_class).to receive(:upgrade_cask) { calls << :upgrade_cask }
+
+    described_class.upgrade_casks!(local_caffeine, args:, skip_prefetch: true)
+
+    expect(calls).to eq([:check_conflicts, :check_conflicts, :upgrade_cask])
   end
 
   context "when quarantine support is unavailable" do

@@ -535,6 +535,7 @@ RSpec.describe Homebrew::Install do
 
     it "skips casks whose enqueue raises and continues with the rest" do
       bad_installer = instance_double(Cask::Installer, cask: instance_double(Cask::Cask, to_s: "bad-cask"))
+      allow(bad_installer).to receive(:download_failed!)
       allow(bad_installer).to receive(:enqueue_downloads)
         .and_raise(URI::InvalidURIError, 'bad URI (is not URI?): "https://example.com/bad -cask.dmg"')
       good_installer = instance_double(Cask::Installer, enqueue_downloads: nil)
@@ -542,6 +543,15 @@ RSpec.describe Homebrew::Install do
       expect do
         expect(described_class.enqueue_cask_installers([bad_installer, good_installer])).to eq([good_installer])
       end.to output(/Error: bad-cask: bad URI/).to_stderr
+    end
+
+    it "marks casks whose enqueue raises as failed so a dependant cask stops before installing them" do
+      installer = instance_double(Cask::Installer, cask: instance_double(Cask::Cask, to_s: "disabled-cask"))
+      allow(installer).to receive(:enqueue_downloads).and_raise(Cask::CaskError, "disabled-cask has been disabled")
+
+      expect(installer).to receive(:download_failed!)
+
+      expect { described_class.enqueue_cask_installers([installer]) }.to output(/disabled-cask/).to_stderr
     end
   end
 

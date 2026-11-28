@@ -355,6 +355,7 @@ module Homebrew
         end
         if !only_upgrade_formulae && !skip_upgrades_after_failed_ask_preview
           if prefetched_casks
+            Utils::Analytics.report_cask_installs(prefetched_cask_installers)
             upgrade_outdated_casks!(
               prefetched_cask_upgrade_casks,
               skip_prefetch:              true,
@@ -718,6 +719,9 @@ module Homebrew
           []
         end
 
+        if use_prefetched_context
+          Utils::Analytics.report_formula_installs(context.formulae_installer + context.dependent_formulae_installer)
+        end
         upgraded_formula_installers = Upgrade.upgrade_formulae(
           context.formulae_installer,
           dry_run:,

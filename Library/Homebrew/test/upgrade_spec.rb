@@ -58,6 +58,25 @@ RSpec.describe Homebrew::Upgrade do
         .to eq([formula_installer])
     end
 
+    it "reports the formulae it fetched" do
+      formula_installer = instance_double(FormulaInstaller, formula: Testball.new)
+      allow(Homebrew::Install).to receive(:fetch_formulae).with([formula_installer]).and_return([formula_installer])
+      allow(described_class).to receive(:upgrade_formula).and_return(true)
+
+      expect(Utils::Analytics).to receive(:report_formula_installs).with([formula_installer])
+
+      described_class.upgrade_formulae([formula_installer], cleanup: false)
+    end
+
+    it "does not report formulae its caller prefetched" do
+      formula_installer = instance_double(FormulaInstaller, formula: Testball.new)
+      allow(described_class).to receive(:upgrade_formula).and_return(true)
+
+      expect(Utils::Analytics).not_to receive(:report_formula_installs)
+
+      described_class.upgrade_formulae([formula_installer], fetch: false, cleanup: false)
+    end
+
     it "groups dependencies across formula upgrades" do
       fresh = formula("fresh-dependency") do
         T.bind(self, T.class_of(Formula))

@@ -58,6 +58,16 @@ RSpec.describe Homebrew::Cmd::Reinstall do
     allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
       .with(method: :resolve)
       .and_return([cask])
+    cask_installer = instance_double(Cask::Installer)
+    allow(Utils::Analytics).to receive(:report_cask_installs)
+    expect(cmd).to receive(:fetch_installers)
+      .with([], [], [cask], download_queue: an_instance_of(Homebrew::DownloadQueue))
+      .ordered
+      .and_return(Homebrew::Install::FetchResult.new(
+                    formula_installers:           [],
+                    dependent_formula_installers: [],
+                    cask_installers:              [cask_installer],
+                  ))
     expect(Cask::Reinstall).to receive(:reinstall_casks)
       .with(
         cask,
@@ -68,9 +78,9 @@ RSpec.describe Homebrew::Cmd::Reinstall do
         require_sha:     false,
         skip_cask_deps:  false,
         zap:             false,
-        skip_prefetch:   false,
+        skip_prefetch:   true,
         download_queue:  nil,
-        cask_installers: nil,
+        cask_installers: [cask_installer],
       )
       .ordered
       .and_return([cask])
@@ -81,6 +91,28 @@ RSpec.describe Homebrew::Cmd::Reinstall do
     expect(Homebrew.messages).to receive(:display_messages)
       .with(force_caveats: true, display_times: false)
       .ordered
+
+    cmd.run
+  end
+
+  it "does not reinstall casks without a report when none could be prefetched" do
+    cask = Cask::Cask.new("local-caffeine")
+    allow(cask).to receive(:pinned?).and_return(false)
+    cmd = described_class.new(["--yes", "local-caffeine"])
+
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
+      .with(method: :resolve)
+      .and_return([cask])
+    allow(cmd).to receive(:fetch_installers).and_return(Homebrew::Install::FetchResult.new(
+                                                          formula_installers:           [],
+                                                          dependent_formula_installers: [],
+                                                          cask_installers:              [],
+                                                        ))
+    allow(Homebrew::Cleanup).to receive_messages(install_clean!: nil, periodic_clean!: nil)
+    allow(Homebrew.messages).to receive(:display_messages)
+
+    expect(Cask::Reinstall).not_to receive(:reinstall_casks)
 
     cmd.run
   end

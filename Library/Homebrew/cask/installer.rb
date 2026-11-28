@@ -208,8 +208,6 @@ module Cask
       tab.installed_on_request = installed_on_request?
       tab.write
 
-      report_analytics
-
       purge_backed_up_versioned_files
 
       puts summary
@@ -225,15 +223,6 @@ module Cask
       raise e
     ensure
       @cask.cleanup_temp(retain: !completed)
-    end
-
-    # Report a successful installation or upgrade.
-    sig { void }
-    def report_analytics
-      if (tap = @cask.tap) && tap.should_report_analytics?
-        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
-                                               on_request: true)
-      end
     end
 
     sig { void }
@@ -532,7 +521,21 @@ module Cask
         raise CaskError, "Dependency download failed for #{failed_installer.cask}."
       end
 
-      cask_installers.reject { |installer| installer.cask.installed? }.each(&:install)
+      missing_cask_installers = cask_installers.reject { |installer| installer.cask.installed? }
+      # Without a prefetch, download (and verify) them before reporting; installing reuses the downloads.
+      unless @dependencies_enqueued
+        missing_cask_installers.each do |installer|
+          installer.prelude
+          installer.download
+        end
+      end
+      ::Utils::Analytics.report_cask_installs(missing_cask_installers)
+      missing_cask_installers.each do |installer|
+        # Their preludes ran before any of them was installed, so check against the ones installed since.
+        installer.check_conflicts
+        installer.install
+      end
+
       return if formula_installers.blank?
 
       Homebrew::Install.perform_preinstall_checks_once
@@ -541,8 +544,12 @@ module Cask
       else
         Homebrew::Install.fetch_formulae(formula_installers)
       end
-      valid_formula_installers.each do |formula_installer|
-        next if formula_installer.formula.any_version_installed? && formula_installer.formula.optlinked?
+      installed = ->(fi) { fi.formula.any_version_installed? && fi.formula.optlinked? }
+      missing_formula_installers = valid_formula_installers.reject(&installed)
+      ::Utils::Analytics.report_formula_installs(missing_formula_installers)
+      missing_formula_installers.each do |formula_installer|
+        # Installing an earlier one may have installed this as its dependency.
+        next if installed.call(formula_installer)
 
         formula_installer.install
         formula_installer.finish
