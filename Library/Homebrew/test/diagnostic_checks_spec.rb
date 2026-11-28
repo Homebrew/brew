@@ -346,15 +346,11 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
                                               full_name: "testball", possible_names: ["testball"],
                                               installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
-        dependent = instance_double(Formula, deprecated?: false, disabled?: false, full_name: "dependent",
-                                             runtime_dependencies: [instance_double(Dependency, name: "testball")])
-        # Finding what `brew autoremove` removes drops the stale dependency from the install receipt in memory.
-        allow(dependent).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([])
         autoremovable = formula("testball") do
           T.bind(self, T.class_of(Formula))
           url "https://brew.sh/testball-1.0.tar.gz"
         end
-        allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+        allow(Formula).to receive(:installed).and_return([deprecated])
         allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([autoremovable])
       end
 
