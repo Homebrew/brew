@@ -22,6 +22,18 @@ module Hardware
     ].freeze, T::Array[Symbol])
 
     INTEL_64BIT_OLDEST_CPU = :core2
+
+    # Maps x86-64 `family` values to their x86-64 level and returns other
+    # values unchanged.
+    x86_64_levels = Hash.new { |_levels, cpu_family| cpu_family }.merge!({
+      "x86_64-v1" => %w[amd_k8 amd_k8_k10_hybrid amd_k10 amd_k10_llano atom bobcat core2 merom penryn prescott
+                        presler],
+      "x86_64-v2" => %w[bulldozer ivybridge jaguar nehalem sandybridge westmere],
+      "x86_64-v3" => %w[alderlake arrowlake broadwell cometlake haswell kabylake pantherlake skylake zen zen2 zen3],
+      "x86_64-v4" => %w[cannonlake graniterapids icelake rocketlake sapphirerapids tigerlake zen4 zen5],
+    }.flat_map { |level, cpu_families| cpu_families.product([level]) }.to_h)
+    X86_64_LEVELS = T.let(x86_64_levels.freeze, T::Hash[T.nilable(String), T.nilable(String)])
+
     ROSETTA_RUNTIME_PATH = "/Library/Apple/usr/libexec/oah/libRosettaRuntime"
 
     @cores = T.let(nil, T.nilable(Integer))

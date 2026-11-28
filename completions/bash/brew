@@ -1715,6 +1715,7 @@ _brew_formula_analytics() {
       --homebrew-devcmdrun-developer
       --homebrew-env-config
       --homebrew-os-arch-ci
+      --homebrew-os-arch-level-ci
       --homebrew-prefixes
       --homebrew-versions
       --install

@@ -20,7 +20,7 @@ module Utils
         core-build-error core-install core-install-on-request
         cask-install core-cask-install os-version
         homebrew-devcmdrun-developer homebrew-env-config homebrew-os-arch-ci
-        homebrew-prefixes homebrew-versions
+        homebrew-os-arch-level-ci homebrew-prefixes homebrew-versions
         brew-command-run brew-command-run-options brew-test-bot-test
       ].freeze
 
