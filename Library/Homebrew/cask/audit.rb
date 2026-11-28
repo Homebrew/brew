@@ -857,6 +857,7 @@ module Cask
 
         next if artifacts_to_test.blank?
 
+        unknown_architecture = T.let(false, T::Boolean)
         any_requires_rosetta = artifacts_to_test.any? do |artifact|
           artifact = T.cast(artifact, T.any(Artifact::App, Artifact::Binary))
           path = tmpdir/artifact.source.relative_path_from(cask.staged_path)
@@ -866,21 +867,75 @@ module Cask
             files = Dir[path/"Contents/MacOS/*"].select do |f|
               File.executable?(f) && !File.directory?(f) && !f.end_with?(".dylib")
             end
-            add_error "No binaries in App: #{artifact.source}", location: url.location if files.empty?
-
             main_binary = get_plist_main_binary(path)
-            main_binary ||= files.fetch(0)
+            unless main_binary
+              script = <<~JAVASCRIPT
+                ObjC.import('Foundation');
+                function run(argv) {
+                  var bundle = $.NSBundle.bundleWithPath(argv[0]);
+                  var executable = bundle.executableURL;
+                  return executable ? ObjC.unwrap(executable.path) : '';
+                }
+              JAVASCRIPT
+              resolution = system_command("/usr/bin/osascript",
+                                          args:         ["-l", "JavaScript", "-e", script, path.to_s],
+                                          print_stderr: false)
+              unless resolution.success?
+                add_error "Unable to resolve app executable: #{artifact.source}", location: url.location
+                unknown_architecture = true
+                next false
+              end
+              resolved = resolution.stdout.strip
+              main_binary = resolved if File.file?(resolved) && File.executable?(resolved)
+            end
+            main_binary ||= files.first
+            unless main_binary
+              add_error "No binaries in App: #{artifact.source}", location: url.location
+              unknown_architecture = true
+              next false
+            end
+            begin
+              script_executable = File.open(main_binary, "rb") { |file| file.read(2) == "#!" }
+            rescue SystemCallError, IOError => e
+              add_error "Unable to inspect artifact executable: #{artifact.source}: #{e.message}",
+                        location: url.location
+              unknown_architecture = true
+              next false
+            end
+            if script_executable
+              odebug "Skipping Rosetta architecture detection for script: #{main_binary}"
+              unknown_architecture = true
+              next false
+            end
 
             system_command("lipo", args: ["-archs", main_binary], print_stderr: false)
           when Artifact::Binary
             binary_path = path.to_s.gsub(cask.appdir, tmpdir.to_s)
+            begin
+              script_executable = File.file?(binary_path) && File.open(binary_path, "rb") do |file|
+                file.read(2) == "#!"
+              end
+            rescue SystemCallError, IOError => e
+              add_error "Unable to inspect artifact executable: #{artifact.source}: #{e.message}",
+                        location: url.location
+              unknown_architecture = true
+              next false
+            end
+            if script_executable
+              odebug "Skipping Rosetta architecture detection for script: #{binary_path}"
+              unknown_architecture = true
+              next false
+            end
             system_command("lipo", args: ["-archs", binary_path], print_stderr: true)
           else
             T.absurd(artifact)
           end
 
-          # binary stanza can contain shell scripts, so we just continue if lipo fails.
-          next false unless result.success?
+          unless result.success?
+            add_error "Unable to determine artifact architecture: #{artifact.source}", location: url.location
+            unknown_architecture = true
+            next false
+          end
 
           odebug "Architectures: #{result.merged_output}"
 
@@ -900,7 +955,7 @@ module Cask
             add_error "At least one artifact requires Rosetta 2 but this is not indicated by the caveats!",
                       location: url.location
           end
-        elsif mentions_rosetta
+        elsif mentions_rosetta && !unknown_architecture
           add_error "No artifacts require Rosetta 2 but the caveats say otherwise!",
                     location: url.location
         end
