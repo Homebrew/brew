@@ -857,19 +857,22 @@ module Cask
 
         next if artifacts_to_test.blank?
 
+        unknown_architecture = T.let(false, T::Boolean)
         any_requires_rosetta = artifacts_to_test.any? do |artifact|
           artifact = T.cast(artifact, T.any(Artifact::App, Artifact::Binary))
           path = tmpdir/artifact.source.relative_path_from(cask.staged_path)
 
           result = case artifact
           when Artifact::App
-            files = Dir[path/"Contents/MacOS/*"].select do |f|
+            main_binary = get_plist_main_binary(path)
+            main_binary ||= Dir[path/"Contents/MacOS/*"].find do |f|
               File.executable?(f) && !File.directory?(f) && !f.end_with?(".dylib")
             end
-            add_error "No binaries in App: #{artifact.source}", location: url.location if files.empty?
-
-            main_binary = get_plist_main_binary(path)
-            main_binary ||= files.fetch(0)
+            unless main_binary
+              add_error "No binaries in App: #{artifact.source}", location: url.location
+              unknown_architecture = true
+              next false
+            end
 
             system_command("lipo", args: ["-archs", main_binary], print_stderr: false)
           when Artifact::Binary
@@ -879,8 +882,12 @@ module Cask
             T.absurd(artifact)
           end
 
-          # binary stanza can contain shell scripts, so we just continue if lipo fails.
-          next false unless result.success?
+          # Scripts have no architecture and `command_wrapper`s only exist once
+          # installed, so we just continue if lipo fails.
+          unless result.success?
+            unknown_architecture = true
+            next false
+          end
 
           odebug "Architectures: #{result.merged_output}"
 
@@ -900,7 +907,7 @@ module Cask
             add_error "At least one artifact requires Rosetta 2 but this is not indicated by the caveats!",
                       location: url.location
           end
-        elsif mentions_rosetta
+        elsif mentions_rosetta && !unknown_architecture
           add_error "No artifacts require Rosetta 2 but the caveats say otherwise!",
                     location: url.location
         end
@@ -1497,9 +1504,9 @@ module Cask
       binary = plist["CFBundleExecutable"].presence
       return unless binary
 
-      binary_path = "#{path}/Contents/MacOS/#{binary}"
-
-      binary_path if File.exist?(binary_path) && File.executable?(binary_path)
+      # `NSBundle` looks for `CFBundleExecutable` in these directories, in this order.
+      ["Contents/MacOS", "Contents", ""].map { |directory| File.join(path, directory, binary) }
+                                        .find { |file| File.file?(file) && File.executable?(file) }
     end
 
     sig {
