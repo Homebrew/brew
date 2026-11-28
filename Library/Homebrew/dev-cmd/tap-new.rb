@@ -15,7 +15,7 @@ module Homebrew
       cmd_args do
         usage_banner "`tap-new` [<options>] <user>`/`<repo>"
         description <<~EOS
-          Generate the template files for a new tap.
+          Generate a new tap with GitHub Actions workflows for testing formulae and casks.
         EOS
         switch "--no-git",
                description: "Don't initialise a Git repository for the tap."
@@ -44,21 +44,24 @@ module Homebrew
         root_url = GitHubPackages.root_url(tap.user, "homebrew-#{tap.repository}") if args.github_packages?
 
         (tap.path/"Formula").mkpath
+        (tap.path/"Casks").mkpath
 
         readme = <<~MARKDOWN
           # #{titleized_user} #{titleized_repository}
 
-          ## How do I install these formulae?
+          ## How do I install packages?
 
-          `brew install #{tap}/<formula>`
+          `brew install #{tap}/<package>`
 
-          Or `brew tap #{tap}` and then `brew install <formula>`.
+          You can also run `brew tap #{tap}` and then install by name.
+          If a formula and a cask share a name, use `brew install --cask` to select the cask.
 
           Or, in a `brew bundle` `Brewfile`:
 
           ```ruby
           tap "#{tap}"
           brew "<formula>"
+          cask "<cask>"
           ```
 
           ## Documentation
@@ -112,8 +115,8 @@ module Homebrew
         puts <<~EOS
           #{tap.path}
 
-          When a pull request making changes to a formula (or formulae) becomes green
-          (all checks passed), then you can publish the built bottles.
+          When a cask-only pull request passes CI, you can merge it directly.
+          For formula changes, you can publish the built bottles once CI passes.
           To do so, run `brew pr-pull` locally or run the `brew pr-pull`
           workflow with the pull request number and, optionally, the pull
           request's expected head commit SHA.

@@ -50,10 +50,14 @@ jobs:
       - run: brew test-bot --only-setup
 
       - run: brew test-bot --only-tap-syntax
+
+      - run: brew test-bot --only-packages-detect
+        id: packages-detect
+        if: github.event_name == 'pull_request'
       # tap-new-github-packages-start
       - name: Base64-encode GITHUB_TOKEN for HOMEBREW_DOCKER_REGISTRY_TOKEN
         id: base64-encode
-        if: github.event_name == 'pull_request'
+        if: steps.packages-detect.outputs.testing_formulae
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -61,15 +65,32 @@ jobs:
           echo "::add-mask::${base64_token}"
           echo "token=${base64_token}" >> "${GITHUB_OUTPUT}"
       # tap-new-github-packages-end
-      - run: brew test-bot --only-formulaeTAP_NEW_ROOT_URL_ARGUMENT
-        if: github.event_name == 'pull_request'
-        # tap-new-github-packages-start
+      - run: |
+          brew test-bot --only-formulaeTAP_NEW_ROOT_URL_ARGUMENT \
+            --testing-formulae="$TESTING_FORMULAE" \
+            --added-formulae="$ADDED_FORMULAE" \
+            --deleted-formulae="$DELETED_FORMULAE"
+        if: steps.packages-detect.outputs.testing_formulae || steps.packages-detect.outputs.deleted_formulae
         env:
+          TESTING_FORMULAE: ${{ steps.packages-detect.outputs.testing_formulae }}
+          ADDED_FORMULAE: ${{ steps.packages-detect.outputs.added_formulae }}
+          DELETED_FORMULAE: ${{ steps.packages-detect.outputs.deleted_formulae }}
+          # tap-new-github-packages-start
           HOMEBREW_DOCKER_REGISTRY_TOKEN: ${{ steps.base64-encode.outputs.token }}
-        # tap-new-github-packages-end
+          # tap-new-github-packages-end
+
+      - run: |
+          brew test-bot --only-casks \
+            --testing-casks="$TESTING_CASKS" \
+            --added-casks="$ADDED_CASKS"
+        if: >-
+          !cancelled() && steps.packages-detect.outcome == 'success' && steps.packages-detect.outputs.testing_casks != ''
+        env:
+          TESTING_CASKS: ${{ steps.packages-detect.outputs.testing_casks }}
+          ADDED_CASKS: ${{ steps.packages-detect.outputs.added_casks }}
 
       - name: Upload bottles as artifact
-        if: always() && github.event_name == 'pull_request'
+        if: always() && steps.packages-detect.outputs.testing_formulae
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bottles_${{ matrix.os }}

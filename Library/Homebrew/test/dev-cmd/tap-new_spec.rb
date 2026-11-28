@@ -8,6 +8,17 @@ require "yaml"
 RSpec.describe Homebrew::DevCmd::TapNew do
   it_behaves_like "parseable arguments"
 
+  it "keeps the registry token with the selected formulae in a GitHub Packages tap" do
+    tap = Tap.fetch("homebrew", "packages")
+    described_class.new(["--no-git", "--github-packages", tap.name]).run
+    steps = YAML.load_file(tap.path/".github/workflows/tests.yml").fetch("jobs").fetch("test-bot").fetch("steps")
+
+    expect(steps.filter_map { |step| step["run"] if step.dig("env", "HOMEBREW_DOCKER_REGISTRY_TOKEN") })
+      .to contain_exactly(a_string_including("--only-formulae --root-url=", '--testing-formulae="$TESTING_FORMULAE"'))
+  ensure
+    FileUtils.rm_rf(tap.path) if tap
+  end
+
   it "initializes a new tap with a README file and GitHub Actions CI", :integration_test do
     ENV["HOMEBREW_GIT_NAME"] = "Homebrew Test"
     ENV["HOMEBREW_GIT_EMAIL"] = "test@example.com"
@@ -17,7 +28,9 @@ RSpec.describe Homebrew::DevCmd::TapNew do
       .and output(%r{homebrew/foo}).to_stdout
       .and not_to_output.to_stderr
 
-    expect(HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/README.md").to exist
+    expect((HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/README.md").read).to include(
+      "## How do I install packages?", "brew install homebrew/foo/<package>"
+    )
     expect(Utils.safe_popen_read("git", "-C", HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo",
                                  "log", "-1", "--format=%s"))
       .to eq("Create homebrew/foo tap\n")
@@ -26,6 +39,9 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     publish_yml = (HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/publish.yml").read
     autobump_yml = (HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/autobump.yml").read
     [dependabot_yml, tests_yml, publish_yml].each { YAML.parse(it) }
+    expect(tests_yml).to include("brew test-bot --only-packages-detect", "brew test-bot --only-casks",
+                                 '--testing-formulae="$TESTING_FORMULAE"', '--testing-casks="$TESTING_CASKS"',
+                                 '--added-casks="$ADDED_CASKS"')
     expect(tests_yml).not_to include("HOMEBREW_DEVELOPER")
     expect(tests_yml).to include("options: --privileged")
     expect(publish_yml).not_to include("HOMEBREW_DEVELOPER", "pull_request_target", "workflow_run")

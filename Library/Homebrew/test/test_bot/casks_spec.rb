@@ -19,6 +19,21 @@ RSpec.describe Homebrew::TestBot::Casks, :cask do
     allow(Utils::Bottles).to receive(:tag).and_return(Utils::Bottles::Tag.from_symbol(:arm64_tahoe))
   end
 
+  it "plans conflict removal, audit and installation in a macOS dry run" do
+    installer = instance_double(Cask::Installer, installed_conflicts: ["old-caffeine"])
+    allow(Cask::Installer).to receive(:new).and_return(installer)
+    expect(Cask::CI::Check).not_to receive(:all)
+
+    args = Homebrew::Cmd::TestBotCmd.new(%w[--dry-run --cleanup]).args
+    phase = described_class.new(dry_run: true)
+    phase.run!([cask.token], added_casks: [cask.token], args:)
+
+    expect(phase.steps.first&.command).to eq(%w[brew fetch --cask --retry local-caffeine --force])
+    expect(phase.steps.map(&:command_short))
+      .to include("audit --cask local-caffeine --online --new", "uninstall --cask old-caffeine",
+                  "install --cask local-caffeine", "Check uninstall local-caffeine")
+  end
+
   it "reinstalls a formula removed by a conflict and records its post-install failures", :integration_test do
     ENV.delete("HOMEBREW_NO_AUTOREMOVE")
     setup_test_formula "testball_bottle", 'post_install_steps { run "/usr/bin/false" }'
@@ -102,6 +117,27 @@ RSpec.describe Homebrew::TestBot::Casks, :cask do
     runner.run!([cask.token], added_casks: [], args: Homebrew::Cmd::TestBotCmd.new([]).args)
 
     expect(runner.steps.map { |step| [step.name, step.status] }).to eq([["fetch", :failed], ["audit", :passed]])
+  end
+
+  it "resolves a third-party cask's core dependency through the API without a cask checkout", :trust_store do
+    tap = Tap.fetch("third-party/tap")
+    Homebrew::Trust.trust!(:tap, tap)
+    root = Cask::CaskLoader.load("third-party/tap/third-party-cask")
+    allow(root.depends_on).to receive(:cask).and_return(["api-only"])
+    stub_cask_loader root, root.full_name
+    allow(CoreCaskTap.instance).to receive(:path).and_return(mktmpdir/"absent-cask")
+    ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+    Homebrew::API::Internal.clear_cache
+    api = Hash.new { {} }.merge("casks" => { "api-only" => { "version" => "1" } }, "cask_tap_git_head" => "0"*40)
+    expect(Homebrew::API::Internal).to receive(:fetch_packages_api!).and_return([api, false])
+    installer = Cask::Installer.new(root)
+    allow(installer).to receive(:primary_container).and_return(instance_double(UnpackStrategy::Zip, dependencies: []))
+    allow(Cask::Installer).to receive(:new).with(root, verbose: false).and_return(installer)
+
+    runner = described_class.new(tap:)
+    runner.run!([root.token], added_casks: [root.token], args: Homebrew::Cmd::TestBotCmd.new([]).args)
+    expect(runner.failed_steps.map(&:output)).to be_empty
+    expect(runner.steps.map(&:command)).to include(["brew", "audit", "--cask", root.full_name, "--online", "--new"])
   end
 
   test_each([:never_installed, :partially_installed, :already_installed]) do |state|

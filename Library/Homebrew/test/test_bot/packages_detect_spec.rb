@@ -90,7 +90,14 @@ RSpec.describe Homebrew::TestBot::PackagesDetect do
     expect(Homebrew::Cmd::TestBotCmd.new(["--only-formulae-detect"]).args.only_packages_detect?).to be(true)
   end
 
-  it "detects casks in a local tap before it has an origin" do
+  it "requires a tap to detect changed casks" do
+    detect = described_class.new("HEAD", tap: nil, git: "git", dry_run: true, fail_fast: false, verbose: false)
+
+    expect { detect.run!(args: Homebrew::Cmd::TestBotCmd.new(["--only-casks"]).args) }
+      .to raise_error(UsageError, /specify a cask or a tap/)
+  end
+
+  it "keeps Git and positional selection with an explicit added cask in a local tap without an origin" do
     %w[CI GITHUB_ACTIONS GITHUB_REPOSITORY].each { |key| ENV.delete(key) }
     mktmpdir do |path|
       tap = Tap.fetch("thirdparty/local")
@@ -102,10 +109,13 @@ RSpec.describe Homebrew::TestBot::PackagesDetect do
       Utils.safe_popen_read(*git, "add", ".")
       Utils.safe_popen_read(*git, "commit", "-m", "Add a cask")
 
-      detect = described_class.new("HEAD", tap:, git: "git", dry_run: false, fail_fast: false, verbose: false)
-      detect.run!(args: Homebrew::Cmd::TestBotCmd.new(["--only-packages-detect"]).args)
-
-      expect(detect.added_casks).to eq(["thirdparty/local/app"])
+      args = Homebrew::Cmd::TestBotCmd.new(%w[--only-casks --added-casks=other HEAD other]).args
+      casks = instance_double(Homebrew::TestBot::Casks, failed_steps: [], ignored_steps: [])
+      allow(Homebrew::TestBot::Casks).to receive(:new).and_return(casks)
+      expect(casks).to receive(:run!).with(["thirdparty/local/app"],
+                                           added_casks: contain_exactly("thirdparty/local/app", "other"), args:)
+      expect(casks).to receive(:run!).with(["thirdparty/local/other"], added_casks: ["other"], args:)
+      path.cd { Homebrew::TestBot::TestRunner.run!(tap, git: "git", args:) }
     end
   end
 end

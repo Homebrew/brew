@@ -3201,6 +3201,7 @@ _brew_test_bot() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --added-casks
       --added-formulae
       --build-dependents-from-source
       --build-from-source
@@ -3208,6 +3209,7 @@ _brew_test_bot() {
       --debug
       --deleted-formulae
       --dry-run
+      --except
       --fail-fast
       --git-email
       --git-name
@@ -3216,6 +3218,7 @@ _brew_test_bot() {
       --keep-old
       --local
       --only-bottles-fetch
+      --only-casks
       --only-cleanup-after
       --only-cleanup-before
       --only-formulae
@@ -3229,6 +3232,7 @@ _brew_test_bot() {
       --root-url
       --skip-checksum-only-audit
       --skip-dependents
+      --skip-install
       --skip-livecheck
       --skip-new
       --skip-new-strict
@@ -3242,6 +3246,7 @@ _brew_test_bot() {
       --tap
       --test-default-formula
       --tested-formulae
+      --testing-casks
       --testing-formulae
       --verbose
       "

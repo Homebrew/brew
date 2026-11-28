@@ -45,7 +45,7 @@ module Homebrew
           @skipped_or_failed_formulae_output_path = T.let(skipped_or_failed_formulae_output_path,
                                                           T.nilable(Pathname))
 
-          if no_only_args?(args) || args.only_formulae?
+          if full_run?(args) || args.only_formulae?
             ensure_blank_file_exists!(bottle_output_path)
             ensure_blank_file_exists!(linkage_output_path)
             ensure_blank_file_exists!(skipped_or_failed_formulae_output_path)
@@ -108,7 +108,7 @@ module Homebrew
           steps_output_path.unlink if steps_output_path.exist?
           steps_output_path.write(steps_output)
 
-          if args.junit? && (no_only_args?(args) || args.only_casks? ||
+          if args.junit? && (full_run?(args) || args.only_casks? ||
                              args.only_formulae? || args.only_formulae_dependents?)
             junit_filters = %w[audit test]
             junit = Junit.new(tests)
@@ -117,6 +117,14 @@ module Homebrew
           end
 
           failed_steps.empty?
+        end
+
+        # Whether the caller selected the default set of phases.
+        sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
+        def full_run?(args)
+          [args.only_cleanup_before?, args.only_setup?, args.only_tap_syntax?, args.only_packages_detect?,
+           args.only_formulae?, args.only_casks?, args.only_formulae_dependents?,
+           args.only_bottles_fetch?, args.only_cleanup_after?].none?
         end
 
         private
@@ -128,20 +136,6 @@ module Homebrew
           else
             FileUtils.touch(file)
           end
-        end
-
-        sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
-        def no_only_args?(args)
-          any_only = args.only_cleanup_before? ||
-                     args.only_setup? ||
-                     args.only_tap_syntax? ||
-                     args.only_casks? ||
-                     args.only_formulae? ||
-                     args.only_packages_detect? ||
-                     args.only_formulae_dependents? ||
-                     args.only_bottles_fetch? ||
-                     args.only_cleanup_after?
-          !any_only
         end
 
         sig {
@@ -158,76 +152,38 @@ module Homebrew
         }
         def build_tests(argument, tap:, git:, output_paths:, skip_setup:,
                         skip_cleanup_before:, skip_cleanup_after:, args:)
-          no_only_args = no_only_args?(args)
+          full_run = full_run?(args)
+          test_formulae = full_run || args.only_formulae?
+          test_casks = full_run || args.only_casks?
 
-          if !skip_setup && (no_only_args || args.only_setup?)
-            setup = Setup.new(dry_run:   args.dry_run?,
-                              fail_fast: args.fail_fast?,
-                              verbose:   args.verbose?)
+          options = { dry_run: args.dry_run?, fail_fast: args.fail_fast?, verbose: args.verbose? }
+          setup = Setup.new(**options) if !skip_setup && (full_run || args.only_setup?)
+          if full_run || args.only_tap_syntax?
+            tap_syntax = TapSyntax.new(tap: tap || CoreTap.instance, git:, **options)
           end
 
-          if no_only_args || args.only_tap_syntax?
-            tap_syntax = TapSyntax.new(tap:       tap || CoreTap.instance,
-                                       dry_run:   args.dry_run?,
-                                       git:,
-                                       fail_fast: args.fail_fast?,
-                                       verbose:   args.verbose?)
-          end
-
-          detect_packages = (no_only_args || args.only_formulae? || args.only_casks?) &&
+          detect_packages = (test_formulae || test_casks) &&
                             [args.testing_casks, args.testing_formulae, args.added_formulae,
                              args.deleted_formulae].all?(&:nil?)
           if args.only_packages_detect? || detect_packages
-            detect = PackagesDetect.new(argument, tap:, git:, dry_run: args.dry_run?,
-                                        fail_fast: args.fail_fast?, verbose: args.verbose?)
+            detect = PackagesDetect.new(argument, tap:, git:, **options)
           end
-
-          if no_only_args || args.only_casks?
-            casks = Casks.new(tap:, dry_run: args.dry_run?, fail_fast: args.fail_fast?, verbose: args.verbose?)
-          end
-
-          if no_only_args || args.only_formulae?
-            formulae = Formulae.new(tap:,
-                                    git:,
-                                    dry_run:      args.dry_run?,
-                                    fail_fast:    args.fail_fast?,
-                                    verbose:      args.verbose?,
-                                    output_paths:)
-          end
-
-          if !args.skip_dependents? && (no_only_args || args.only_formulae? || args.only_formulae_dependents?)
-            formulae_dependents = FormulaeDependents.new(tap:,
-                                                         git:,
-                                                         dry_run:   args.dry_run?,
-                                                         fail_fast: args.fail_fast?,
-                                                         verbose:   args.verbose?)
+          casks = Casks.new(tap:, **options) if test_casks
+          formulae = Formulae.new(tap:, git:, output_paths:, **options) if test_formulae
+          if !args.skip_dependents? && (test_formulae || args.only_formulae_dependents?)
+            formulae_dependents = FormulaeDependents.new(tap:, git:, **options)
           end
 
           if Homebrew::TestBot.cleanup?(args)
-            if !skip_cleanup_before && (no_only_args || args.only_cleanup_before?)
-              cleanup_before = CleanupBefore.new(tap:,
-                                                 git:,
-                                                 dry_run:   args.dry_run?,
-                                                 fail_fast: args.fail_fast?,
-                                                 verbose:   args.verbose?)
+            if !skip_cleanup_before && (full_run || args.only_cleanup_before?)
+              cleanup_before = CleanupBefore.new(tap:, git:, **options)
             end
-
-            if !skip_cleanup_after && (no_only_args || args.only_cleanup_after?)
-              cleanup_after = CleanupAfter.new(tap:,
-                                               git:,
-                                               dry_run:   args.dry_run?,
-                                               fail_fast: args.fail_fast?,
-                                               verbose:   args.verbose?)
+            if !skip_cleanup_after && (full_run || args.only_cleanup_after?)
+              cleanup_after = CleanupAfter.new(tap:, git:, **options)
             end
           end
 
-          if args.only_bottles_fetch?
-            bottles_fetch = BottlesFetch.new(tap:,
-                                             git:,
-                                             dry_run:   args.dry_run?,
-                                             fail_fast: args.fail_fast?,
-                                             verbose:   args.verbose?)
-          end
+          bottles_fetch = BottlesFetch.new(tap:, git:, **options) if args.only_bottles_fetch?
 
           { setup:, tap_syntax:, detect:, casks:, formulae:, formulae_dependents:,
             cleanup_before:, cleanup_after:, bottles_fetch: }

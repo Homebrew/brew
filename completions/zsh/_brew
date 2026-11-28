@@ -246,7 +246,7 @@ __brew_internal_commands() {
     'tab:Edit tab information for installed formulae or casks'
     'tap:Tap a repository containing formulae, casks, or external commands'
     'tap-info:Show detailed information about one or more taps'
-    'tap-new:Generate the template files for a new tap'
+    'tap-new:Generate a new tap with GitHub Actions workflows for testing formulae and casks'
     'test:Run the test method provided by an installed formula'
     'test-bot:Tests the full lifecycle of a Homebrew change to a tap (Git repository)'
     'tests:Run Homebrew'\''s unit and integration tests'
@@ -2615,6 +2615,7 @@ _brew_test() {
 # brew test-bot
 _brew_test_bot() {
   _arguments \
+    '(--only-packages-detect)--added-casks[Treat these testing casks as newly added]' \
     '(--only-packages-detect)--added-formulae[Use these added formulae rather than running package detection]' \
     '--build-dependents-from-source[Build a limited set of dependents from source in addition to testing bottles. Up to 10 per formula per shard, prioritising popular dependents in a sharded group]' \
     '--build-from-source[Build from source rather than building bottles]' \
@@ -2622,6 +2623,7 @@ _brew_test_bot() {
     '--debug[Display any debugging information]' \
     '(--only-packages-detect)--deleted-formulae[Use these deleted formulae rather than running package detection]' \
     '--dry-run[Print what would be done rather than doing it]' \
+    '--except[Skip the listed `brew audit` methods for formulae and casks]' \
     '--fail-fast[Immediately exit on a failing step]' \
     '--git-email[Set the Git author/committer email to the given email]' \
     '--git-name[Set the Git author/committer names to the given name]' \
@@ -2629,33 +2631,36 @@ _brew_test_bot() {
     '--junit[generate a JUnit XML test results file]' \
     '--keep-old[Run `brew bottle --keep-old` to build new bottles for a single platform]' \
     '--local[Ask Homebrew to write verbose logs under `./logs/` and set `$HOME` to `./home/`]' \
-    '(--only-packages-detect)--only-bottles-fetch[Only run the bottles fetch steps. This optional post-upload test checks that all the bottles were uploaded correctly. It is not run unless requested and only needs to be run on a single machine. The bottle commit to be tested must be on the tested branch]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --skip-setup)--only-cleanup-after[Only run the post-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
-    '(--only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-cleanup-before[Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-formulae[Only run the formulae steps]' \
-    '(--skip-dependents --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-cleanup-after --skip-setup)--only-formulae-dependents[Only run the formulae dependents steps]' \
+    '(--only-packages-detect --only-casks)--only-bottles-fetch[Only run the bottles fetch steps. This optional post-upload test checks that all the bottles were uploaded correctly. It is not run unless requested and only needs to be run on a single machine. The bottle commit to be tested must be on the tested branch]' \
+    '(--only-bottles-fetch --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-casks[Only fetch, audit and test changed or named casks]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-casks --only-formulae --only-packages-detect --only-formulae-dependents --skip-setup)--only-cleanup-after[Only run the post-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
+    '(--only-setup --only-tap-syntax --only-casks --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-cleanup-before[Only run the pre-cleanup step. Needs `--cleanup`, except in GitHub Actions]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-casks --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-formulae[Only run the formulae steps]' \
+    '(--skip-dependents --only-cleanup-before --only-setup --only-tap-syntax --only-casks --only-formulae --only-packages-detect --only-cleanup-after --skip-setup)--only-formulae-dependents[Only run the formulae dependents steps]' \
     '--only-json-tab[Run `brew bottle --only-json-tab` to build new bottles that do not contain a tab]' \
-    '(--testing-formulae --added-formulae --deleted-formulae --only-bottles-fetch --only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-dependents --only-cleanup-after --skip-setup)--only-packages-detect[Only detect added, modified and deleted formulae and casks]' \
-    '(--only-cleanup-before --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-setup[Only run the local system setup check step]' \
-    '(--only-cleanup-before --only-setup --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-tap-syntax[Only run the tap syntax check step]' \
+    '(--testing-formulae --added-formulae --deleted-formulae --testing-casks --added-casks --only-bottles-fetch --only-cleanup-before --only-setup --only-tap-syntax --only-casks --only-formulae --only-formulae-dependents --only-cleanup-after --skip-setup)--only-packages-detect[Only detect added, modified and deleted formulae and casks]' \
+    '(--only-cleanup-before --only-tap-syntax --only-casks --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-setup[Only run the local system setup check step]' \
+    '(--only-cleanup-before --only-setup --only-casks --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after --skip-setup)--only-tap-syntax[Only run the tap syntax check step]' \
     '--publish[Publish the uploaded bottles]' \
     '--quiet[Make some output more quiet]' \
     '--root-url[Use the specified URL as the root of the bottle'\''s URL instead of Homebrew'\''s default]' \
     '--skip-checksum-only-audit[Don'\''t audit checksum-only changes]' \
     '(--only-formulae-dependents)--skip-dependents[Don'\''t test any dependents]' \
-    '--skip-livecheck[Don'\''t test livecheck]' \
-    '--skip-new[Don'\''t pass `--new` to `brew audit` for new formulae]' \
-    '--skip-new-strict[Don'\''t pass `--strict` to `brew audit` for new formulae]' \
-    '--skip-online-checks[Don'\''t pass `--online` to `brew audit` and skip `brew livecheck`]' \
+    '--skip-install[With `--only-casks`, fetch and audit casks without installing them]' \
+    '--skip-livecheck[Skip livecheck for formulae and casks]' \
+    '--skip-new[Don'\''t pass `--new` to `brew audit` for new packages]' \
+    '--skip-new-strict[Don'\''t pass `--strict` to `brew audit` for new packages]' \
+    '--skip-online-checks[Skip online audit checks and livecheck, including for new packages]' \
     '--skip-relocation[Run `brew bottle --skip-relocation` to build new bottles that don'\''t require relocation]' \
     '--skip-revision-audit[Don'\''t audit the revision]' \
-    '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after)--skip-setup[Don'\''t check if the local system is set up correctly]' \
+    '(--only-cleanup-before --only-setup --only-tap-syntax --only-casks --only-formulae --only-packages-detect --only-formulae-dependents --only-cleanup-after)--skip-setup[Don'\''t check if the local system is set up correctly]' \
     '--skip-stable-version-audit[Don'\''t audit the stable version]' \
     '--skipped-or-failed-formulae[Use these skipped or failed formulae from formulae steps for a formulae dependents step]' \
     '--stable[Only run the tap syntax checks needed on stable brew]' \
-    '--tap[Use the Git repository of the given tap. Defaults to the core tap for syntax checking]' \
+    '--tap[Use the given tap. Defaults to the current tap, or the core tap for syntax checking]' \
     '--test-default-formula[Use a default testing formula when not building a tap and no other formulae are specified]' \
     '--tested-formulae[Use these tested formulae from formulae steps for a formulae dependents step]' \
+    '(--only-packages-detect)--testing-casks[Use these testing casks rather than running package detection]' \
     '(--only-packages-detect)--testing-formulae[Use these testing formulae rather than running package detection]' \
     '--verbose[Print test step output in real time. Has the side effect of passing output as raw bytes instead of re-encoding in UTF-8]'
 }
