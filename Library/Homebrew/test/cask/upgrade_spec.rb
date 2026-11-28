@@ -233,6 +233,14 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(renamed_app.installed_version).to eq "1.0.0"
       end
 
+      it "shows the version of an app that has updated itself as the installed version" do
+        stub_cask_bundle_version(auto_updates_path, short_version: "2.60")
+        expect(described_class).to receive(:show_upgrade_summary)
+          .with([version_change("auto-updates", "2.60", "2.61")], dry_run: true)
+
+        described_class.upgrade_casks!(auto_updates, dry_run: true, args:)
+      end
+
       it 'excludes "auto_updates true" casks when HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS is set' do
         allow(Homebrew::EnvConfig).to receive(:upgrade_auto_updates_casks?).and_call_original
 
@@ -938,6 +946,13 @@ RSpec.describe Cask::Upgrade, :cask do
       expect { described_class.upgrade_casks!(local_caffeine, args:) }
         .to change(local_caffeine, :installed_version).from("1.2.2").to("1.2.3")
     end
+  end
+
+  it "prints the version of an app that has updated itself when upgrading it" do
+    Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/auto-updates"))).install
+    stub_cask_bundle_version(auto_updates_path, short_version: "2.60")
+
+    expect { described_class.upgrade_casks!(auto_updates, args:) }.to output(/^  2\.60 -> 2\.61$/).to_stdout
   end
 
   context "when upgrading after a forced upgrade without a cask receipt" do

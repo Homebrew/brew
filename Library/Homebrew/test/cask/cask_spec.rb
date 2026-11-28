@@ -797,10 +797,50 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#displayed_version" do
+    let(:cask_file) { Pathname(mktmpdir)/"auto-updates-bundle-check.rb" }
+
+    test_each([
+      ["2.57", "2.60", "2.61", "2.60"],
+      ["2.57", "2.61", "2.61", "2.61"],
+      ["157.0", "158.0", "158.0.1", "158.0"],
+      ["1.73.90.0", "131.1.73.97", "1.73.98.0", "1.73.90.0"],
+      ["2026.3.9", "7.2.1", "2026.4.1", "2026.3.9"],
+      ["2.57", "2.60", "2.61,3000", "2.57"],
+      ["4200", "Build 4210", "4215", "4200"],
+    ]) do |receipt_version, app_version, tap_version, expected|
+      it "is #{expected} for receipt #{receipt_version}, app version #{app_version} and tap #{tap_version}" do
+        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts: ['app "MyFancyApp.app"'])
+        allow(cask).to receive(:installed_version).and_return(receipt_version)
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: app_version)
+
+        expect(cask.displayed_version).to eq(expected)
+      end
+    end
+
+    it "is the receipt version when the app's `Info.plist` cannot be read" do
+      cask = write_auto_updates_cask(cask_file, version: "2.61", artifacts: ['app "MyFancyApp.app"'])
+      allow(cask).to receive(:installed_version).and_return("2.57")
+      stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.60")
+      allow(Homebrew::BundleVersion).to receive(:from_info_plist)
+        .and_raise(ErrorDuringExecution.new(["plutil"], status: 1))
+
+      expect(cask.displayed_version).to eq("2.57")
+    end
+
+    it "is the receipt version for a cask that does not update itself" do
+      cask = Cask::CaskLoader.load("local-caffeine")
+      allow(cask).to receive(:installed_version).and_return("1.2.2")
+      stub_cask_bundle_version(cask.config.appdir/"Caffeine.app", short_version: "1.2.2.5")
+
+      expect(cask.displayed_version).to eq("1.2.2")
+    end
+  end
+
   describe "#outdated_info" do
     it "includes pinned cask details" do
       cask = Cask::CaskLoader.load("local-caffeine")
-      allow(cask).to receive_messages(outdated_version: "1.2.2", pinned?: true, pinned_version: "1.2.2")
+      allow(cask).to receive_messages(installed_version: "1.2.2", pinned?: true, pinned_version: "1.2.2")
 
       expect(cask.outdated_info(false, true, false, false, false))
         .to eq("local-caffeine (1.2.2) != 1.2.3 [pinned at 1.2.2]")
@@ -808,6 +848,22 @@ RSpec.describe Cask::Cask, :cask do
         pinned:         true,
         pinned_version: "1.2.2",
       )
+    end
+
+    context "when the app has updated itself" do
+      let(:cask) { Cask::CaskLoader.load("local-caffeine") }
+
+      before do
+        allow(cask).to receive_messages(installed_version: "1.2.2", displayed_version: "1.2.2.5")
+      end
+
+      it "shows the app's version" do
+        expect(cask.outdated_info(false, true, false, false, false)).to eq("local-caffeine (1.2.2.5) != 1.2.3")
+      end
+
+      it "keeps the receipt version in JSON" do
+        expect(cask.outdated_info(false, false, true, false, false)).to include(installed_versions: ["1.2.2"])
+      end
     end
   end
 

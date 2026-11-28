@@ -553,7 +553,7 @@ module Homebrew
           end
         when Cask::Cask
           if quiet
-            installed_version = formula_or_cask.installed_version
+            installed_version = formula_or_cask.displayed_version
             installed = installed_version.present?
             tab = Cask::Tab.for_cask(formula_or_cask)
 

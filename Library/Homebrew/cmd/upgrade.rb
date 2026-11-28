@@ -855,7 +855,7 @@ module Homebrew
         prefetch_names&.replace(valid_casks.map(&:full_name))
         prefetch_upgrades&.replace(
           valid_casks.map do |cask|
-            VersionChange.new(name: cask.full_name, old_version: cask.installed_version.to_s,
+            VersionChange.new(name: cask.full_name, old_version: cask.displayed_version.to_s,
                               new_version: cask.version.to_s)
           end,
         )

@@ -424,6 +424,25 @@ module Cask
       bundle_version&.version
     end
 
+    # The installed version to show to users. An app that updates itself gets
+    # ahead of its receipt, so its own version is shown when it lies between
+    # the receipt's version and the cask's.
+    sig { returns(T.nilable(String)) }
+    def displayed_version
+      installed = installed_version
+      return installed if installed.nil? || !auto_updates_app?
+
+      app_version = bundle_short_version
+      if [installed, app_version, version.to_s].all?(/\A\d+(?:\.\d+)*\z/) &&
+         Version.new(app_version.to_s).between?(Version.new(installed), Version.new(version))
+        app_version
+      else
+        installed
+      end
+    rescue ErrorDuringExecution
+      installed
+    end
+
     sig { returns(Tab) }
     def tab
       Tab.for_cask(self)
@@ -554,7 +573,7 @@ module Cask
       else
         pinned = " [pinned at #{pinned_version}]" if pinned?
 
-        "#{token} (#{installed_version}) != #{version}#{pinned}"
+        "#{token} (#{displayed_version}) != #{version}#{pinned}"
       end
     end
 

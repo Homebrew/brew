@@ -182,6 +182,33 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "shows the version of an app that has updated itself as the installed version" do
+    cask = Cask::CaskLoader.load("local-transmission")
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    allow(cask).to receive_messages(installed?:        true,
+                                    installed_version: "2.59",
+                                    displayed_version: "2.60",
+                                    outdated?:         true,
+                                    version:           Cask::DSL::Version.new("2.61"),
+                                    supports_linux?:   false)
+    (Cask::Caskroom.path/"local-transmission/2.59").mkpath
+    allow(Cask::Caskroom).to receive(:casks).and_return([])
+    allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(Cask::Tab.empty)
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> local-transmission #{Formatter.success("↑")} (Transmission): 2.60 → 2.61
+      BitTorrent client
+      https://transmissionbt.com/
+      Installed (as dependency)
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/l/local-transmission.rb
+      ==> Installed Versions
+      local-transmission #{Formatter.success("↑")} 2.60 → 2.61 (0B)
+      #{installed_macos_requirement}
+      ==> Apps
+      Transmission.app
+    EOS
+  end
+
   describe "installed sibling cask versions" do
     let(:cask) { Cask::Cask.new("example") { version "3.0" } }
     let(:installed_cask) { Cask::Cask.new("example@dev") { version "3.2.0-RC3" } }

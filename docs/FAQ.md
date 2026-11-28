@@ -320,6 +320,7 @@ For a versioned cask that installs a single readable app bundle, Homebrew compar
 The default `brew upgrade` includes the cask when the installed app appears older and skips reinstalling it when the installed app appears to be the same version or newer.
 For an eligible, unpinned cask, Homebrew refreshes the Caskroom version, installed caskfile and receipt when the bundle version exactly matches the newer cask version and both caskfiles specify the same installation artifacts.
 This lets `brew uninstall` and `brew uninstall --zap` use the current cask’s removal instructions. If the installation artifacts have changed, use `brew reinstall --cask <cask>` to apply them.
+`brew info`, `brew outdated --verbose` and `brew upgrade` show the app’s own version as the installed version when it lies between the recorded version and the cask’s current version.
 
 This comparison is not available for every artifact or versioning scheme.
 When Homebrew cannot make a reliable comparison, it normally skips the self-updating cask instead of guessing.
