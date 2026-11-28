@@ -38,7 +38,8 @@ module Homebrew
 
     sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
     def local?(args)
-      args.local? || GitHub::Actions.env_set?
+      # Cask installers and GUI apps use the runner's actual home directory.
+      args.local? || (GitHub::Actions.env_set? && !args.only_casks?)
     end
 
     sig { params(tap: T.nilable(Tap)).void }
@@ -160,7 +161,7 @@ module Homebrew
       ENV["HOMEBREW_GIT_EMAIL"] = args.git_email ||
                                   "1589480+BrewTestBot@users.noreply.github.com"
 
-      Homebrew.failed = !TestRunner.run!(tap, git: GIT, args:)
+      Homebrew.failed = true unless TestRunner.run!(tap, git: GIT, args:)
     end
   end
 end

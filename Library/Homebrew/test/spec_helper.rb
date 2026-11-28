@@ -331,6 +331,7 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
 
     @__homebrew_failed = Homebrew.failed?
 
+    initial_dirs = Keg.prefix_subdirectories
     @__files_before_test = Test::Helper::Files.find_files
 
     @__env = ENV.to_hash # dup doesn't work on ENV
@@ -464,6 +465,7 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
         HOMEBREW_LIBRARY_PATH/"test/.cursor",
         HOMEBREW_LIBRARY_PATH/"test/Library",
       ]
+      (Keg.prefix_subdirectories - initial_dirs).each { |dir| Utils::Path.rmdir_if_possible(dir) unless dir.symlink? }
 
       files_after_test = Test::Helper::Files.find_files
 

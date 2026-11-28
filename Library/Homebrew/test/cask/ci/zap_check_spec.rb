@@ -17,8 +17,10 @@ RSpec.describe Cask::CI::ZapCheck do
   end
 
   it "selects the explicit tap-source mode in the zap subprocess" do
+    ENV["HOME"] = mktmpdir.to_s
     expect(described_class).to receive(:system_command)
       .with(ENV.fetch("HOMEBREW_BREW_FILE"), args: ["generate-zap", "--tap-source", "Casks/example.rb"],
+            env: { "HOME" => Dir.home(ENV.fetch("USER")) },
             print_stderr: false, timeout: Cask::CI::ZapCheck::GENERATE_ZAP_TIMEOUT)
       .and_return(instance_double(SystemCommand::Result))
 

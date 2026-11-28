@@ -73,7 +73,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
       )
     end
 
-    it "includes test resources in the existing bottle-build fetch" do
+    it "fetches test resources and respects offline and online audit options for the bottle build" do
       foo = formula("foo") do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/foo-1.0.tar.gz"
@@ -85,9 +85,15 @@ RSpec.describe Homebrew::TestBot::Formulae do
       allow(formulae).to receive(:install_ca_certificates_if_needed)
       allow(formulae).to receive(:skipped)
 
-      formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new([]).args)
+      args = Homebrew::Cmd::TestBotCmd.new(%w[--except=homepage --skip-revision-audit]).args
+      formulae.formula!("foo", args:)
+      formulae.added_formulae = ["foo"]
+      formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new(["--skip-online-checks"]).args)
 
-      expect(formulae.steps.map(&:command)).to include(%w[brew fetch --formula --retry foo --test --build-bottle])
+      expect(formulae.steps.map(&:command)).to include(%w[brew audit --formula foo --strict],
+                                                       %w[brew fetch --formula --retry foo --test --build-bottle],
+                                                       %w[brew audit --formula foo --online --git --skip-style
+                                                          --except=homepage,revision])
     end
 
     context "when cleaning up dependencies" do
@@ -189,10 +195,8 @@ RSpec.describe Homebrew::TestBot::Formulae do
         incompatible = instance_double(Formula, bottle: nil)
         allow(Formulary).to receive(:factory).with("compatible").and_return(compatible)
         allow(Formulary).to receive(:factory).with("incompatible").and_return(incompatible)
-        padded_prefix = Utils::Bottles.tag.padded_prefix
-        raise "Current tag has no padded prefix" if padded_prefix.nil?
-
-        stub_const("HOMEBREW_PREFIX", Pathname(padded_prefix))
+        allow(Utils::Bottles).to receive(:tag).and_return(Utils::Bottles::Tag.from_symbol(:arm64_tahoe))
+        stub_const("HOMEBREW_PREFIX", Pathname(Homebrew::MACOS_ARM64_BOTTLE_PREFIX))
 
         formulae.install_padded_prefix_source_dependencies(%w[compatible incompatible])
 

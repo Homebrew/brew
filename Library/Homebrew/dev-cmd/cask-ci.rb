@@ -34,6 +34,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        # odeprecated "`brew cask-ci`", "`brew test-bot --only-casks`"
         operation = args.named.fetch(0)
         cask_path = args.named.second
 
@@ -46,14 +47,9 @@ module Homebrew
           end
 
           macos_requirement_satisfied = cask.depends_on.macos&.satisfied? != false
-          cask_conflicts = cask.conflicts_with&.dig(:cask).to_a.select do |conflict|
-            Cask::CaskLoader.load(conflict).installed?
-          end
-          formula_conflicts = cask.conflicts_with&.dig(:formula).to_a.select do |conflict|
-            Formula[conflict].any_version_installed?
-          end
-
-          dependencies = Cask::Installer.new(cask).missing_cask_and_formula_dependencies
+          installer = Cask::Installer.new(cask)
+          conflicts = installer.installed_conflicts
+          dependencies = installer.missing_cask_and_formula_dependencies
           cask_dependencies = dependencies.grep(Cask::Cask).map(&:full_name)
           formula_dependencies = dependencies.grep(Formula).map(&:full_name)
 
@@ -64,9 +60,8 @@ module Homebrew
           end
 
           File.open(ENV.fetch("GITHUB_ENV"), "a") do |file|
-            file.puts "CASK_CONFLICTS=#{cask_conflicts.join(" ")}" if cask_conflicts.present?
+            file.puts "CASK_CONFLICTS=#{conflicts.join(" ")}" if conflicts.present?
             file.puts "CASK_DEPENDENCIES=#{cask_dependencies.join(" ")}" if cask_dependencies.present?
-            file.puts "FORMULA_CONFLICTS=#{formula_conflicts.join(" ")}" if formula_conflicts.present?
           end
         when "install"
           cask = load_cask(require_cask_path!(operation, cask_path))

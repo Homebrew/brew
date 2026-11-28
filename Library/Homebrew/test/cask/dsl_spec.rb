@@ -813,11 +813,12 @@ RSpec.describe Cask::DSL, :cask, :no_api do
 
       cask = Cask::Cask.new("requested-cask", tap:) do
         version "1.0"
-        conflicts_with cask: "#{tap}/conflicting-cask"
+        conflicts_with cask: ["#{tap}/missing-cask", "#{tap}/conflicting-cask"]
       end
       Homebrew::Trust.trust!(:cask, "#{tap}/requested-cask")
 
       expect { Cask::Installer.new(cask).check_conflicts }.not_to raise_error
+      expect(Cask::Installer.new(cask).installed_conflicts).to be_empty
     ensure
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
@@ -844,6 +845,7 @@ RSpec.describe Cask::DSL, :cask, :no_api do
 
       expect { Cask::Installer.new(cask).check_conflicts }
         .to raise_error(Cask::CaskConflictError, "Cask 'requested-cask' conflicts with 'conflicting-cask'.")
+      expect(Cask::Installer.new(cask).installed_conflicts).to eq(["#{tap}/conflicting-cask"])
     ensure
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end

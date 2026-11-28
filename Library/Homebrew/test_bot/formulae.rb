@@ -746,30 +746,14 @@ module Homebrew
           # Online checks are a bit flaky and less useful for PRs that modify multiple formulae.
           skip_online_checks = args.skip_online_checks? || (@testing_formulae_count > 5)
 
-          fetch_args = [formula_name, "--test", "--build-bottle"]
-          fetch_args << "--force" if cleanup?(args)
-
-          audit_args = [formula_name]
-          audit_args << "--online" unless skip_online_checks
-          if new_formula
-            if !args.skip_new?
-              audit_args << "--new"
-            elsif !args.skip_new_strict?
-              audit_args << "--strict"
-            end
-          else
-            audit_args << "--git" << "--skip-style"
-            audit_args << "--except=unconfirmed_checksum_change" if args.skip_checksum_only_audit?
-            audit_args << "--except=stable_version" if args.skip_stable_version_audit?
-            audit_args << "--except=revision" if args.skip_revision_audit?
-          end
+          audit = audit_command(:formula, formula_name, args:, new_package: new_formula, online: !skip_online_checks)
 
           # This needs to be done before any network operation.
           install_ca_certificates_if_needed
 
           if (messages = unsatisfied_requirements_messages(formula))
-            test "brew", "fetch", "--formula", "--retry", *fetch_args
-            test "brew", "audit", "--formula", *audit_args
+            fetch(:formula, formula_name, args:)
+            test(*audit)
 
             skipped formula_name, messages
             return
@@ -796,7 +780,7 @@ module Homebrew
 
           info_header "Starting tests for #{formula_name}"
 
-          test "brew", "fetch", "--formula", "--retry", *fetch_args
+          fetch(:formula, formula_name, args:)
 
           env = {}
           env["HOMEBREW_GIT_PATH"] = nil if deps.any? do |d|
@@ -823,7 +807,7 @@ module Homebrew
           livecheck(formula) if !args.skip_livecheck? && !skip_online_checks
 
           test "brew", "style", "--formula", formula_name, report_analytics: true
-          test "brew", "audit", "--formula", *audit_args, report_analytics: true unless formula.deprecated?
+          test(*audit, report_analytics: true) unless formula.deprecated?
           unless install_step_passed
             failed(formula_name, "install failed", ignore_failures:)
 

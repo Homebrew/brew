@@ -32,7 +32,7 @@ module Homebrew
           testsuite.add_attribute "timestamp", start_time(test.steps.fetch(0)).iso8601
 
           test.steps.each do |step|
-            next unless filters.any? { |filter| step.command_short.start_with? filter }
+            next if !test.is_a?(Casks) && filters.none? { |filter| step.command_short.start_with? filter }
 
             testcase = testsuite.add_element "testcase"
             testcase.add_attribute "name", step.command_short
@@ -42,7 +42,7 @@ module Homebrew
 
             next if step.passed?
 
-            elem = testcase.add_element "failure"
+            elem = testcase.add_element(step.ignored? ? "skipped" : "failure")
             elem.add_attribute "message", "#{step.status}: #{step.command.join(" ")}"
           end
         end

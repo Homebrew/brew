@@ -71,6 +71,7 @@ module Cask
         args << "--tap-source" if cask_path.end_with?(".rb")
         system_command ENV.fetch("HOMEBREW_BREW_FILE"),
                        args:         [*args, cask_path],
+                       env:          { "HOME" => Dir.home(ENV.fetch("USER")) }, # GUI apps write to the account home.
                        print_stderr: false,
                        timeout:      GENERATE_ZAP_TIMEOUT
       rescue Timeout::Error

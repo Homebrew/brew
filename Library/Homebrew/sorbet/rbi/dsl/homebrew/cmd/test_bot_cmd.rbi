@@ -12,6 +12,9 @@ end
 
 class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(T::Array[String])) }
+  def added_casks; end
+
+  sig { returns(T.nilable(T::Array[String])) }
   def added_formulae; end
 
   sig { returns(T::Boolean) }
@@ -28,6 +31,9 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def dry_run?; end
+
+  sig { returns(T.nilable(T::Array[String])) }
+  def except; end
 
   sig { returns(T::Boolean) }
   def fail_fast?; end
@@ -52,6 +58,9 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def only_bottles_fetch?; end
+
+  sig { returns(T::Boolean) }
+  def only_casks?; end
 
   sig { returns(T::Boolean) }
   def only_cleanup_after?; end
@@ -96,6 +105,9 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
   def skip_dependents?; end
 
   sig { returns(T::Boolean) }
+  def skip_install?; end
+
+  sig { returns(T::Boolean) }
   def skip_livecheck?; end
 
   sig { returns(T::Boolean) }
@@ -133,6 +145,9 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(T::Array[String])) }
   def tested_formulae; end
+
+  sig { returns(T.nilable(T::Array[String])) }
+  def testing_casks; end
 
   sig { returns(T.nilable(T::Array[String])) }
   def testing_formulae; end

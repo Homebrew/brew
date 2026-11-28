@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cask/ci/runner_matrix"
 require "utils/analytics"
 require "utils/output"
 
@@ -30,10 +31,12 @@ module Homebrew
           verbose:          T::Boolean,
           ignore_failures:  T::Boolean,
           report_analytics: T::Boolean,
+          dry_run:          T::Boolean,
+          block:            T.nilable(T.proc.void),
         ).returns(Step)
       }
       def test(*arguments, named_args: nil, env: {}, verbose: @verbose, ignore_failures: false,
-               report_analytics: false)
+               report_analytics: false, dry_run: @dry_run, &block)
         step = Step.new(
           arguments.map(&:to_s),
           named_args:,
@@ -42,8 +45,8 @@ module Homebrew
           ignore_failures:,
           repository:      @repository,
         )
-        step.run(dry_run: @dry_run, fail_fast: @fail_fast)
         @steps << step
+        step.run(dry_run:, fail_fast: @fail_fast, &block)
 
         if ENV["HOMEBREW_TEST_BOT_ANALYTICS"].present? && report_analytics
           ::Utils::Analytics.report_test_bot_test(step.command_short, step.passed?)
@@ -65,6 +68,39 @@ module Homebrew
       end
 
       private
+
+      sig { params(type: Symbol, name: String, args: Homebrew::Cmd::TestBotCmd::Args).returns(Step) }
+      def fetch(type, name, args:)
+        command = ["brew", "fetch", "--#{type}", "--retry", name]
+        command.push("--test", "--build-bottle") if type == :formula
+        command << "--force" if cleanup?(args)
+        test(*command)
+      end
+
+      sig {
+        params(type: Symbol, name: String, args: Homebrew::Cmd::TestBotCmd::Args, new_package: T::Boolean,
+               online: T::Boolean).returns(T::Array[String])
+      }
+      def audit_command(type, name, args:, new_package:, online: !args.skip_online_checks?)
+        command = ["brew", "audit", "--#{type}", name]
+        command << "--online" if online
+        exceptions = args.except.to_a.dup
+        if new_package
+          if !args.skip_new? && !args.skip_online_checks?
+            command << "--new"
+          elsif !args.skip_new_strict?
+            command << "--strict"
+          end
+        elsif type == :formula
+          command << "--git" << "--skip-style"
+          exceptions << "unconfirmed_checksum_change" if args.skip_checksum_only_audit?
+          exceptions << "stable_version" if args.skip_stable_version_audit?
+          exceptions << "revision" if args.skip_revision_audit?
+        end
+        exceptions.concat(Cask::CI::RunnerMatrix::LIVECHECK_AUDITS) if type == :cask && args.skip_livecheck?
+        command << "--except=#{exceptions.uniq.join(",")}" if exceptions.present?
+        command
+      end
 
       sig { returns(T.nilable(Tap)) }
       attr_reader :tap

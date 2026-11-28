@@ -21,6 +21,7 @@ RSpec.describe Tapioca::Compilers::SubcommandArgs do
     stub_const("TapiocaArgsTestCmd", Class.new(Homebrew::AbstractCommand) do
       cmd_args do
         switch "--global"
+        comma_array "--hidden-packages", hidden: true
         named_args :none
         Homebrew::AbstractSubcommand.define_all(self, command: TapiocaArgsTestCmd)
       end
@@ -48,6 +49,11 @@ RSpec.describe Tapioca::Compilers::SubcommandArgs do
   end
 
   describe Tapioca::Compilers::Args do
+    it "types a hidden comma-separated option as an array" do
+      expect(decorated_rbi(described_class, TapiocaArgsTestCmd))
+        .to include("sig { returns(T.nilable(T::Array[String])) }\n  def hidden_packages; end")
+    end
+
     it "limits the command's own `Args` class to command-wide options" do
       output = decorated_rbi(described_class, TapiocaArgsTestCmd)
 

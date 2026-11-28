@@ -64,12 +64,6 @@ module Tapioca
         parser.subcommands_for_option(method_name.to_s.delete_suffix("?"))
       end
 
-      sig { params(parser: Homebrew::CLI::Parser).returns(T::Array[Symbol]) }
-      def self.comma_arrays(parser)
-        parser.instance_variable_get(:@non_global_processed_options)
-              .filter_map { |k, v| parser.option_to_name(k).to_sym if v == :comma_array }
-      end
-
       # A `--[no-]foo` switch has a genuine "unset" state distinct from `false` (see
       # `CLI::Parser#disable_switch`), so its accessor can return `nil` unless an `env:`
       # always resolves it to a real boolean first. The declared `--[no-]` form survives
@@ -105,7 +99,8 @@ module Tapioca
 
       sig { params(klass: RBI::Scope, parser: Homebrew::CLI::Parser, method_names: T::Array[Symbol]).void }
       def self.create_args_methods(klass, parser, method_names)
-        comma_array_methods = comma_arrays(parser)
+        comma_array_methods = parser.instance_variable_get(:@option_types)
+                                    .filter_map { |name, type| name.to_sym if type == :comma_array }
         negatable_methods = negatable_switches(parser)
 
         method_names.each do |method_name|

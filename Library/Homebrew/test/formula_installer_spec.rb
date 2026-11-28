@@ -255,8 +255,6 @@ RSpec.describe FormulaInstaller do
       end
 
       installer.post_install
-    ensure
-      FileUtils.rm_rf HOMEBREW_PREFIX/"libexec"
     end
 
     it "runs declarative post-install steps when the launcher selects an API formula name" do

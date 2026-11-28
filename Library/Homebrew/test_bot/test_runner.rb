@@ -8,6 +8,7 @@ require "test_bot/test_formulae"
 require "test_bot/cleanup_after"
 require "test_bot/cleanup_before"
 require "test_bot/packages_detect"
+require "test_bot/casks"
 require "test_bot/formulae_dependents"
 require "test_bot/bottles_fetch"
 require "test_bot/formulae"
@@ -22,6 +23,7 @@ module Homebrew
           setup:               T.nilable(Setup),
           tap_syntax:          T.nilable(TapSyntax),
           detect:              T.nilable(PackagesDetect),
+          casks:               T.nilable(Casks),
           formulae:            T.nilable(Formulae),
           formulae_dependents: T.nilable(FormulaeDependents),
           cleanup_before:      T.nilable(CleanupBefore),
@@ -106,7 +108,8 @@ module Homebrew
           steps_output_path.unlink if steps_output_path.exist?
           steps_output_path.write(steps_output)
 
-          if args.junit? && (no_only_args?(args) || args.only_formulae? || args.only_formulae_dependents?)
+          if args.junit? && (no_only_args?(args) || args.only_casks? ||
+                             args.only_formulae? || args.only_formulae_dependents?)
             junit_filters = %w[audit test]
             junit = Junit.new(tests)
             junit.build(filters: junit_filters)
@@ -132,6 +135,7 @@ module Homebrew
           any_only = args.only_cleanup_before? ||
                      args.only_setup? ||
                      args.only_tap_syntax? ||
+                     args.only_casks? ||
                      args.only_formulae? ||
                      args.only_packages_detect? ||
                      args.only_formulae_dependents? ||
@@ -170,13 +174,16 @@ module Homebrew
                                        verbose:   args.verbose?)
           end
 
-          no_formulae_flags = args.testing_formulae.nil? &&
-                              args.added_formulae.nil? &&
-                              args.deleted_formulae.nil?
-          detect_formulae = no_formulae_flags && (no_only_args || args.only_formulae?)
-          if args.only_packages_detect? || detect_formulae
+          detect_packages = (no_only_args || args.only_formulae? || args.only_casks?) &&
+                            [args.testing_casks, args.testing_formulae, args.added_formulae,
+                             args.deleted_formulae].all?(&:nil?)
+          if args.only_packages_detect? || detect_packages
             detect = PackagesDetect.new(argument, tap:, git:, dry_run: args.dry_run?,
                                         fail_fast: args.fail_fast?, verbose: args.verbose?)
+          end
+
+          if no_only_args || args.only_casks?
+            casks = Casks.new(tap:, dry_run: args.dry_run?, fail_fast: args.fail_fast?, verbose: args.verbose?)
           end
 
           if no_only_args || args.only_formulae?
@@ -222,7 +229,7 @@ module Homebrew
                                              verbose:   args.verbose?)
           end
 
-          { setup:, tap_syntax:, detect:, formulae:, formulae_dependents:,
+          { setup:, tap_syntax:, detect:, casks:, formulae:, formulae_dependents:,
             cleanup_before:, cleanup_after:, bottles_fetch: }
         end
 
@@ -233,18 +240,15 @@ module Homebrew
             tests[:setup]&.run!(args:)
             tests[:tap_syntax]&.run!(args:)
 
-            if (detect = tests[:detect])
-              detect.run!(args:)
+            detect = tests[:detect]
+            detect&.run!(args:)
+            tests[:casks]&.run!(detect&.testing_casks || args.testing_casks.to_a,
+                                added_casks: detect&.added_casks.to_a | args.added_casks.to_a, args:)
 
-              testing_formulae = detect.testing_formulae
-              added_formulae = detect.added_formulae
-              deleted_formulae = detect.deleted_formulae
-              return if testing_formulae.empty? && deleted_formulae.empty?
-            else
-              testing_formulae = args.testing_formulae.to_a
-              added_formulae = args.added_formulae.to_a
-              deleted_formulae = args.deleted_formulae.to_a
-            end
+            testing_formulae = detect&.testing_formulae || args.testing_formulae.to_a
+            added_formulae = detect&.added_formulae || args.added_formulae.to_a
+            deleted_formulae = detect&.deleted_formulae || args.deleted_formulae.to_a
+            return if (detect || tests[:casks]) && testing_formulae.empty? && deleted_formulae.empty?
 
             skipped_or_failed_formulae = if (formulae_test = tests[:formulae])
               formulae_test.testing_formulae = testing_formulae

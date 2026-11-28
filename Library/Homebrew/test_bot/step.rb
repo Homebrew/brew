@@ -211,12 +211,13 @@ module Homebrew
         end
       end
 
-      sig { params(dry_run: T::Boolean, fail_fast: T::Boolean).void }
-      def run(dry_run: false, fail_fast: false)
+      sig { params(dry_run: T::Boolean, fail_fast: T::Boolean, block: T.nilable(T.proc.void)).void }
+      def run(dry_run: false, fail_fast: false, &block)
         @start_time = T.let(Time.now, T.nilable(Time))
 
         puts_command
         if dry_run
+          @end_time = @start_time
           @status = :passed
           puts_result
           return
@@ -224,14 +225,28 @@ module Homebrew
 
         raise "git should always be called with -C!" if command[0] == "git" && %w[-C clone].exclude?(command[1])
 
-        result = system_command command.fetch(0), args:         command.drop(1),
-                                                  print_stdout: @verbose,
-                                                  print_stderr: @verbose,
-                                                  env:          @env
+        if block
+          begin
+            yield
+            success = true
+            output = ""
+          rescue SystemExit, StandardError => e
+            success = e.is_a?(SystemExit) && e.success?
+            output = e.to_s.dup
+            puts output if @verbose
+          end
+        else
+          result = system_command command.fetch(0), args:         command.drop(1),
+                                                    print_stdout: @verbose,
+                                                    print_stderr: @verbose,
+                                                    env:          @env
+          success = result.success?
+          output = result.merged_output
+        end
 
         @end_time = T.let(Time.now, T.nilable(Time))
 
-        @status = if result.success?
+        @status = if success
           :passed
         elsif @ignore_failures
           :ignored
@@ -240,8 +255,6 @@ module Homebrew
         end
 
         puts_result
-
-        output = result.merged_output
 
         # ActiveSupport can barf on some Unicode so don't use .present?
         if output.empty?
