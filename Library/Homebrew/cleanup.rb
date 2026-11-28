@@ -1006,14 +1006,15 @@ module Homebrew
       puts "from #{HOMEBREW_PREFIX}"
     end
 
+    # The formulae that {.autoremove} removes.
     sig {
       params(
         dry_run:       T::Boolean,
         removed_kegs:  T::Array[Keg],
         removed_casks: T::Array[Cask::Cask],
-      ).void
+      ).returns(T::Array[Formula])
     }
-    def self.autoremove(dry_run: false, removed_kegs: [], removed_casks: [])
+    def self.autoremovable_formulae(dry_run: false, removed_kegs: [], removed_casks: [])
       require "utils/autoremove"
       require "cask/caskroom"
 
@@ -1027,6 +1028,7 @@ module Homebrew
           formula.installed_kegs.all? { |keg| removed_kegs.include?(keg) }
         end
       end
+      InstalledDependents.prune_stale_dependencies(installed_formulae, dry_run:)
 
       formulae = installed_formulae
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
@@ -1049,9 +1051,18 @@ module Homebrew
         removable_formulae.reject! { |formula| required_kegs.include?(formula.any_installed_keg) }
       end
       # Uninstalling skips pinned formulae, so they stay and keep their dependencies.
-      removable_formulae = InstalledDependents.formulae_safe_to_remove(removable_formulae.reject(&:pinned?),
-                                                                       installed_formulae)
+      InstalledDependents.formulae_safe_to_remove(removable_formulae.reject(&:pinned?), installed_formulae)
+    end
 
+    sig {
+      params(
+        dry_run:       T::Boolean,
+        removed_kegs:  T::Array[Keg],
+        removed_casks: T::Array[Cask::Cask],
+      ).void
+    }
+    def self.autoremove(dry_run: false, removed_kegs: [], removed_casks: [])
+      removable_formulae = autoremovable_formulae(dry_run:, removed_kegs:, removed_casks:)
       return if removable_formulae.blank?
 
       formulae_names = removable_formulae.map(&:full_name).sort

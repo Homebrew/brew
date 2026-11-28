@@ -105,6 +105,80 @@ RSpec.describe Homebrew::Uninstall do
         .to output(/required to build build_dependent, which is currently installed/).to_stderr
     end
 
+    def install_formula(name, receipt_dependency: nil, outdated: false)
+      f = formula(name) do
+        T.bind(self, T.class_of(Formula))
+        url(outdated ? "f-2" : "f-1")
+      end
+      prefix = f.rack/"1"
+      prefix.mkpath
+      Keg.new(prefix).optlink
+      stub_formula_loader f
+      return f if receipt_dependency.nil?
+
+      tab = Tab.empty
+      tab.homebrew_version = "1.1.6"
+      tab.tabfile = prefix/AbstractTab::FILENAME
+      tab.runtime_dependencies = [{ "full_name" => receipt_dependency, "version" => "1" }]
+      tab.write
+      f
+    end
+
+    specify "when upgrading outdated dependents stops them requiring the keg" do
+      former_dependency = install_formula("former_dependency")
+      install_formula("outdated_dependent", receipt_dependency: "former_dependency", outdated: true)
+      install_formula("pinned_dependent", receipt_dependency: "former_dependency", outdated: true).pin
+      kegs_by_rack = { former_dependency.rack => [Keg.new(former_dependency.latest_installed_prefix)] }
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack, named_args: ["former_dependency"]) }
+        .to output(<<~EOS).to_stderr
+          Error: Refusing to uninstall #{HOMEBREW_CELLAR}/former_dependency/1
+          because it is required by outdated_dependent and pinned_dependent, which are currently installed.
+          To stop the dependents below from requiring it, run:
+            brew unpin pinned_dependent
+            brew upgrade outdated_dependent pinned_dependent
+          You can override this and force removal with:
+            brew uninstall --ignore-dependencies former_dependency
+        EOS
+    end
+
+    specify "when a cask requires the keg as well" do
+      former_dependency = install_formula("former_dependency")
+      install_formula("outdated_dependent", receipt_dependency: "former_dependency", outdated: true)
+      keg = Keg.new(former_dependency.latest_installed_prefix)
+      allow(InstalledDependents).to receive(:find_some_installed_dependents)
+        .and_return([[keg], ["dependent_cask", "outdated_dependent"]])
+
+      expect { described_class.handle_unsatisfied_dependents({ former_dependency.rack => [keg] }) }
+        .not_to output(/brew upgrade/).to_stderr
+    end
+
+    specify "when a dependent requires the keg under another name" do
+      former_dependency = install_formula("former_dependency")
+      install_formula("outdated_dependent", receipt_dependency: "former_dependency", outdated: true)
+      install_formula("other_dependent", receipt_dependency: "former_dependency_alias")
+      keg = Keg.new(former_dependency.latest_installed_prefix)
+      allow(InstalledDependents).to receive(:find_some_installed_dependents)
+        .and_return([[keg], ["other_dependent", "outdated_dependent"]])
+
+      expect { described_class.handle_unsatisfied_dependents({ former_dependency.rack => [keg] }) }
+        .not_to output(/brew upgrade/).to_stderr
+    end
+
+    specify "when a stale install receipt lists the keg that another formula still declares" do
+      install_formula("stale_dependent", receipt_dependency: "dependency")
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack) }
+        .to output(/required by dependent_formula, which is currently installed/).to_stderr
+    end
+
+    specify "when the only formula that still declares the keg is uninstalled as well" do
+      install_formula("stale_dependent", receipt_dependency: "dependency")
+      kegs_by_rack = [dependency, dependent_formula].to_h { |f| [f.rack, [Keg.new(f.latest_installed_prefix)]] }
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack) }.not_to output.to_stderr
+    end
+
     specify "when `ignore_dependencies` is true" do
       expect do
         described_class.handle_unsatisfied_dependents(kegs_by_rack, ignore_dependencies: true)

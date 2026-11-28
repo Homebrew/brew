@@ -28,7 +28,8 @@ module Homebrew
       handle_unsatisfied_dependents(kegs_by_rack,
                                     casks:,
                                     ignore_dependencies:,
-                                    named_args:)
+                                    named_args:,
+                                    dry_run:)
       return if Homebrew.failed?
 
       kegs_by_rack.each do |rack, kegs|
@@ -157,12 +158,18 @@ module Homebrew
         casks:               T::Array[Cask::Cask],
         ignore_dependencies: T::Boolean,
         named_args:          T::Array[String],
+        dry_run:             T::Boolean,
       ).void
     }
-    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
+    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [],
+                                           dry_run: false)
       return if ignore_dependencies
 
       all_kegs = kegs_by_rack.values.flatten(1)
+      # A formula that is uninstalled too does not keep the dependencies it declares.
+      keg_names = all_kegs.map(&:name)
+      remaining_formulae = Formula.installed.reject { |f| keg_names.intersect?(f.possible_names) }
+      InstalledDependents.prune_stale_dependencies(remaining_formulae, dry_run:, removed_names: keg_names)
       check_for_dependents!(all_kegs, casks:, named_args:)
     rescue MethodDeprecatedError
       # Silently ignore deprecations when uninstalling.
@@ -172,7 +179,16 @@ module Homebrew
     sig { params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask], named_args: T::Array[String]).returns(T::Boolean) }
     def self.check_for_dependents!(kegs, casks: [], named_args: [])
       if (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
-        DependentsMessage.new(*result, named_args:).output
+        required_kegs, dependents = result
+        formulae = Formula.installed.select { |f| dependents.include?(f.to_s) }
+        # A dependent that is not a formula keeps requiring the kegs.
+        commands = if formulae.count == dependents.count
+          keg_names = required_kegs.to_h { |keg| [keg.name, keg.name] }
+          InstalledDependents.commands_to_drop_dependencies(keg_names, formulae, all_dependents: true)
+        else
+          []
+        end
+        DependentsMessage.new(required_kegs, dependents, named_args:, commands:).output
       elsif (result = InstalledDependents.find_installed_build_dependents(kegs))
         DependentsMessage.new(*result, named_args:, build: true).output
       else

@@ -72,7 +72,8 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       expect(keg).to receive(:unlink).with(dry_run: true).and_call_original
       expect(keg).to receive(:uninstall).with(dry_run: true).and_call_original
       expect(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
-        .with({ keg.rack => [keg] }, casks: [cask], ignore_dependencies: false, named_args: cmd.args.named)
+        .with({ keg.rack => [keg] }, casks: [cask], ignore_dependencies: false, named_args: cmd.args.named,
+              dry_run: true)
       expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args: cmd.args.named)
       expect(Cask::Uninstall).to receive(:uninstall_casks)
         .with(cask, verbose: false, force: false, dry_run: true)

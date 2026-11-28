@@ -14,8 +14,10 @@ require "utils/shell"
 require "utils/output"
 require "cask/caskroom"
 require "cask/quarantine"
+require "cleanup"
 require "diagnostic/finding"
 require "git_repository"
+require "installed_dependents"
 require "missing"
 require "system_command"
 require "trust"
@@ -1274,6 +1276,7 @@ module Homebrew
           (f.deprecated? || f.disabled?) &&
             f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
         end
+        deprecated_or_disabled.reject! { |f| removed_automatically?(f.possible_names) }
         return if deprecated_or_disabled.empty?
 
         installed_dependency_names = installed_formula_dependency_names(installed_formulae)
@@ -1537,6 +1540,7 @@ module Homebrew
         newest_kegs_first = Keg.all.select(&:deleted_formula?).sort_by(&:scheme_and_version).reverse
         kegs_with_a_tap, kegs_without_a_tap = newest_kegs_first.partition { |keg| keg.tab.tap }
         deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name)
+        deleted_kegs.reject! { |keg| removed_automatically?([keg.name]) }
 
         return if deleted_kegs.blank?
 
@@ -1944,9 +1948,24 @@ module Homebrew
 
       sig { params(formulae: T::Array[Formula]).returns(T::Set[String]) }
       def installed_formula_dependency_names(formulae)
-        formulae.flat_map do |formula|
+        # What `brew autoremove` removes is a dependency too, even when no install receipt lists it any more.
+        autoremovable_names.to_set + formulae.flat_map do |formula|
           formula.runtime_dependencies.map { |dependency| Utils.name_from_full_name(dependency.name) }
-        end.to_set
+        end
+      end
+
+      # The names of the formulae that `brew autoremove` removes. Finding them also drops stale dependencies
+      # from the install receipts in memory, as `brew uninstall` does.
+      sig { returns(T::Array[String]) }
+      def autoremovable_names
+        @autoremovable ||= T.let(Cleanup.autoremovable_formulae(dry_run: true), T.nilable(T::Array[Formula]))
+        @autoremovable.flat_map(&:possible_names)
+      end
+
+      # Autoremove runs after `brew uninstall` and with the periodic cleanup, so what it removes needs no action.
+      sig { params(names: T::Array[String]).returns(T::Boolean) }
+      def removed_automatically?(names)
+        !Homebrew::EnvConfig.no_autoremove? && autoremovable_names.intersect?(names)
       end
 
       sig {
@@ -1954,43 +1973,25 @@ module Homebrew
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
-        upgradeable_dependents = T.let([], T::Array[String])
-        pinned_dependents = T.let([], T::Array[String])
-
-        installed_formulae.each do |dependent|
-          installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
-            dependency_names[Utils.name_from_full_name(dependency.name)]
-          end.uniq
-          next if installed_dependency_names.empty?
-
-          current_dependency_names = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
-                                              .filter_map do |dependency|
-            dependency_names[Utils.name_from_full_name(dependency.name)]
-          end
-          dependencies_still_required = installed_dependency_names & current_dependency_names
-          dependencies_to_drop = installed_dependency_names - dependencies_still_required
-
-          next if dependencies_to_drop.empty? || !dependent.outdated?
-
-          destination = dependent.pinned? ? pinned_dependents : upgradeable_dependents
-          destination << dependent.full_name
-        end
+        unneeded_names = autoremovable_names.filter_map { |name| dependency_names[name] }
+                                            .uniq
+                                            .sort
+        commands = InstalledDependents.commands_to_drop_dependencies(dependency_names, installed_formulae)
 
         guidance = []
-        if upgradeable_dependents.present? || pinned_dependents.present?
-          commands = []
-          if pinned_dependents.present?
-            pinned_names = pinned_dependents.uniq.sort.join(" ")
-            commands << "brew unpin #{pinned_names}"
-          end
-          upgrade_names = (upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")
-          commands << "brew upgrade #{upgrade_names}"
+        if unneeded_names.present?
+          it_or_them = unneeded_names.one? ? "it" : "them"
+          guidance << <<~EOS.chomp
+            Nothing requires #{Utils::Text.to_sentence(unneeded_names)} any more. To remove #{it_or_them}, run:
+              brew autoremove
+          EOS
+        end
+        if commands.present?
           guidance << [
             "To stop the listed dependents from requiring the formulae above, run:",
             commands.map { |command| "  #{command}" }.join("\n"),
           ].join("\n")
         end
-
         guidance.join("\n\n")
       end
 

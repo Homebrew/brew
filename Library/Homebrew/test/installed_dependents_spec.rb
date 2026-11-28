@@ -564,4 +564,271 @@ RSpec.describe InstalledDependents do
       expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("baz")], installed)).to eq([])
     end
   end
+
+  describe "::commands_to_drop_dependencies" do
+    let(:dependency) { instance_double(Dependency, name: "foo") }
+
+    def commands_for_dependent(outdated: true, others: [])
+      dependent = instance_double(Formula, full_name: "bar", outdated?: outdated, pinned?: false, disabled?: false,
+                                           runtime_dependencies: [dependency], recursive_dependencies: [])
+      yield dependent if block_given?
+
+      described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent, *others])
+    end
+
+    it "upgrades an outdated dependent whose latest version no longer declares the dependency" do
+      expect(commands_for_dependent).to eq(["brew upgrade bar"])
+    end
+
+    it "leaves an up-to-date dependent to the pruning of its install receipt" do
+      expect(commands_for_dependent(outdated: false)).to eq([])
+    end
+
+    it "skips a disabled dependent, which cannot be upgraded" do
+      commands = commands_for_dependent { |dependent| allow(dependent).to receive(:disabled?).and_return(true) }
+
+      expect(commands).to eq([])
+    end
+
+    it "skips a dependent whose latest dependencies cannot be loaded" do
+      commands = commands_for_dependent do |dependent|
+        allow(dependent).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError.new("gone"))
+      end
+
+      expect(commands).to eq([])
+    end
+
+    it "suggests nothing while an up-to-date dependent's install receipt still lists the dependency" do
+      other = instance_double(Formula, full_name: "baz", outdated?: false, pinned?: false,
+                                       runtime_dependencies: [dependency], recursive_dependencies: [])
+
+      expect(commands_for_dependent(others: [other])).to eq([])
+    end
+
+    def dependent_listing(lists, name:, declares: [], outdated: true)
+      instance_double(Formula, full_name: name, outdated?: outdated, pinned?: false, disabled?: false,
+                               runtime_dependencies: [instance_double(Dependency, name: lists)],
+                               recursive_dependencies: declares.map { instance_double(Dependency, name: it) })
+    end
+
+    it "suggests nothing when the upgrades make the dependents require each other's dependencies" do
+      dependents = [dependent_listing("foo", name: "bar", declares: ["baz"]),
+                    dependent_listing("baz", name: "qux", declares: ["foo"])]
+
+      expect(described_class.commands_to_drop_dependencies({ "foo" => "foo", "baz" => "baz" }, dependents)).to eq([])
+    end
+
+    context "when an upgrade frees one of two dependencies" do
+      let(:dependents) do
+        [dependent_listing("foo", name: "bar"),
+         dependent_listing("baz", name: "qux", declares: ["baz"], outdated: false)]
+      end
+      let(:dependency_names) { { "foo" => "foo", "baz" => "baz" } }
+
+      it "suggests it to `brew doctor`" do
+        commands = described_class.commands_to_drop_dependencies(dependency_names, dependents)
+
+        expect(commands).to eq(["brew upgrade bar"])
+      end
+
+      it "suggests nothing to `brew uninstall`, which stays refused for the other one" do
+        commands = described_class.commands_to_drop_dependencies(dependency_names, dependents, all_dependents: true)
+
+        expect(commands).to eq([])
+      end
+    end
+
+    context "when the dependent's latest version makes the dependency a choice" do
+      # The dependent as `Formula.installed` loads it, with its install receipt as build options.
+      def commands_for_receipt(&latest_dependencies)
+        dependent_keg = setup_test_keg("bar", "1.0")
+        tab = Tab.empty
+        tab.tabfile = dependent_keg/AbstractTab::FILENAME
+        tab.runtime_dependencies = [{ "full_name" => "foo" }]
+        tab.write
+        stub_formula("bar", "2.0", &latest_dependencies)
+
+        dependent = Formulary.from_rack(HOMEBREW_CELLAR/"bar")
+        described_class.commands_to_drop_dependencies({ "foo" => "foo" }, [dependent])
+      end
+
+      it "upgrades it when the dependency is optional and was not selected" do
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :optional
+        end
+
+        expect(commands).to eq(["brew upgrade bar"])
+      end
+
+      it "suggests nothing when the dependency is recommended, which the upgrade installs by default" do
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :recommended
+        end
+
+        expect(commands).to eq([])
+      end
+
+      it "upgrades it when a dependency of the latest version was installed without the dependency it recommends" do
+        installed_keg = setup_test_keg("baz", "1.0") do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :recommended
+        end
+        tab = Tab.empty
+        tab.tabfile = installed_keg/AbstractTab::FILENAME
+        tab.used_options = ["--without-foo"]
+        tab.write
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "baz"
+        end
+
+        expect(commands).to eq(["brew upgrade bar"])
+      end
+
+      it "suggests nothing when the latest version selects the dependency as an option of its own dependency" do
+        stub_formula("baz") do
+          T.bind(self, T.class_of(Formula))
+          depends_on "foo" => :optional
+        end
+        commands = commands_for_receipt do
+          T.bind(self, T.class_of(Formula))
+          depends_on "baz" => "with-foo"
+        end
+
+        expect(commands).to eq([])
+      end
+    end
+
+    it "suggests nothing while a dependent without a receipt list has a dependency from an untrusted tap" do
+      other = instance_double(Formula, full_name: "baz")
+      allow(other).to receive(:runtime_dependencies).and_raise(Homebrew::UntrustedTapError)
+      allow(other).to receive(:runtime_dependencies).with(stop_at_untrusted: true).and_return([dependency])
+      allow(other).to receive(:recursive_dependencies).and_raise(Homebrew::UntrustedTapError)
+
+      expect(commands_for_dependent(others: [other])).to eq([])
+    end
+  end
+
+  describe "::prune_stale_dependencies" do
+    let(:dependent_keg) do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "baz"
+      end
+    end
+    let(:dependent) { Formulary.factory("bar") }
+    let(:receipt_dependencies) do
+      JSON.parse((dependent_keg/AbstractTab::FILENAME).read).fetch("runtime_dependencies").map { it["full_name"] }
+    end
+
+    def write_receipt(keg, *dependencies)
+      tab = Tab.empty
+      tab.tabfile = keg/AbstractTab::FILENAME
+      tab.runtime_dependencies = dependencies.map { |full_name| { "full_name" => full_name } }
+      tab.write
+    end
+
+    before do
+      keg.optlink
+      write_receipt(setup_test_keg("baz", "1.0"))
+      # `foo` was a dependency of `baz` when `bar` was installed.
+      write_receipt(dependent_keg, "baz", "foo")
+    end
+
+    it "removes a dependency that the dependent's dependency tree no longer declares" do
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz"])
+    end
+
+    it "stops counting the dependent without writing its receipt in a dry run" do
+      described_class.prune_stale_dependencies(Formula.installed, dry_run: true)
+      dependents = described_class.find_some_installed_dependents([keg])
+
+      expect([dependents, receipt_dependencies]).to eq([nil, ["baz", "foo"]])
+    end
+
+    it "stops counting a dependent whose dependencies were read before" do
+      described_class.find_some_installed_dependents([keg])
+      described_class.prune_stale_dependencies(Formula.installed, dry_run: true)
+
+      expect(described_class.find_some_installed_dependents([keg])).to be_nil
+    end
+
+    it "skips the dependency tree when one of the dependent's dependencies declares the dependency" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      expect(dependent).not_to receive(:recursive_dependencies)
+
+      described_class.prune_stale_dependencies([dependent, Formulary.factory("baz")])
+    end
+
+    it "keeps a dependency that the receipt lists under the name it had before it was renamed" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      allow(Formulary.factory("foo")).to receive(:possible_names).and_return(%w[foo foo-old])
+      (HOMEBREW_PREFIX/"opt/foo-old").make_relative_symlink(HOMEBREW_CELLAR/"foo/1.0")
+      write_receipt(dependent_keg, "baz", "foo-old")
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo-old"])
+    end
+
+    it "keeps a dependency that the dependent's keg links to" do
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false)
+                                                        .and_return([Dependency.new("foo")])
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps a dependency that is not installed" do
+      keg.remove_opt_record
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps a dependency that another installed formula still declares" do
+      other_keg = setup_test_keg("qux", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+      end
+      write_receipt(other_keg, "foo")
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent that is not the latest version" do
+      allow(dependent).to receive(:pkg_version).and_return(PkgVersion.parse("1.1"))
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent that declares a dependency through an alias" do
+      stub_formula_loader Formulary.factory("baz"), "baz-alias"
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "baz-alias"
+      end
+      described_class.prune_stale_dependencies(Formula.installed)
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+
+    it "keeps the receipt of a dependent whose dependency tree cannot be loaded" do
+      allow(dependent).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError.new("baz"))
+      described_class.prune_stale_dependencies([dependent])
+
+      expect(receipt_dependencies).to eq(["baz", "foo"])
+    end
+  end
 end

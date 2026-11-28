@@ -346,6 +346,13 @@ RSpec.describe Homebrew::Cleanup do
       allow(InstalledDependents).to receive(:find_some_installed_dependents)
         .with([removable_keg], casks: [], formulae: [removable_formula])
         .and_return([[removable_keg], ["pango"]])
+      allow(InstalledDependents).to receive(:prune_stale_dependencies)
+    end
+
+    it "prunes stale dependencies from the install receipts of the installed formulae" do
+      expect(InstalledDependents).to receive(:prune_stale_dependencies).with([removable_formula], dry_run: true)
+
+      described_class.autoremove(dry_run: true)
     end
 
     it "does not print or uninstall formulae required by installed dependents" do

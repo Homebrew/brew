@@ -328,14 +328,48 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       dependency = instance_double(Dependency, name: "testball")
       dependent = instance_double(Formula, deprecated?: false, disabled?: false, runtime_dependencies: [dependency],
                                            full_name: "dependent", pinned?: false, outdated?: true)
-      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(dependent).to receive(:recursive_dependencies).and_return([])
       allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+      allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).and_return([])
 
       expect(checks.check_deprecated_disabled&.to_s).to include(
         "The following formulae are installed as dependencies:\n\n  testball",
         "To stop the listed dependents from requiring the formulae above, run:\n  " \
         "brew upgrade dependent",
       )
+    end
+
+    context "when nothing requires a deprecated formula any more" do
+      before do
+        tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
+        keg = instance_double(Keg, tab:)
+        deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
+                                              full_name: "testball", possible_names: ["testball"],
+                                              installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
+        autoremovable = formula("testball") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/testball-1.0.tar.gz"
+        end
+        allow(Formula).to receive(:installed).and_return([deprecated])
+        allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([autoremovable])
+      end
+
+      it "skips it, as `brew autoremove` removes it after an uninstall or with the periodic cleanup" do
+        expect(checks.check_deprecated_disabled).to be_nil
+      end
+
+      it "says to run `brew autoremove` when that is disabled" do
+        ENV["HOMEBREW_NO_AUTOREMOVE"] = "1"
+
+        expect(checks.check_deprecated_disabled&.to_s).to end_with <<~EOS.chomp
+          The following formulae are installed as dependencies:
+
+            testball
+
+          Nothing requires testball any more. To remove it, run:
+            brew autoremove
+        EOS
+      end
     end
 
     it "skips a formula removed from its tap whose keg kept a deprecated copy" do
@@ -439,6 +473,21 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     EOS
   end
 
+  it "skips a deleted formula that `brew autoremove` removes" do
+    tab = instance_double(Tab, tap: CoreTap.instance, installed_on_request_present?: true,
+                               installed_on_request: false)
+    keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
+                               scheme_and_version: [0, PkgVersion.parse("1.0")], tab:)
+    autoremovable = formula("deleted-dep") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/deleted-dep-1.0.tar.gz"
+    end
+    allow(Keg).to receive(:all).and_return([keg])
+    allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).with(dry_run: true).and_return([autoremovable])
+
+    expect(checks.check_deleted_formula).to be_nil
+  end
+
   it "provides commands to upgrade dependents of a deleted formula" do
     tap = CoreTap.instance
     tab = instance_double(Tab, tap:, installed_on_request_present?: true, installed_on_request: false)
@@ -450,13 +499,14 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       "dependent-two"    => false,
       "pinned-dependent" => true,
     }.map do |name, pinned|
-      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true,
+      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true, disabled?: false,
                                            runtime_dependencies: [dependency])
-      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(dependent).to receive(:recursive_dependencies).and_return([])
       dependent
     end
     allow(Keg).to receive(:all).and_return([keg])
     allow(Formula).to receive(:installed).and_return(dependents)
+    allow(Homebrew::Cleanup).to receive(:autoremovable_formulae).and_return([])
 
     expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
       Some installed kegs have no formulae!

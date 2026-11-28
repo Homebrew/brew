@@ -201,4 +201,132 @@ module InstalledDependents
     end
     removable
   end
+
+  # The commands that stop `formulae` from requiring the formulae in
+  # `dependency_names`, which maps their possible names to their full names.
+  # An outdated dependent is upgraded when its latest version no longer needs
+  # them.
+  # With `all_dependents`, every one of `formulae` is known to require one of
+  # them, whatever name it lists it under.
+  sig {
+    params(dependency_names: T::Hash[String, String], formulae: T::Array[Formula], all_dependents: T::Boolean)
+      .returns(T::Array[String])
+  }
+  def commands_to_drop_dependencies(dependency_names, formulae, all_dependents: false)
+    kept_dependencies = T.let([], T::Array[String])
+    droppers = T.let([], T::Array[[Formula, T::Array[String]]])
+    full_names = ->(deps) { deps.filter_map { |dep| dependency_names[Utils.name_from_full_name(dep.name)] } }
+
+    formulae.each do |dependent|
+      installed_dependency_names = full_names.call(dependent.runtime_dependencies(stop_at_untrusted: true))
+      # A dependent that lists a dependency under another name, such as an alias, keeps requiring it.
+      return [] if all_dependents && installed_dependency_names.empty?
+      next if installed_dependency_names.empty?
+
+      # Unlike `runtime_dependencies`, this raises when a dependency cannot be loaded.
+      declared_dependencies = dependent.recursive_dependencies do |formula, dep|
+        next Dependable::PRUNE if dep.build? || dep.test?
+        next if dep.required? || !formula.is_a?(Formula)
+
+        # An upgrade uses the options that a dependent passes on and the ones each formula was installed
+        # with, as `FormulaInstaller#effective_build_options_for` does. A recommended dependency then stays
+        # unless it was opted out of and an optional one only when it was selected. An older install
+        # receipt does not list the options that its formula has gained since.
+        used_options = (formula.build.used_options | Tab.for_formula(formula).used_options) & formula.options
+        selected = if dep.recommended?
+          dep.option_names.none? { |name| used_options.include?("without-#{name}") }
+        else
+          dep.option_names.any? { |name| used_options.include?("with-#{name}") }
+        end
+        Dependable::PRUNE unless selected
+      end
+      declared_dependency_names = full_names.call(declared_dependencies)
+      dropped = installed_dependency_names - declared_dependency_names
+      # Only an upgrade changes what a dependent requires, and a disabled formula cannot be upgraded.
+      dropped = [] if dropped.any? && (!dependent.outdated? || dependent.disabled?)
+      # An upgrade can also make a dependent require a dependency that its receipt does not list.
+      kept_dependencies.concat(installed_dependency_names - dropped, declared_dependency_names)
+      droppers << [dependent, dropped]
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, FormulaSpecificationError, Homebrew::UntrustedTapError
+      # Its latest dependencies cannot be read, so this dependent keeps what its receipt lists.
+      kept_dependencies.concat(installed_dependency_names.to_a)
+    end
+
+    # An uninstall stays refused while any of the dependencies is still required.
+    return [] if all_dependents && kept_dependencies.any?
+
+    # A command only helps when no other dependent keeps requiring what it drops.
+    outdated = droppers.filter_map { |dependent, dropped| dependent if (dropped - kept_dependencies).any? }
+    {
+      "unpin"   => outdated.select(&:pinned?),
+      "upgrade" => outdated,
+    }.filter_map do |command, dependents|
+      ["brew", command, *dependents.map(&:full_name).uniq.sort].join(" ") if dependents.any?
+    end
+  end
+
+  # Removes the dependencies from the install receipts of `formulae` that
+  # an install would no longer record for their kegs. A receipt lists all runtime
+  # dependencies from install time, so it goes stale when a dependency drops
+  # one of its own and the dependent is not rebuilt. An installed dependency
+  # goes when none of `formulae` that list it still declares it, the
+  # dependent's dependency tree no longer has it and its keg does not link to it.
+  # One of `removed_names` also goes while another of `formulae` still declares
+  # it, so that only the formulae that need it are reported as its dependents.
+  sig { params(formulae: T::Array[Formula], dry_run: T::Boolean, removed_names: T::Array[String]).void }
+  def prune_stale_dependencies(formulae, dry_run: false, removed_names: [])
+    declared_names = formulae.to_h { |f| [f.name, f.deps.map { |dep| Utils.name_from_full_name(dep.name) }] }
+    receipt_name = ->(dep) { Utils.name_from_full_name(dep["full_name"]) if dep.is_a?(Hash) && dep["full_name"] }
+    receipts = formulae.filter_map do |dependent|
+      keg = dependent.any_installed_keg
+      tab_dependencies = keg&.runtime_dependencies
+      next if keg.nil? || tab_dependencies.nil?
+
+      tab_names = tab_dependencies.filter_map(&receipt_name)
+      # The dependent or one of its dependencies declares nearly every dependency.
+      undeclared_names = tab_names - declared_names.values_at(dependent.name, *tab_names).flatten
+      [dependent, keg, tab_dependencies, tab_names - undeclared_names, undeclared_names]
+    end
+    # A dependency that a formula still declares stays installed, whatever the other receipts list,
+    # so those receipts are only checked for a dependency that is being removed.
+    declared_somewhere = receipts.flat_map { |_, _, _, names, _| names }.to_set - removed_names
+    # A receipt can list a formula under the name it had before it was renamed.
+    possible_names = T.let({}, T::Hash[String, T::Array[String]])
+    current_names = ->(deps) { deps.flat_map { |dep| possible_names[dep.name] ||= dep.to_formula.possible_names } }
+    pruned = T.let(false, T::Boolean)
+
+    # Every keg's linkage comes from the same cache, which is only read when a receipt gets this far.
+    CacheStoreDatabase.use(:linkage) do
+      receipts.each do |dependent, keg, tab_dependencies, _, undeclared_names|
+        stale_names = undeclared_names.reject { |name| declared_somewhere.include?(name) }
+                                      .select { |name| (HOMEBREW_PREFIX/"opt"/name).directory? }
+        next if stale_names.empty?
+        # An upgrade writes a new receipt.
+        next if keg.version != dependent.pkg_version
+        # An alias may have moved on to another formula while the keg still uses the one in the receipt.
+        next if dependent.deps.any? { |dep| dep.to_formula.name != Utils.name_from_full_name(dep.name) }
+
+        stale_names -= current_names.call(dependent.recursive_dependencies)
+        next if stale_names.empty?
+
+        # A receipt also lists what the keg links to, whether or not a formula declares it.
+        stale_names -= current_names.call(dependent.runtime_dependencies(read_from_tab: false))
+        next if stale_names.empty?
+
+        tab_dependencies.delete_if { |dep| stale_names.include?(receipt_name.call(dep)) }
+        tab = keg.tab
+        tab.runtime_dependencies = tab_dependencies
+        tab.write unless dry_run
+        pruned = true
+      rescue FormulaUnavailableError, TapFormulaAmbiguityError, FormulaSpecificationError, Homebrew::UntrustedTapError
+        # The dependency tree cannot be read, so the receipt stays as it is.
+        next
+      end
+    end
+    return unless pruned
+
+    # What was read from the receipts before now is cached.
+    [:runtime_dependencies, :runtime_formula_dependencies, :installed_runtime_formula_dependencies,
+     :runtime_installed_formula_dependents].each { |key| Formula.cache.delete(key) }
+  end
 end
